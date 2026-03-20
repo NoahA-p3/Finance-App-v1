@@ -12,7 +12,7 @@ export default function ReportsPage() {
           ["Net Profit", "$31,750"],
           ["Estimated Tax", "$8,460"]
         ].map(([label, value]) => (
-          <Card key={label}><p className="text-sm text-slate-500">{label}</p><p className="mt-2 text-2xl font-semibold">{value}</p></Card>
+          <Card key={label}><p className="text-sm text-indigo-200/70">{label}</p><p className="mt-2 text-2xl font-semibold text-white">{value}</p></Card>
         ))}
       </div>
       <div className="mt-4"><OverviewChart /></div>
