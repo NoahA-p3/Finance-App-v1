@@ -1,0 +1,54 @@
+alter table public.profiles
+  add column if not exists username text,
+  add column if not exists first_name text,
+  add column if not exists last_name text,
+  add column if not exists phone_country_code text,
+  add column if not exists phone_number text;
+
+create unique index if not exists profiles_username_unique_idx on public.profiles (lower(username)) where username is not null;
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, username, first_name, last_name, phone_country_code, phone_number)
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    nullif(trim(new.raw_user_meta_data ->> 'username'), ''),
+    nullif(trim(new.raw_user_meta_data ->> 'first_name'), ''),
+    nullif(trim(new.raw_user_meta_data ->> 'last_name'), ''),
+    nullif(trim(new.raw_user_meta_data ->> 'phone_country_code'), ''),
+    nullif(trim(new.raw_user_meta_data ->> 'phone_number'), '')
+  )
+  on conflict (id) do update
+    set email = excluded.email,
+        username = excluded.username,
+        first_name = excluded.first_name,
+        last_name = excluded.last_name,
+        phone_country_code = excluded.phone_country_code,
+        phone_number = excluded.phone_number,
+        updated_at = now();
+
+  return new;
+end;
+$$;
+
+create or replace function public.email_for_login_identifier(login_identifier text)
+returns text
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select p.email
+  from public.profiles p
+  where lower(p.email) = lower(login_identifier)
+     or lower(coalesce(p.username, '')) = lower(login_identifier)
+  limit 1;
+$$;
+
+grant execute on function public.email_for_login_identifier(text) to anon, authenticated;
