@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PhoneInput, { parsePhoneNumber } from "react-phone-number-input";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -35,8 +36,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("+1");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -48,6 +48,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+      const parsedPhoneNumber = phoneNumber ? parsePhoneNumber(phoneNumber) : null;
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -62,8 +63,8 @@ export function AuthForm({ mode }: AuthFormProps) {
                 username,
                 firstName,
                 lastName,
-                phoneCountryCode,
-                phoneNumber
+                phoneCountryCode: parsedPhoneNumber ? `+${parsedPhoneNumber.countryCallingCode}` : null,
+                phoneNumber: parsedPhoneNumber?.nationalNumber ?? null
               }
         )
       });
@@ -133,28 +134,14 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
           <div>
             <label className="mb-1 block text-sm text-slate-600">Phone number (optional)</label>
-            <div className="grid grid-cols-[7rem_1fr] gap-2">
-              <input
-                className="rounded-lg border border-slate-300 bg-white px-2 py-2"
-                type="text"
-                list="country-code-options"
-                value={phoneCountryCode}
-                onChange={(e) => setPhoneCountryCode(e.target.value)}
-                placeholder="+1"
-              />
-              <datalist id="country-code-options">
-                {COUNTRY_CODE_OPTIONS.map((code) => (
-                  <option key={code} value={code} />
-                ))}
-              </datalist>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="5551234567"
-              />
-            </div>
+            <PhoneInput
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+              defaultCountry="US"
+              international
+              countryCallingCodeEditable
+              value={phoneNumber}
+              onChange={setPhoneNumber}
+            />
           </div>
         </>
       )}
