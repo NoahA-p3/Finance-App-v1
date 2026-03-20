@@ -19,25 +19,30 @@ export function AuthForm({ mode }: AuthFormProps) {
     setLoading(true);
     setError(null);
 
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-    const payload = await response.json();
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
-    if (!response.ok) {
-      setError(payload.error ?? "Unable to authenticate.");
+      if (!response.ok) {
+        setError(payload.error ?? "Unable to authenticate.");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   };
 
   return (
