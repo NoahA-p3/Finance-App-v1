@@ -35,7 +35,6 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -87,10 +86,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         nextErrors.confirmPassword = "Passwords do not match.";
       }
 
-      if (!username.trim()) {
-        nextErrors.username = "Username is required.";
-      }
-
       if (!firstName.trim()) {
         nextErrors.firstName = "First name is required.";
       }
@@ -129,7 +124,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             : {
                 email: identifier.trim(),
                 password,
-                username: username.trim(),
                 firstName: firstName.trim(),
                 lastName: lastName.trim()
               }
@@ -200,22 +194,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
       {mode === "signup" && (
         <>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Username</label>
-            <input
-              className={inputClass("username")}
-              type="text"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                setFieldErrors((prev) => ({ ...prev, username: "" }));
-              }}
-              placeholder="Choose a unique username"
-              required
-            />
-            {fieldErrors.username && <p className="mt-1 text-xs text-rose-600">{fieldErrors.username}</p>}
-          </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">First name</label>
