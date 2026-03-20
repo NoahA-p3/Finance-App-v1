@@ -33,7 +33,6 @@ export type Database = {
           phone_country_code: string | null;
           phone_number: string | null;
           updated_at: string;
-          username: string | null;
         };
         Insert: {
           created_at?: string;
@@ -44,7 +43,6 @@ export type Database = {
           phone_country_code?: string | null;
           phone_number?: string | null;
           updated_at?: string;
-          username?: string | null;
         };
         Update: {
           created_at?: string;
@@ -55,7 +53,6 @@ export type Database = {
           phone_country_code?: string | null;
           phone_number?: string | null;
           updated_at?: string;
-          username?: string | null;
         };
       };
       receipts: {

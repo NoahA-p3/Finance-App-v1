@@ -30,7 +30,7 @@ async function getErrorMessage(response: Response): Promise<string> {
 }
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -65,12 +65,12 @@ export function AuthForm({ mode }: AuthFormProps) {
   const validate = () => {
     const nextErrors: Record<string, string> = {};
 
-    if (!identifier.trim()) {
-      nextErrors.identifier = mode === "login" ? "Enter your email or username." : "Email is required.";
+    if (!email.trim()) {
+      nextErrors.email = "Email is required.";
     }
 
-    if (mode === "signup" && identifier.trim() && !EMAIL_PATTERN.test(identifier.trim())) {
-      nextErrors.identifier = "Please enter a valid email address.";
+    if (email.trim() && !EMAIL_PATTERN.test(email.trim())) {
+      nextErrors.email = "Please enter a valid email address.";
     }
 
     if (!password) {
@@ -120,9 +120,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         },
         body: JSON.stringify(
           mode === "login"
-            ? { identifier: identifier.trim(), password }
+            ? { email: email.trim(), password }
             : {
-                email: identifier.trim(),
+                email: email.trim(),
                 password,
                 firstName: firstName.trim(),
                 lastName: lastName.trim()
@@ -176,20 +176,20 @@ export function AuthForm({ mode }: AuthFormProps) {
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          {mode === "login" ? "Email or Username" : "Email"}
+          Email
         </label>
         <input
-          className={inputClass("identifier")}
-          type={mode === "login" ? "text" : "email"}
-          value={identifier}
+          className={inputClass("email")}
+          type="email"
+          value={email}
           onChange={(e) => {
-            setIdentifier(e.target.value);
-            setFieldErrors((prev) => ({ ...prev, identifier: "" }));
+            setEmail(e.target.value);
+            setFieldErrors((prev) => ({ ...prev, email: "" }));
           }}
-          placeholder={mode === "login" ? "name@email.com or username" : "name@email.com"}
+          placeholder="name@email.com"
           required
         />
-        {fieldErrors.identifier && <p className="mt-1 text-xs text-rose-600">{fieldErrors.identifier}</p>}
+        {fieldErrors.email && <p className="mt-1 text-xs text-rose-600">{fieldErrors.email}</p>}
       </div>
 
       {mode === "signup" && (
