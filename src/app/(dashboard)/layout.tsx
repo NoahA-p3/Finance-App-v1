@@ -1,7 +1,7 @@
+import { PropsWithChildren } from "react";
 import { requireUser } from "@/lib/auth";
 
-export default async function DashboardShellLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: PropsWithChildren) {
   await requireUser();
-
   return children;
 }
