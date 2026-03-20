@@ -7,6 +7,26 @@ interface AuthFormProps {
   mode: "login" | "signup";
 }
 
+async function getErrorMessage(response: Response): Promise<string> {
+  const text = await response.text();
+
+  if (!text) {
+    return `Unable to authenticate (HTTP ${response.status}).`;
+  }
+
+  try {
+    const payload = JSON.parse(text) as { error?: string };
+
+    if (payload.error) {
+      return payload.error;
+    }
+  } catch {
+    // Ignore JSON parse errors and fall through to a trimmed plain-text error.
+  }
+
+  return text.trim() || `Unable to authenticate (HTTP ${response.status}).`;
+}
+
 export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,25 +39,28 @@ export function AuthForm({ mode }: AuthFormProps) {
     setLoading(true);
     setError(null);
 
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-    const payload = await response.json();
+      if (!response.ok) {
+        setError(await getErrorMessage(response));
+        return;
+      }
 
-    if (!response.ok) {
-      setError(payload.error ?? "Unable to authenticate.");
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   };
 
   return (
