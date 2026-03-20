@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -20,12 +19,19 @@ export function AuthForm({ mode }: AuthFormProps) {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const action = mode === "login" ? supabase.auth.signInWithPassword : supabase.auth.signUp;
-    const { error: authError } = await action({ email, password });
+    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
 
-    if (authError) {
-      setError(authError.message);
+    const payload = await response.json();
+
+    if (!response.ok) {
+      setError(payload.error ?? "Unable to authenticate.");
       setLoading(false);
       return;
     }
