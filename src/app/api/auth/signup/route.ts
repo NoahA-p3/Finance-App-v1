@@ -42,5 +42,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ user: data.user }, { status: 201 });
+  return NextResponse.json(
+    {
+      user: data.user,
+      requiresEmailConfirmation: !data.session
+    },
+    { status: 201 }
+  );
 }
