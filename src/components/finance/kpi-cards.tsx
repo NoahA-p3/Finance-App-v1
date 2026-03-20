@@ -1,15 +1,22 @@
 import { Card } from "@/components/ui/card";
 import { kpiData } from "@/lib/mock-data";
 
+const accent = [
+  "from-cyan-400/35 to-sky-500/20",
+  "from-blue-400/30 to-indigo-500/20",
+  "from-pink-400/35 to-rose-500/20"
+];
+
 export function KpiCards() {
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {kpiData.map((kpi) => (
+      {kpiData.map((kpi, index) => (
         <Card key={kpi.title}>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{kpi.title}</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">${kpi.amount.toLocaleString()}</p>
-          <p className="mt-2 text-xs text-emerald-600">{kpi.delta}</p>
-          <div className="mt-4 h-8 rounded-lg bg-gradient-to-r from-indigo-50 to-slate-100" />
+          <div className={`rounded-xl bg-gradient-to-br p-4 ${accent[index % accent.length]}`}>
+            <p className="text-xs uppercase tracking-[0.16em] text-indigo-100/70">{kpi.title}</p>
+            <p className="mt-2 text-3xl font-semibold text-white">${kpi.amount.toLocaleString()}</p>
+            <p className="mt-2 inline-flex rounded-full bg-emerald-400/20 px-2 py-1 text-xs text-emerald-200">{kpi.delta}</p>
+          </div>
         </Card>
       ))}
     </div>

@@ -11,19 +11,17 @@ const mainNav = [
   { href: "/reports", label: "Reports", icon: ReportIcon }
 ];
 
-const settingsNav = { href: "/settings", label: "Settings", icon: SettingsIcon };
+const footerNav = { href: "/settings", label: "Settings", icon: SettingsIcon };
 
 function NavLink({ href, label, icon: Icon, isActive }: { href: string; label: string; icon: typeof DashboardIcon; isActive: boolean }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
-        isActive
-          ? "bg-indigo-50 font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200"
-          : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+        isActive ? "bg-cyan-300/20 text-cyan-100" : "text-indigo-100/80 hover:bg-white/10 hover:text-white"
       }`}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className={`h-4 w-4 ${isActive ? "text-cyan-300" : "text-indigo-200/80 group-hover:text-white"}`} />
       {label}
     </Link>
   );
@@ -33,19 +31,21 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[260px] shrink-0 border-r border-slate-200 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 lg:flex lg:flex-col">
-      <div className="p-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-300">Finance Assistant</p>
-        <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Command Center</h1>
+    <aside className="hidden w-[250px] shrink-0 rounded-[22px] border border-white/10 bg-[#22254a] p-4 shadow-[0_24px_80px_rgba(5,8,28,0.55)] lg:flex lg:flex-col">
+      <div className="px-2 pb-5 pt-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">FINCHECK</p>
+        <p className="mt-1 text-xs text-indigo-100/65">Finance command center</p>
       </div>
-      <nav className="space-y-1 px-3">
+
+      <nav className="space-y-1.5">
         {mainNav.map((item) => (
           <NavLink key={item.href} {...item} isActive={pathname === item.href} />
         ))}
       </nav>
-      <nav className="mt-auto space-y-1 px-3 pb-4">
-        <NavLink {...settingsNav} isActive={pathname === settingsNav.href} />
-      </nav>
+
+      <div className="mt-auto space-y-1.5 border-t border-white/10 pt-4">
+        <NavLink {...footerNav} isActive={pathname === footerNav.href} />
+      </div>
     </aside>
   );
 }
