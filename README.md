@@ -15,3 +15,14 @@ A deploy-ready Next.js + Supabase MVP with auth, dashboard, transactions, catego
 - Push to GitHub.
 - Import project into Vercel.
 - Add the environment variables from `.env.example`.
+
+## Vercel build troubleshooting
+
+If your Vercel log stops shortly after `next build` starts, double-check that all three environment variables below are set in **Project → Settings → Environment Variables** for the target environment (Production/Preview/Development):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Missing Supabase values can cause build/runtime failures that look unrelated at first glance.
+
