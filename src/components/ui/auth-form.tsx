@@ -2,33 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
-import type { Country } from "react-phone-number-input";
-import "react-phone-number-input/style.css";
 
 interface AuthFormProps {
   mode: "login" | "signup";
 }
-
-type CountryOption = {
-  code: string;
-  dialCode: string;
-  flag: string;
-  label: string;
-};
-
-const COUNTRY_OPTIONS: CountryOption[] = [
-  { code: "US", dialCode: "+1", flag: "🇺🇸", label: "United States" },
-  { code: "CA", dialCode: "+1", flag: "🇨🇦", label: "Canada" },
-  { code: "GB", dialCode: "+44", flag: "🇬🇧", label: "United Kingdom" },
-  { code: "AU", dialCode: "+61", flag: "🇦🇺", label: "Australia" },
-  { code: "DE", dialCode: "+49", flag: "🇩🇪", label: "Germany" },
-  { code: "FR", dialCode: "+33", flag: "🇫🇷", label: "France" },
-  { code: "IN", dialCode: "+91", flag: "🇮🇳", label: "India" },
-  { code: "JP", dialCode: "+81", flag: "🇯🇵", label: "Japan" },
-  { code: "BR", dialCode: "+55", flag: "🇧🇷", label: "Brazil" },
-  { code: "MX", dialCode: "+52", flag: "🇲🇽", label: "Mexico" }
-];
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -61,8 +38,6 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [country, setCountry] = useState<Country>("US");
-  const [phoneNumber, setPhoneNumber] = useState<string | undefined>(undefined);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -123,12 +98,6 @@ export function AuthForm({ mode }: AuthFormProps) {
       if (!lastName.trim()) {
         nextErrors.lastName = "Last name is required.";
       }
-
-      if (!phoneNumber) {
-        nextErrors.phone = "Please enter your phone number.";
-      } else if (!isValidPhoneNumber(phoneNumber)) {
-        nextErrors.phone = "Enter a valid international phone number.";
-      }
     }
 
     setFieldErrors(nextErrors);
@@ -162,8 +131,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 password,
                 username: username.trim(),
                 firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                phone: phoneNumber
+                lastName: lastName.trim()
               }
         )
       });
@@ -281,39 +249,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_2fr]">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Country</label>
-              <select
-                className={inputClass("country")}
-                value={country}
-                onChange={(e) => setCountry(e.target.value as Country)}
-              >
-                {COUNTRY_OPTIONS.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.flag} {option.label} ({option.dialCode})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Phone number</label>
-              <PhoneInput
-                country={country}
-                international
-                withCountryCallingCode
-                value={phoneNumber}
-                onChange={(value) => {
-                  setPhoneNumber(value);
-                  setFieldErrors((prev) => ({ ...prev, phone: "" }));
-                }}
-                className={inputClass("phone")}
-                placeholder="+1 555 123 4567"
-                required
-              />
-              {fieldErrors.phone && <p className="mt-1 text-xs text-rose-600">{fieldErrors.phone}</p>}
-            </div>
-          </div>
         </>
       )}
 
