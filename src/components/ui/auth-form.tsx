@@ -2,101 +2,32 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import type { Country } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 interface AuthFormProps {
   mode: "login" | "signup";
 }
 
-const COUNTRY_CODES = [
-  "+1",
-  "+20",
-  "+27",
-  "+30",
-  "+31",
-  "+32",
-  "+33",
-  "+34",
-  "+39",
-  "+40",
-  "+41",
-  "+44",
-  "+45",
-  "+46",
-  "+47",
-  "+48",
-  "+49",
-  "+52",
-  "+54",
-  "+55",
-  "+60",
-  "+61",
-  "+62",
-  "+63",
-  "+64",
-  "+65",
-  "+66",
-  "+81",
-  "+82",
-  "+84",
-  "+86",
-  "+90",
-  "+91",
-  "+92",
-  "+94",
-  "+95",
-  "+98",
-  "+212",
-  "+213",
-  "+216",
-  "+218",
-  "+234",
-  "+251",
-  "+254",
-  "+255",
-  "+256",
-  "+260",
-  "+263",
-  "+351",
-  "+352",
-  "+353",
-  "+354",
-  "+355",
-  "+356",
-  "+357",
-  "+358",
-  "+359",
-  "+380",
-  "+385",
-  "+386",
-  "+420",
-  "+421",
-  "+852",
-  "+853",
-  "+855",
-  "+856",
-  "+880",
-  "+886",
-  "+961",
-  "+962",
-  "+963",
-  "+964",
-  "+965",
-  "+966",
-  "+967",
-  "+968",
-  "+970",
-  "+971",
-  "+972",
-  "+973",
-  "+974",
-  "+975",
-  "+976",
-  "+977",
-  "+992",
-  "+993",
-  "+994",
-  "+995",
-  "+998"
+type CountryOption = {
+  code: string;
+  dialCode: string;
+  flag: string;
+  label: string;
+};
+
+const COUNTRY_OPTIONS: CountryOption[] = [
+  { code: "US", dialCode: "+1", flag: "🇺🇸", label: "United States" },
+  { code: "CA", dialCode: "+1", flag: "🇨🇦", label: "Canada" },
+  { code: "GB", dialCode: "+44", flag: "🇬🇧", label: "United Kingdom" },
+  { code: "AU", dialCode: "+61", flag: "🇦🇺", label: "Australia" },
+  { code: "DE", dialCode: "+49", flag: "🇩🇪", label: "Germany" },
+  { code: "FR", dialCode: "+33", flag: "🇫🇷", label: "France" },
+  { code: "IN", dialCode: "+91", flag: "🇮🇳", label: "India" },
+  { code: "JP", dialCode: "+81", flag: "🇯🇵", label: "Japan" },
+  { code: "BR", dialCode: "+55", flag: "🇧🇷", label: "Brazil" },
+  { code: "MX", dialCode: "+52", flag: "🇲🇽", label: "Mexico" }
 ];
 
 async function getErrorMessage(response: Response): Promise<string> {
@@ -125,8 +56,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("+1");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [country, setCountry] = useState<Country>("US");
+  const [phoneNumber, setPhoneNumber] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -138,9 +69,28 @@ export function AuthForm({ mode }: AuthFormProps) {
     setError(null);
     setSuccess(null);
 
+    if (mode === "signup") {
+      if (!identifier.trim() || !password || !username.trim() || !firstName.trim() || !lastName.trim()) {
+        setError("Email, username, first name, last name, and password are required.");
+        setLoading(false);
+        return;
+      }
+
+      if (!phoneNumber) {
+        setError("Please enter a phone number.");
+        setLoading(false);
+        return;
+      }
+
+      if (!isValidPhoneNumber(phoneNumber)) {
+        setError("Please enter a valid international phone number.");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
-      const sanitizedPhoneNumber = phoneNumber.replace(/\D/g, "");
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -156,8 +106,9 @@ export function AuthForm({ mode }: AuthFormProps) {
                 username: username.trim(),
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
-                phoneCountryCode: sanitizedPhoneNumber ? phoneCountryCode : null,
-                phoneNumber: sanitizedPhoneNumber || null
+                // `react-phone-number-input` returns phone values in E.164 format (example: +15551234567).
+                // Supabase phone auth expects E.164 so each number includes country code and has one canonical format.
+                phone: phoneNumber
               }
         )
       });
@@ -168,12 +119,8 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
 
       if (mode === "signup") {
-        const payload = (await response.json()) as { requiresEmailConfirmation?: boolean };
-
-        if (payload.requiresEmailConfirmation) {
-          router.push("/login?signup=success");
-          return;
-        }
+        setSuccess("Signup successful. Verify your email and complete phone/code verification if Supabase prompts you.");
+        return;
       }
 
       router.push("/dashboard");
@@ -234,27 +181,36 @@ export function AuthForm({ mode }: AuthFormProps) {
               />
             </div>
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-slate-600">Phone number (optional)</label>
-            <div className="grid grid-cols-[130px_1fr] gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_2fr]">
+            <div>
+              <label className="mb-1 block text-sm text-slate-600">Country</label>
               <select
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2"
-                value={phoneCountryCode}
-                onChange={(e) => setPhoneCountryCode(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                value={country}
+                onChange={(e) => setCountry(e.target.value as Country)}
               >
-                {COUNTRY_CODES.map((code) => (
-                  <option key={code} value={code}>
-                    {code}
+                {COUNTRY_OPTIONS.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.flag} {option.label} ({option.dialCode})
                   </option>
                 ))}
               </select>
-              <input
-                className="rounded-lg border border-slate-300 px-3 py-2"
-                type="tel"
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-600">Phone number</label>
+              {/*
+                Country selection controls the dialing code used by the phone input.
+                The stored `phoneNumber` value is still E.164, regardless of how the user types locally.
+              */}
+              <PhoneInput
+                country={country}
+                international
+                withCountryCallingCode
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="5551234567"
-                inputMode="tel"
+                onChange={setPhoneNumber}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="Enter phone number"
+                required
               />
             </div>
           </div>
