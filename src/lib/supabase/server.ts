@@ -14,7 +14,19 @@ export async function createClient() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          // In Server Components, cookies are read-only in Next.js 15.
+          // Middleware/Route Handlers refresh auth cookies when needed.
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              (cookieStore as unknown as { set: (key: string, val: string, opts?: Record<string, unknown>) => void }).set(
+                name,
+                value,
+                options
+              );
+            });
+          } catch {
+            // no-op for read-only contexts
+          }
         }
       }
     }
