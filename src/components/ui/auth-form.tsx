@@ -8,6 +8,8 @@ interface AuthFormProps {
   mode: "login" | "signup";
 }
 
+const COUNTRY_CODE_OPTIONS = Array.from({ length: 998 }, (_, index) => `+${index + 1}`);
+
 async function getErrorMessage(response: Response): Promise<string> {
   const text = await response.text();
 
