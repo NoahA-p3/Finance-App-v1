@@ -13,10 +13,13 @@ function resolveSiteUrl(requestUrl: string) {
 
 export async function POST(req: Request) {
   const supabase = await createClient();
-  const { email, password } = await req.json();
+  const { email, password, username, firstName, lastName, phoneCountryCode, phoneNumber } = await req.json();
 
-  if (!email || !password) {
-    return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+  if (!email || !password || !username || !firstName || !lastName) {
+    return NextResponse.json(
+      { error: "Email, username, first name, last name, and password are required." },
+      { status: 400 }
+    );
   }
 
   const siteUrl = resolveSiteUrl(req.url);
@@ -24,6 +27,13 @@ export async function POST(req: Request) {
     email,
     password,
     options: {
+      data: {
+        username,
+        first_name: firstName,
+        last_name: lastName,
+        phone_country_code: phoneCountryCode || null,
+        phone_number: phoneNumber?.trim() ? phoneNumber.trim() : null
+      },
       emailRedirectTo: `${siteUrl}/login`
     }
   });
