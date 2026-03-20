@@ -1,27 +1,26 @@
-import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { getTransactions } from "@/lib/data";
-import { CategoryManager } from "@/components/transactions/category-manager";
-import { ReceiptUpload } from "@/components/transactions/receipt-upload";
-import { TransactionList } from "@/components/transactions/transaction-list";
+import { DashboardShell } from "@/components/shell/dashboard-shell";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { recentTransactions } from "@/lib/mock-data";
 
-export default async function TransactionsPage() {
-  const { user } = await requireUser();
-  const supabase = await createClient();
-
-  const [transactions, categoriesResult] = await Promise.all([
-    getTransactions(user.id),
-    supabase.from("categories").select("id,name").eq("user_id", user.id).order("created_at", { ascending: false })
-  ]);
-
+export default function TransactionsPage() {
   return (
-    <div className="space-y-6">
-      <TransactionList transactions={transactions as never[]} />
-      <div className="grid gap-6 md:grid-cols-2">
-        <CategoryManager initialCategories={categoriesResult.data ?? []} />
-        <ReceiptUpload />
-      </div>
-      <p className="text-sm text-slate-500">Receipt matching can be automated with bank sync + OCR in a later release.</p>
-    </div>
+    <DashboardShell title="Transactions">
+      <Card>
+        <div className="mb-4 grid gap-3 md:grid-cols-3">
+          <Input placeholder="Search merchant or amount..." />
+          <select className="rounded-xl border border-slate-200 px-3 py-2 text-sm"><option>All categories</option></select>
+          <select className="rounded-xl border border-slate-200 px-3 py-2 text-sm"><option>All status</option></select>
+        </div>
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs uppercase text-slate-500"><tr><th>Date</th><th>Merchant</th><th>Amount</th><th>Category</th><th>Receipt</th><th>Status</th></tr></thead>
+          <tbody>
+            {recentTransactions.map((row) => (
+              <tr key={row.id} className="border-t border-slate-100"><td className="py-3">{row.date}</td><td>{row.merchant}</td><td>${Math.abs(row.amount)}</td><td>{row.category}</td><td>{row.receipt}</td><td>{row.status}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+    </DashboardShell>
   );
 }
