@@ -7,6 +7,8 @@ interface AuthFormProps {
   mode: "login" | "signup";
 }
 
+const COUNTRY_CODE_OPTIONS = Array.from({ length: 998 }, (_, index) => `+${index + 1}`);
+
 async function getErrorMessage(response: Response): Promise<string> {
   const text = await response.text();
 
@@ -28,8 +30,13 @@ async function getErrorMessage(response: Response): Promise<string> {
 }
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+1");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -46,7 +53,19 @@ export function AuthForm({ mode }: AuthFormProps) {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify(
+          mode === "login"
+            ? { identifier, password }
+            : {
+                email: identifier,
+                password,
+                username,
+                firstName,
+                lastName,
+                phoneCountryCode,
+                phoneNumber
+              }
+        )
       });
 
       if (!response.ok) {
@@ -67,15 +86,78 @@ export function AuthForm({ mode }: AuthFormProps) {
     <form className="w-full space-y-4 rounded-xl border border-slate-200 bg-white p-6" onSubmit={handleSubmit}>
       <h1 className="text-2xl font-semibold capitalize">{mode}</h1>
       <div>
-        <label className="mb-1 block text-sm text-slate-600">Email</label>
+        <label className="mb-1 block text-sm text-slate-600">
+          {mode === "login" ? "Email or Username" : "Email"}
+        </label>
         <input
           className="w-full rounded-lg border border-slate-300 px-3 py-2"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type={mode === "login" ? "text" : "email"}
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
           required
         />
       </div>
+      {mode === "signup" && (
+        <>
+          <div>
+            <label className="mb-1 block text-sm text-slate-600">Username</label>
+            <input
+              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm text-slate-600">First name</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-600">Last name</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-slate-600">Phone number (optional)</label>
+            <div className="grid grid-cols-[7rem_1fr] gap-2">
+              <input
+                className="rounded-lg border border-slate-300 bg-white px-2 py-2"
+                type="text"
+                list="country-code-options"
+                value={phoneCountryCode}
+                onChange={(e) => setPhoneCountryCode(e.target.value)}
+                placeholder="+1"
+              />
+              <datalist id="country-code-options">
+                {COUNTRY_CODE_OPTIONS.map((code) => (
+                  <option key={code} value={code} />
+                ))}
+              </datalist>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="5551234567"
+              />
+            </div>
+          </div>
+        </>
+      )}
       <div>
         <label className="mb-1 block text-sm text-slate-600">Password</label>
         <input
