@@ -7,6 +7,8 @@ interface AuthFormProps {
   mode: "login" | "signup";
 }
 
+const COUNTRY_CODE_OPTIONS = Array.from({ length: 998 }, (_, index) => `+${index + 1}`);
+
 async function getErrorMessage(response: Response): Promise<string> {
   const text = await response.text();
 
@@ -132,16 +134,19 @@ export function AuthForm({ mode }: AuthFormProps) {
           <div>
             <label className="mb-1 block text-sm text-slate-600">Phone number (optional)</label>
             <div className="grid grid-cols-[7rem_1fr] gap-2">
-              <select
+              <input
                 className="rounded-lg border border-slate-300 bg-white px-2 py-2"
+                type="text"
+                list="country-code-options"
                 value={phoneCountryCode}
                 onChange={(e) => setPhoneCountryCode(e.target.value)}
-              >
-                <option value="+1">+1 (US/CA)</option>
-                <option value="+44">+44 (UK)</option>
-                <option value="+61">+61 (AU)</option>
-                <option value="+91">+91 (IN)</option>
-              </select>
+                placeholder="+1"
+              />
+              <datalist id="country-code-options">
+                {COUNTRY_CODE_OPTIONS.map((code) => (
+                  <option key={code} value={code} />
+                ))}
+              </datalist>
               <input
                 className="w-full rounded-lg border border-slate-300 px-3 py-2"
                 type="tel"
