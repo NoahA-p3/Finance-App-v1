@@ -9,12 +9,12 @@ export function OverviewChart() {
     <Card>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-slate-900">Revenue vs Expenses</h3>
-          <p className="text-sm text-slate-500">18 transactions automatically categorized</p>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Revenue vs Expenses</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">18 transactions automatically categorized</p>
         </div>
         <div className="flex gap-2 text-xs">
           {['7D', '30D', '90D', '12M'].map((period) => (
-            <button key={period} className={`rounded-lg px-2.5 py-1 ${period === '12M' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
+            <button key={period} className={`rounded-lg px-2.5 py-1 ${period === '12M' ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
               {period}
             </button>
           ))}

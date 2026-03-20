@@ -9,7 +9,7 @@ const colors = ["#2563eb", "#7c3aed", "#f97316", "#16a34a", "#0ea5e9", "#94a3b8"
 export function ExpenseBreakdown() {
   return (
     <Card>
-      <h3 className="text-base font-semibold text-slate-900">Expense Breakdown</h3>
+      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Expense Breakdown</h3>
       <div className="mt-4 h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
