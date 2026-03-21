@@ -8,6 +8,8 @@ interface AccountMenuProps {
   userId: string;
   initialName: string;
   initialEmail: string;
+  className?: string;
+  placement?: "bottom" | "top";
 }
 
 function getInitials(name: string, email: string) {
@@ -41,7 +43,7 @@ function splitName(name: string) {
   };
 }
 
-export function AccountMenu({ userId, initialName, initialEmail }: AccountMenuProps) {
+export function AccountMenu({ userId, initialName, initialEmail, className, placement = "bottom" }: AccountMenuProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -146,7 +148,7 @@ export function AccountMenu({ userId, initialName, initialEmail }: AccountMenuPr
   return (
     <div className="relative" ref={containerRef}>
       <button
-        className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-indigo-100 transition hover:bg-white/10"
+        className={`flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-indigo-100 transition hover:bg-white/10 ${className ?? ""}`}
         onClick={() => setIsMenuOpen((prev) => !prev)}
         aria-haspopup="menu"
         aria-expanded={isMenuOpen}
@@ -158,7 +160,9 @@ export function AccountMenu({ userId, initialName, initialEmail }: AccountMenuPr
 
       {isMenuOpen && (
         <div
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-44 rounded-xl border border-white/15 bg-[#20244a] p-1.5 shadow-[0_16px_40px_rgba(7,10,30,0.5)]"
+          className={`absolute right-0 z-30 min-w-44 rounded-xl border border-white/15 bg-[#20244a] p-1.5 shadow-[0_16px_40px_rgba(7,10,30,0.5)] ${
+            placement === "top" ? "bottom-[calc(100%+0.5rem)]" : "top-[calc(100%+0.5rem)]"
+          }`}
           role="menu"
           aria-label="Account options"
         >

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DashboardIcon, ReceiptIcon, ReportIcon, SettingsIcon, TransactionsIcon } from "@/components/shell/icon";
+import { DashboardIcon, ReceiptIcon, ReportIcon, TransactionsIcon } from "@/components/shell/icon";
+import { AccountMenu } from "@/components/shell/account-menu";
 
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
@@ -10,8 +11,6 @@ const mainNav = [
   { href: "/receipts", label: "Receipts", icon: ReceiptIcon },
   { href: "/reports", label: "Reports", icon: ReportIcon }
 ];
-
-const footerNav = { href: "/settings", label: "Settings", icon: SettingsIcon };
 
 function NavLink({ href, label, icon: Icon, isActive }: { href: string; label: string; icon: typeof DashboardIcon; isActive: boolean }) {
   return (
@@ -27,7 +26,15 @@ function NavLink({ href, label, icon: Icon, isActive }: { href: string; label: s
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -43,8 +50,8 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto space-y-1.5 border-t border-white/10 pt-4">
-        <NavLink {...footerNav} isActive={pathname === footerNav.href} />
+      <div className="mt-auto border-t border-white/10 pt-4">
+        <AccountMenu userId={user.id} initialName={user.name} initialEmail={user.email} placement="top" className="w-full justify-start" />
       </div>
     </aside>
   );

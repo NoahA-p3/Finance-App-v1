@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { AccountMenu } from "@/components/shell/account-menu";
+import { SettingsIcon } from "@/components/shell/icon";
 
 interface TopNavProps {
   title: string;
@@ -29,7 +31,16 @@ export function TopNav({ title, user }: TopNavProps) {
         >
           🔔
         </button>
-        <AccountMenu userId={user.id} initialName={user.name} initialEmail={user.email} />
+        <Link
+          href="/settings"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-indigo-100 transition hover:bg-white/10"
+          aria-label="Settings"
+        >
+          <SettingsIcon className="h-4 w-4" />
+        </Link>
+        <div className="lg:hidden">
+          <AccountMenu userId={user.id} initialName={user.name} initialEmail={user.email} />
+        </div>
       </div>
     </header>
   );
