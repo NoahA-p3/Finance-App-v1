@@ -31,7 +31,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[250px] shrink-0 rounded-[22px] border border-white/10 bg-[#22254a] p-4 shadow-[0_24px_80px_rgba(5,8,28,0.55)] lg:flex lg:flex-col">
+    <aside className="hidden w-[250px] shrink-0 rounded-[22px] border border-white/10 bg-[#22254a] p-4 shadow-[0_24px_80px_rgba(5,8,28,0.55)] lg:fixed lg:left-[max(1rem,calc((100vw-1500px)/2+1rem))] lg:top-4 lg:flex lg:h-[calc(100vh-2rem)] lg:flex-col lg:overflow-y-auto">
       <div className="px-2 pb-5 pt-2">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">FINCHECK</p>
         <p className="mt-1 text-xs text-indigo-100/65">Finance command center</p>
