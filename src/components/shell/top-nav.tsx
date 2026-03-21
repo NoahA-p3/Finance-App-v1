@@ -1,8 +1,18 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { AccountMenu } from "@/components/shell/account-menu";
 
-export function TopNav({ title }: { title: string }) {
+interface TopNavProps {
+  title: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export function TopNav({ title, user }: TopNavProps) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[#22254a] px-4 py-3 shadow-[0_16px_50px_rgba(5,8,28,0.45)] lg:px-5">
       <div>
@@ -19,10 +29,7 @@ export function TopNav({ title }: { title: string }) {
         >
           🔔
         </button>
-        <button className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-indigo-100 transition hover:bg-white/10">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-indigo-400 text-xs font-bold text-[#181a35]">A</span>
-          <span className="hidden md:inline">Adaline Horton</span>
-        </button>
+        <AccountMenu userId={user.id} initialName={user.name} initialEmail={user.email} />
       </div>
     </header>
   );
