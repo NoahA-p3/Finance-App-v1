@@ -1,53 +1,87 @@
-# Finance Assistant (SaaS MVP)
+# Finance Assistant MVP
 
-Finance Assistant is a Next.js + Supabase SaaS dashboard for freelancers and small businesses.
+Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancers and small businesses in Denmark.
 
-## Stack
-- Next.js App Router + TypeScript
-- Tailwind CSS (shadcn-style component primitives)
-- Recharts for KPI visualizations
-- Supabase (Auth, Postgres, Storage)
-- Vercel deployment target
+> Current product state: early MVP foundation. Auth, profile, transaction/category/receipt data paths, and dashboard scaffolding exist. Danish accounting and VAT domain depth is mostly planned.
 
-## Architecture
-- `src/app/(auth)` contains login/signup flows.
-- `src/app/(dashboard)` contains protected product modules: dashboard, transactions, receipts, reports, settings, onboarding.
-- `src/components/shell` defines the persistent app shell (sidebar + top nav).
-- `src/components/finance` contains dashboard-specific widgets/charts.
-- `src/lib/supabase` stores browser/server clients.
-- `supabase/migrations` contains schema + RLS + storage bucket provisioning.
+## What the app does (current)
+- User signup/login/logout with Supabase Auth.
+- Protected dashboard routes via Next.js middleware.
+- Basic profile record sync in `public.profiles`.
+- Transaction CRUD surface (currently list + create via `/api/transactions`).
+- Category create/delete via `/api/categories`.
+- Receipt file upload to private Supabase Storage bucket (`receipts`) via `/api/receipts`.
+- Dashboard/reporting UI is mostly placeholder/mock-data driven.
+
+## Tech stack (observed in repo)
+- Next.js `15.2.6` + React `19` + TypeScript
+- Tailwind CSS
+- Supabase (`@supabase/supabase-js`, `@supabase/ssr`)
+- Zod (installed)
+- Recharts for charting
+- Vercel as intended hosting target
 
 ## Local setup
-1. Copy `.env.example` to `.env.local`.
-2. Add your Supabase project URL and anon key.
-3. Run:
+1. Install dependencies:
    ```bash
    npm install
-   npm run dev
    ```
-4. Open `http://localhost:3000`.
-
-## Supabase schema
-Run migrations in order with Supabase CLI:
-```bash
-supabase db push
-```
-
-Key tables used by the MVP schema:
-- `users`
-- `accounts`
-- `transactions`
-- `categories`
-- `receipts`
-
-Storage bucket:
-- `receipts` (private, image/PDF uploads)
-
-## Deploy to Vercel
-1. Push this repository to GitHub.
-2. Import the repo in Vercel.
-3. Configure environment variables:
+2. Copy environment file:
+   ```bash
+   cp .env.example .env.local
+   ```
+3. Set required variables (no secrets committed):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Deploy and verify auth callback URLs in Supabase Auth settings.
+   - `SUPABASE_SERVICE_ROLE_KEY` (present in env example; currently not directly consumed in app code)
+4. Start dev server:
+   ```bash
+   npm run dev
+   ```
+5. Open `http://localhost:3000`.
 
+## Scripts
+- `npm run dev` — start local dev server
+- `npm run lint` — Next.js lint
+- `npm run typecheck` — `tsc --noEmit`
+- `npm run build` — production build
+- `npm run start` — run built app
+
+## Supabase and database
+- SQL migrations: `supabase/migrations/`
+- Generated DB type file: `src/types/database.ts`
+- Apply migrations (Supabase CLI):
+  ```bash
+  supabase db push
+  ```
+
+## Repository structure
+- `src/app/(auth)` — login/signup routes
+- `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, settings, onboarding)
+- `src/app/api` — route handlers for auth, transactions, categories, receipts
+- `src/components` — UI and feature components
+- `src/lib` — auth helper, Supabase clients, data-fetch helpers
+- `supabase/migrations` — schema, triggers, RLS/storage policy definitions
+- `docs/` — product, domain, architecture, testing, security, UX docs
+- `tasks/EPICS.md` — prioritized implementation roadmap
+
+## Documentation map
+- Product: `docs/product/PRD.md`, `docs/product/MVP_SCOPE.md`
+- Domain: `docs/domain/DK_ACCOUNTING_RULES.md`, `docs/domain/DK_VAT_RULES.md`, `docs/domain/LEGAL_FORM_RULES.md`
+- Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`
+- Testing: `docs/testing/TEST_STRATEGY.md`, `docs/testing/GOLDEN_DATASETS.md`
+- Security: `docs/security/SECURITY_RULES.md`
+- UX: `docs/ux/USER_FLOWS.md`
+- Roadmap: `tasks/EPICS.md`
+- Agent instructions: `AGENTS.md`
+
+## Working with Codex in this repo
+- Read `AGENTS.md` first.
+- Ground any claim in code/migrations/docs already present.
+- For unknown details, mark as **Assumption** or **TODO**, do not invent.
+- If changing schema/API/workflow, update corresponding docs in the same PR.
+
+## Deployment notes
+- Intended deployment target is Vercel.
+- No `vercel.json` is currently present; deployment relies on framework defaults + configured env vars.
+- Ensure Supabase Auth URL settings include the deployed app domain and redirect URLs.
