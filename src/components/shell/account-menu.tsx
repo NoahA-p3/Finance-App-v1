@@ -109,14 +109,26 @@ export function AccountMenu({ userId, initialName, initialEmail, className, plac
     const { firstName, lastName } = splitName(trimmedName);
 
     try {
+      const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
+      const authUserId = authUserData.user?.id;
+
+      if (authUserError || !authUserId || authUserId !== userId) {
+        setErrorMessage("Unable to verify your account for this update.");
+        return;
+      }
+
       const { error: profileError } = await supabase
+        .schema("public")
         .from("profiles")
-        .update({
-          email: trimmedEmail,
-          first_name: firstName,
-          last_name: lastName
-        })
-        .eq("id", userId);
+        .upsert(
+          {
+            id: authUserId,
+            email: trimmedEmail,
+            first_name: firstName,
+            last_name: lastName
+          },
+          { onConflict: "id" }
+        );
 
       if (profileError) {
         setErrorMessage(profileError.message);
