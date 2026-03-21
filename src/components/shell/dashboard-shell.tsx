@@ -27,6 +27,7 @@ function resolveDisplayName(params: {
 export async function DashboardShell({ children, title }: PropsWithChildren<{ title: string }>) {
   const { supabase, user } = await requireUser();
   const { data: profile } = await supabase
+    .schema("public")
     .from("profiles")
     .select("first_name,last_name,email")
     .eq("id", user.id)
