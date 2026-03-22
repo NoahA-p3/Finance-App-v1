@@ -68,7 +68,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 ## Documentation map
 - Product: `docs/product/PRD.md`, `docs/product/MVP_SCOPE.md`
 - Domain: `docs/domain/DK_ACCOUNTING_RULES.md`, `docs/domain/DK_VAT_RULES.md`, `docs/domain/LEGAL_FORM_RULES.md`
-- Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`
+- Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`, `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`
 - Testing: `docs/testing/TEST_STRATEGY.md`, `docs/testing/GOLDEN_DATASETS.md`
 - Security: `docs/security/SECURITY_RULES.md`
 - UX: `docs/ux/USER_FLOWS.md`
