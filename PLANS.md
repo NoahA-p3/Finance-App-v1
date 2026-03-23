@@ -77,3 +77,89 @@ When route/schema/type changes are included:
 - **Assumption:** runtime path should remain auth-user keyed (`auth.users` + `public.profiles`, `transactions`, `categories`, `receipts`).
 - **Open question:** should legacy migration artifacts be removed, superseded, or retained only for historical context?
 - **Open question:** what minimum persisted reporting outputs are required before replacing current mock dashboard cards/charts?
+
+### Goal
+Stabilize the MVP backend on a single canonical schema and hardened API boundaries so persisted finance flows can replace mock-heavy dashboard behavior safely.
+
+## Schema convergence pass (docs and plan only, March 23, 2026)
+
+### Canonical schema decision
+Keep the auth-user keyed runtime path as the only canonical backend model:
+- identity: `auth.users` -> `public.profiles`
+- finance tables: `public.transactions`, `public.categories`, `public.receipts`
+- storage path convention: private `receipts` bucket with per-user folder prefix
+
+### Legacy or divergent artifacts to deprecate (do not extend)
+From `supabase/migrations/202603200004_finance_assistant_mvp.sql`:
+- `public.users`
+- `public.accounts`
+- alternate `public.transactions` shape (`merchant`, `account_id`, `category` text)
+- alternate `public.receipts` shape (`file_url`, `merchant`, `amount`, `vat`)
+- receipt policy coupling ownership through `receipts.transaction_id` instead of `receipts.user_id`
+
+### Proposed migration sequence (safe path)
+1. **Decision lock + docs alignment**
+   - record canonical model in architecture docs and PLANS.
+   - mark divergent migration artifacts as legacy/non-runtime.
+2. **Preflight inventory migration**
+   - add a non-destructive migration that reports/flags existence of legacy tables/columns/policies in target environments.
+   - no table drops in this step.
+3. **Compatibility guard migration**
+   - add comments and defensive checks that prevent re-creating legacy ownership paths in future migrations.
+   - keep runtime path untouched.
+4. **Type regeneration and contract sync**
+   - regenerate `src/types/database.ts` from canonical schema.
+   - ensure docs and API contracts reference only canonical table shapes.
+5. **Controlled cleanup migration (after verification window)**
+   - remove or archive legacy tables/policies only after confirming no runtime dependencies and taking backups.
+
+### Rollback / recovery notes
+- For steps 1-4 (docs/guardrails/type sync), rollback is a standard git revert.
+- For step 5 (cleanup), require:
+  - pre-drop snapshot/backup,
+  - scripted recreation SQL for removed legacy artifacts,
+  - post-restore RLS/policy verification checklist.
+- If cleanup causes regressions, restore from snapshot and re-apply only canonical-path migrations.
+
+### Type regeneration requirements
+- After schema-affecting convergence migrations, regenerate `src/types/database.ts` from Supabase schema.
+- Block merge if generated types still include deprecated legacy runtime entities.
+- Verify profile fields and finance table columns in types match canonical migration state.
+
+### Risks
+- Hidden environment drift where legacy tables exist with production data.
+- Breaking historical scripts or ad-hoc queries that still point to legacy tables.
+- Incomplete policy restoration if rollback is attempted without scripted recovery.
+
+### Assumptions
+- Runtime code and active APIs continue to use canonical auth-user keyed tables only.
+- Legacy artifacts are either unused or can be archived before hard deletion.
+
+
+## Non-destructive schema convergence prep (implementation slice)
+
+### Goal
+Reduce schema drift risk without altering runtime behavior or dropping legacy artifacts.
+
+### Low-risk guardrails to add now
+1. Explicitly label canonical runtime schema path in architecture docs and planning docs.
+2. Add migration-adjacent guidance that legacy branch tables are deprecated for new work.
+3. Define generated type regeneration workflow and required drift checks.
+4. Audit and document code references that still imply legacy schema usage (if any).
+
+### Out of scope for this slice
+- dropping/renaming any table
+- destructive cleanup of legacy artifacts
+- broad runtime data-access rewrites
+- business-logic changes
+
+### Verification for this slice
+- `npm run typecheck`
+- `npm run build`
+- `npm run lint` only if non-interactive in current environment
+
+### Expected outputs
+- docs and plan updates only
+- migration-adjacent guardrail notes (non-executable)
+- drift list and next implementation slice recommendation
+

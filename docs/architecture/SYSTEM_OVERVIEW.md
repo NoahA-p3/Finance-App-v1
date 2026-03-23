@@ -31,9 +31,11 @@ Related docs: [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md)
 
 ## Database and auth setup
 - Supabase Auth as identity provider.
-- Core tables from migrations include:
-  - `profiles`, `transactions`, `categories`, `receipts` (active path),
-  - plus older branch tables `users`, `accounts` in one migration.
+- Canonical runtime identity/data path:
+  - `auth.users` -> `public.profiles`
+  - `public.transactions`, `public.categories`, `public.receipts`
+- Legacy/divergent artifacts exist in one migration branch (`public.users`, `public.accounts`, alternate transaction/receipt columns) and are documented as deprecated for new work.
+- Do not extend legacy branch tables for new features unless task scope explicitly targets legacy support.
 - RLS policies enforce per-user ownership on major tables.
 - Auth trigger `handle_new_user()` syncs `auth.users` to `public.profiles`.
 
@@ -68,3 +70,15 @@ Related docs: [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md)
 - No background jobs or webhook consumers.
 - No explicit ledger posting/period-close subsystem.
 - No automated test suite in repo.
+
+
+## Schema convergence notes
+- Treat auth-user keyed tables as the only canonical runtime model for API and feature work.
+- Plan schema cleanup in phased migrations: inventory -> guardrails -> type regeneration -> controlled legacy cleanup.
+- Require backup/recovery procedures before any destructive legacy-table removal.
+
+
+## Generated type workflow guardrail
+- After schema-affecting migrations, regenerate `src/types/database.ts` before merge.
+- Confirm canonical runtime entities (`profiles`, `transactions`, `categories`, `receipts`) are represented correctly and legacy runtime entities are not reintroduced in app contracts.
+- If migrations and generated types disagree, treat migrations as source of truth and resolve drift in the same PR.
