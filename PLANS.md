@@ -78,7 +78,8 @@ When route/schema/type changes are included:
 - **Open question:** should legacy migration artifacts be removed, superseded, or retained only for historical context?
 - **Open question:** what minimum persisted reporting outputs are required before replacing current mock dashboard cards/charts?
 
----
+### Goal
+Stabilize the MVP backend on a single canonical schema and hardened API boundaries so persisted finance flows can replace mock-heavy dashboard behavior safely.
 
 ## Schema convergence pass (docs and plan only, March 23, 2026)
 
