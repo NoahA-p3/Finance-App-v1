@@ -52,13 +52,18 @@ Current backend pattern: Next.js route handlers in `src/app/api/*` using Supabas
 ### `POST /api/transactions`
 - Purpose: create transaction for current user.
 - Auth boundary: authenticated user required.
-- Inputs: JSON body merged into insert payload + enforced `user_id`.
+- Inputs (allowlisted):
+  - required: `description` (string), `amount` (number or decimal-like string, max 2 decimals), `type` (`expense`|`revenue`), `date` (`YYYY-MM-DD`)
+  - optional: `category_id` (UUID or `null`), `receipt_id` (UUID or `null`)
+  - ownership fields like `user_id` are ignored and set from authenticated session.
 - Outputs:
   - `201`: inserted transaction row
   - `401/400`: `{ error }`
 - Files: `src/app/api/transactions/route.ts`.
 - Validation notes:
-  - relies mostly on DB constraints; limited request-level validation today.
+  - rejects invalid JSON or non-object payloads.
+  - rejects unsupported enum/date/amount formats.
+  - maps only allowlisted fields into insert payload.
 
 ## Category APIs
 
