@@ -75,6 +75,7 @@ Related docs: [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md)
 ## Schema convergence notes
 - Treat auth-user keyed tables as the only canonical runtime model for API and feature work.
 - Plan schema cleanup in phased migrations: inventory -> guardrails -> type regeneration -> controlled legacy cleanup.
+- Inventory helper view for convergence checks: `public.legacy_schema_inventory` (added via non-destructive migration).
 - Require backup/recovery procedures before any destructive legacy-table removal.
 
 

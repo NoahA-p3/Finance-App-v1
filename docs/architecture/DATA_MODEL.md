@@ -99,8 +99,17 @@ Observed runtime code references:
 - Active API routes query `transactions`, `categories`, and `receipts` under auth-user ownership.
 
 Documented drift still to fix (non-destructive):
-- `src/types/database.ts` currently omits some profile columns present in migrations (e.g., `username`), so type regeneration/verification remains required.
+- `src/types/database.ts` has a manual reconciliation for canonical `profiles.username`, but full CLI-based regeneration/verification is still required to ensure complete parity.
 - Legacy migration branch remains present and can still confuse future contributors without guardrails.
+
+
+### Inventory mechanism (non-destructive)
+Migration `202603230001_legacy_schema_inventory.sql` adds `public.legacy_schema_inventory` for environment checks.
+Run:
+```sql
+select * from public.legacy_schema_inventory order by artifact_key;
+```
+Use this output to confirm whether legacy artifacts still exist before any cleanup planning.
 
 ## Migration convergence sequence (proposed)
 1. Align docs and planning artifacts with canonical model.
@@ -115,6 +124,10 @@ Documented drift still to fix (non-destructive):
 
 ### Type regeneration requirement
 Any schema convergence migration must be followed by regenerating `src/types/database.ts` and checking for accidental legacy entities.
+
+
+### Generated type reconciliation note
+If Supabase CLI is unavailable in the working environment, document the blocker and required generation command, then apply only clearly proven canonical drift fixes.
 
 ## Planned entities (not implemented)
 - `businesses` / organization tenant model.

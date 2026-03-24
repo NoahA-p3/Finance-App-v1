@@ -19,3 +19,16 @@ Before destructive cleanup migrations:
 1. Inventory legacy table usage in target environments.
 2. Regenerate and verify `src/types/database.ts` against canonical schema.
 3. Prepare rollback assets (snapshot + recreation SQL + policy verification checklist).
+
+## Inventory query
+After applying migrations, run:
+```sql
+select * from public.legacy_schema_inventory order by artifact_key;
+```
+
+## Generated type workflow
+If Supabase CLI is available, regenerate types with:
+- `supabase gen types typescript --local > src/types/database.ts`
+- or `supabase gen types typescript --project-id <PROJECT_ID> > src/types/database.ts`
+
+If CLI is not available in the environment, document the blocker and reconcile only clearly verified canonical drift.
