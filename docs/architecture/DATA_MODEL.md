@@ -46,6 +46,28 @@ Related docs: [System Overview](./SYSTEM_OVERVIEW.md), [DK Accounting Rules](../
 - Private bucket.
 - Policies enforce folder prefix equals `auth.uid()` for CRUD operations.
 
+
+## Canonical schema decision (to keep)
+Use only the auth-user keyed model as canonical runtime:
+- `auth.users` identity provider
+- `public.profiles` keyed by `profiles.id = auth.users.id`
+- `public.transactions`, `public.categories`, `public.receipts` keyed by `user_id = auth.uid()`
+- private storage bucket `receipts` with per-user folder policies
+
+All schema and API evolution should build on this path.
+
+
+### Canonical-path guardrail
+Do not introduce new schema work against `public.users` or `public.accounts`. New runtime features must use the auth-keyed tables above.
+
+## Legacy artifacts to avoid (deprecate over time)
+The following artifacts from `202603200004_finance_assistant_mvp.sql` are considered divergent and should not be extended:
+- `public.users`
+- `public.accounts`
+- alternate `public.transactions` columns (`merchant`, `account_id`, `category` text)
+- alternate `public.receipts` columns (`file_url`, `merchant`, `amount`, `vat`)
+- receipt RLS design based on transaction join ownership instead of direct `receipts.user_id`
+
 ## Legacy / conflicting schema branch (observed)
 `202603200004_finance_assistant_mvp.sql` also defines `public.users`, `public.accounts`, and an alternate `transactions/receipts` shape.
 
@@ -68,6 +90,44 @@ Status: appears older or divergent from currently queried tables.
 - No explicit VAT fields in active schema.
 - No document metadata schema beyond storage path and optional linkage.
 - No audit-event table for sensitive changes.
+
+
+
+## Legacy-schema reference audit (current codebase)
+Observed runtime code references:
+- No active route handlers reference `public.users` or `public.accounts`.
+- Active API routes query `transactions`, `categories`, and `receipts` under auth-user ownership.
+
+Documented drift still to fix (non-destructive):
+- `src/types/database.ts` has a manual reconciliation for canonical `profiles.username`, but full CLI-based regeneration/verification is still required to ensure complete parity.
+- Legacy migration branch remains present and can still confuse future contributors without guardrails.
+
+
+### Inventory mechanism (non-destructive)
+Migration `202603230001_legacy_schema_inventory.sql` adds `public.legacy_schema_inventory` for environment checks.
+Run:
+```sql
+select * from public.legacy_schema_inventory order by artifact_key;
+```
+Use this output to confirm whether legacy artifacts still exist before any cleanup planning.
+
+## Migration convergence sequence (proposed)
+1. Align docs and planning artifacts with canonical model.
+2. Add non-destructive inventory/guard migrations to detect legacy artifacts in deployed environments.
+3. Regenerate `src/types/database.ts` against canonical schema and resolve any type drift.
+4. After verification window and backups, execute controlled cleanup migration for legacy artifacts.
+
+### Rollback / recovery guidance
+- Docs-only and guard migration steps: revert commit/migration file.
+- Cleanup step: require pre-drop backup snapshot and scripted recreation SQL for removed legacy tables/policies.
+- Re-run RLS/policy verification after restore.
+
+### Type regeneration requirement
+Any schema convergence migration must be followed by regenerating `src/types/database.ts` and checking for accidental legacy entities.
+
+
+### Generated type reconciliation note
+If Supabase CLI is unavailable in the working environment, document the blocker and required generation command, then apply only clearly proven canonical drift fixes.
 
 ## Planned entities (not implemented)
 - `businesses` / organization tenant model.
