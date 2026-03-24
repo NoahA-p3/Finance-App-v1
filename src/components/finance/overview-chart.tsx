@@ -1,7 +1,7 @@
 "use client";
 
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card } from "@/components/ui/card";
+import { LineChart } from "@/components/charts/line-chart";
 import { trendData } from "@/lib/mock-data";
 
 export function OverviewChart() {
@@ -20,18 +20,16 @@ export function OverviewChart() {
           ))}
         </div>
       </div>
-      <div className="h-[280px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={trendData}>
-            <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="#b7bce1" />
-            <YAxis tickLine={false} axisLine={false} stroke="#b7bce1" />
-            <Tooltip contentStyle={{ background: "#171a36", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12 }} />
-            <Line dataKey="revenue" stroke="#38bdf8" strokeWidth={2.5} dot={false} />
-            <Line dataKey="expenses" stroke="#fb7185" strokeWidth={2.5} dot={false} />
-            <Line dataKey="profit" stroke="#4ade80" strokeWidth={2.5} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <LineChart
+        className="h-[280px]"
+        data={trendData}
+        xKey="label"
+        series={[
+          { key: "revenue", label: "Revenue", color: "#38bdf8" },
+          { key: "expenses", label: "Expenses", color: "#fb7185" },
+          { key: "profit", label: "Profit", color: "#4ade80" },
+        ]}
+      />
     </Card>
   );
 }
