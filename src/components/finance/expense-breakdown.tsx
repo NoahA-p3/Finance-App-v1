@@ -1,6 +1,6 @@
 "use client";
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { DonutChart } from "@/components/charts/donut-chart";
 import { Card } from "@/components/ui/card";
 import { expenseBreakdown } from "@/lib/mock-data";
 
@@ -10,18 +10,7 @@ export function ExpenseBreakdown() {
   return (
     <Card>
       <h3 className="text-base font-semibold text-white">Spending Activity</h3>
-      <div className="mt-4 h-[240px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={expenseBreakdown} dataKey="value" nameKey="name" innerRadius={50} outerRadius={85}>
-              {expenseBreakdown.map((item, index) => (
-                <Cell key={item.name} fill={colors[index % colors.length]} />
-              ))}
-            </Pie>
-            <Tooltip contentStyle={{ background: "#171a36", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12 }} />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+      <DonutChart className="mt-4 h-[240px]" data={expenseBreakdown} colors={colors} innerRadius={50} outerRadius={84} />
       <ul className="space-y-1 text-sm text-indigo-100/80">
         {expenseBreakdown.slice(0, 4).map((item) => (
           <li key={item.name} className="flex justify-between">

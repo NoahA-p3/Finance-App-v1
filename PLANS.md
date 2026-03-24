@@ -207,3 +207,48 @@ Reduce schema drift risk without altering runtime behavior or dropping legacy ar
   - Remote project: `supabase gen types typescript --project-id <PROJECT_ID> > src/types/database.ts`
 - Manual low-risk reconciliation applied for clear canonical drift (`profiles.username` in `src/types/database.ts`).
 
+
+## Charting library migration (March 24, 2026)
+
+### Goal
+Replace Recharts with a modern, maintainable charting approach across dashboard chart surfaces while preserving current data behavior and visual consistency.
+
+### Current behavior
+- Chart components in `src/components/finance/*`, `src/components/dashboard/*`, and `src/components/dashboard-ui/*` use Recharts primitives directly.
+- Current chart types are line charts and donut/pie charts.
+- Data is passed as typed arrays for reusable chart components or imported from `src/lib/mock-data` for scaffolded views.
+- Styling is handled through Tailwind classes plus inline chart color/theme props.
+- Docs currently reference Recharts in `README.md` and `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`.
+
+### Proposed approach
+1. Remove `recharts` and implement reusable internal SVG chart primitives for React 19/Next.js compatibility and long-term maintainability.
+2. Add shared chart components under `src/components/charts/`.
+3. Migrate all line and donut chart components to the shared primitives with responsive containers and hover tooltips.
+4. Preserve existing labels/colors/data-shape behavior and keep visual style aligned with existing cards/sections.
+5. Update docs and dependency references to remove Recharts and document the internal chart primitives.
+
+### Affected files
+- `package.json`
+- `src/components/finance/overview-chart.tsx`
+- `src/components/finance/expense-breakdown.tsx`
+- `src/components/dashboard/revenue-expense-chart.tsx`
+- `src/components/dashboard-ui/line-chart-section.tsx`
+- `src/components/dashboard-ui/donut-chart-section.tsx`
+- `src/components/charts/*` (new shared utilities)
+- `README.md`
+- `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`
+
+### Risks
+- Tooltip behavior and axis formatting may differ from Recharts defaults.
+- Donut hover/label behavior in the custom SVG implementation can need tuning for very small slices.
+- Unused legacy chart component groups may still add maintenance surface unless consolidated later.
+
+### Verification steps
+- `npm install`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions
+- Existing chart surfaces are presentation-focused and may continue using mock data where already used.
+- No new chart types are required beyond existing line and donut/pie charts in this migration.

@@ -4,7 +4,7 @@
  * DonutChartSection displays expense activity distribution with mock categories.
  * The donut chart complements the line chart for quick spending pattern review.
  */
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { DonutChart } from "@/components/charts/donut-chart";
 
 const expenseActivity = [
   { name: "Housing", value: 32 },
@@ -22,16 +22,7 @@ export default function DonutChartSection() {
       <h3 className="mb-1 text-lg font-semibold text-slate-100">Activity Breakdown</h3>
       <p className="mb-3 text-sm text-slate-300">Expense split (dummy data)</p>
 
-      <ResponsiveContainer width="100%" height="75%">
-        <PieChart>
-          <Pie data={expenseActivity} dataKey="value" nameKey="name" innerRadius={58} outerRadius={88} paddingAngle={3}>
-            {expenseActivity.map((entry, index) => (
-              <Cell key={entry.name} fill={colors[index % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip contentStyle={{ backgroundColor: "#1E213A", border: "1px solid #4F46E5", borderRadius: 12 }} />
-        </PieChart>
-      </ResponsiveContainer>
+      <DonutChart className="h-[75%]" data={expenseActivity} colors={colors} innerRadius={58} outerRadius={88} />
 
       <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
         {expenseActivity.map((item, index) => (

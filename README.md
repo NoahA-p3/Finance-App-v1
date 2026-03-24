@@ -18,7 +18,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Tailwind CSS
 - Supabase (`@supabase/supabase-js`, `@supabase/ssr`)
 - Zod (installed)
-- Recharts for charting
+- Custom reusable SVG chart primitives (no external charting dependency)
 - Vercel as intended hosting target
 
 ## Local setup

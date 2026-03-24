@@ -27,7 +27,7 @@ The repo mixes two states:
 - **Framework/runtime:** Next.js 15 + React 19 + TypeScript (`package.json`).
 - **Styling/UI:** Tailwind CSS (`tailwind.config.ts`, `src/app/globals.css`).
 - **Backend services:** Supabase Auth/Postgres/Storage (`src/lib/supabase/*`, SQL migrations).
-- **Charts:** Recharts (`package.json`, `src/components/finance/*chart*.tsx`).
+- **Charts:** Internal reusable SVG chart components (`src/components/charts/*`) used by finance/dashboard chart sections.
 - **Validation lib present:** Zod in dependencies, but little/no current usage in route handlers.
 
 ## Directory-by-directory breakdown (important parts)

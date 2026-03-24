@@ -2,9 +2,9 @@
 
 /**
  * LineChartSection visualizes monthly income trend data with placeholder values.
- * Recharts is used to keep this chart component reusable and easy to extend.
+ * A shared SVG line chart utility is used to keep this component reusable and easy to extend.
  */
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { LineChart } from "@/components/charts/line-chart";
 
 const incomeData = [
   { month: "Jan", income: 3400 },
@@ -21,15 +21,15 @@ export default function LineChartSection() {
     <section className="h-[320px] rounded-2xl bg-[#272B4A] p-5 shadow-lg">
       <h3 className="mb-1 text-lg font-semibold text-slate-100">Total Income</h3>
       <p className="mb-4 text-sm text-slate-300">Monthly trend (dummy data)</p>
-      <ResponsiveContainer width="100%" height="80%">
-        <LineChart data={incomeData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#3C426B" />
-          <XAxis dataKey="month" stroke="#A5B4FC" />
-          <YAxis stroke="#A5B4FC" />
-          <Tooltip contentStyle={{ backgroundColor: "#1E213A", border: "1px solid #4F46E5", borderRadius: 12 }} />
-          <Line type="monotone" dataKey="income" stroke="#22D3EE" strokeWidth={3} dot={{ fill: "#22D3EE", r: 4 }} />
-        </LineChart>
-      </ResponsiveContainer>
+      <LineChart
+        className="h-[80%]"
+        data={incomeData}
+        xKey="month"
+        series={[{ key: "income", label: "Income", color: "#22D3EE" }]}
+        gridColor="#3C426B"
+        axisColor="#4B5A8D"
+        tickColor="#A5B4FC"
+      />
     </section>
   );
 }
