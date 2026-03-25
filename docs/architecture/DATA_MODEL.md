@@ -27,6 +27,11 @@ Current code and active API routes primarily use:
 
 This remains the active MVP runtime path today. The module-aligned model below defines planned schema expansion.
 
+### Current runtime tenancy details (implemented)
+- `public.profiles.active_company_id` stores persisted active company context per authenticated user.
+- `public.transactions`, `public.categories`, and `public.receipts` include `company_id` for active-company data isolation.
+- `public.company_settings` includes persisted invoice settings metadata, branding/logo metadata placeholders, branch/department labels, and `cvr_number`.
+
 ## Module-aligned schema map (target)
 
 ### 1) User and Company Management

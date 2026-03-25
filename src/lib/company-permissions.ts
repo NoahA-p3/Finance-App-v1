@@ -12,8 +12,51 @@ export type CompanyPermissionKey = (typeof COMPANY_PERMISSIONS)[keyof typeof COM
 
 export interface CompanyMembershipContext {
   companyId: string;
+  companyName: string | null;
   role: string;
   permissions: Set<string>;
+}
+
+export interface CompanyMembershipSummary {
+  companyId: string;
+  companyName: string | null;
+  role: string;
+  createdAt: string;
+}
+
+async function getRolePermissions(supabase: Awaited<ReturnType<typeof createClient>>, role: string) {
+  const { data: rolePermissions, error: rolePermissionsError } = await supabase
+    .from("role_permissions")
+    .select("permission_key")
+    .eq("role_key", role);
+
+  if (rolePermissionsError) {
+    return null;
+  }
+
+  return new Set(rolePermissions.map((item) => item.permission_key));
+}
+
+export async function listUserCompanyMemberships(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<CompanyMembershipSummary[]> {
+  const { data: memberships, error } = await supabase
+    .from("company_memberships")
+    .select("company_id, role, created_at, companies(name)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error || !memberships) {
+    return [];
+  }
+
+  return memberships.map((membership) => ({
+    companyId: membership.company_id,
+    companyName: (membership.companies as { name?: string } | null)?.name ?? null,
+    role: membership.role,
+    createdAt: membership.created_at
+  }));
 }
 
 export async function getCompanyMembershipContext(
@@ -21,36 +64,36 @@ export async function getCompanyMembershipContext(
   userId: string,
   companyId?: string
 ): Promise<CompanyMembershipContext | null> {
-  let membershipQuery = supabase
-    .from("company_memberships")
-    .select("company_id, role, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true })
-    .limit(1);
-
-  if (companyId) {
-    membershipQuery = membershipQuery.eq("company_id", companyId);
-  }
-
-  const { data: membership, error: membershipError } = await membershipQuery.maybeSingle();
-
-  if (membershipError || !membership) {
+  const memberships = await listUserCompanyMemberships(supabase, userId);
+  if (memberships.length === 0) {
     return null;
   }
 
-  const { data: rolePermissions, error: rolePermissionsError } = await supabase
-    .from("role_permissions")
-    .select("permission_key")
-    .eq("role_key", membership.role);
+  const { data: profile } = await supabase.from("profiles").select("active_company_id").eq("id", userId).maybeSingle();
+  const preferredCompanyId = companyId ?? profile?.active_company_id ?? null;
 
-  if (rolePermissionsError) {
+  const membership = preferredCompanyId
+    ? memberships.find((entry) => entry.companyId === preferredCompanyId) ?? null
+    : memberships[0] ?? null;
+
+  if (!membership) {
+    return null;
+  }
+
+  if (!preferredCompanyId || preferredCompanyId !== membership.companyId) {
+    await supabase.from("profiles").update({ active_company_id: membership.companyId }).eq("id", userId);
+  }
+
+  const permissions = await getRolePermissions(supabase, membership.role);
+  if (!permissions) {
     return null;
   }
 
   return {
-    companyId: membership.company_id,
+    companyId: membership.companyId,
+    companyName: membership.companyName,
     role: membership.role,
-    permissions: new Set(rolePermissions.map((item) => item.permission_key))
+    permissions
   };
 }
 

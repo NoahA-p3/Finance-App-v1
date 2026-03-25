@@ -16,8 +16,14 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 
 ## Supabase security and RLS
 - RLS enabled on key tables (`profiles`, `transactions`, `categories`, `receipts`, legacy tables).
-- Policies constrain CRUD to `auth.uid()` ownership.
+- Policies constrain CRUD to `auth.uid()` ownership and same-company membership checks for company-scoped finance rows (`company_id`).
 - Storage bucket policies restrict receipt object paths to per-user folder prefixes.
+
+## Company isolation controls (current runtime)
+- Active company is persisted in `profiles.active_company_id` and switched only through `POST /api/companies/switch` after membership validation.
+- Company-scoped route handlers resolve active company server-side and do not trust client ownership or company context fields.
+- Finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) enforce active membership + `company_id` scoping.
+- CVR lookup endpoint is adapter-based and returns explicit `manual_entry_required` fallback when provider integration is unavailable.
 
 ## Sensitive data classification
 - High sensitivity:

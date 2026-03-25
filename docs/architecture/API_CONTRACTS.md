@@ -32,6 +32,8 @@ Currently implemented route handlers in `src/app/api/*`:
 - `PATCH /api/companies/members`
 - `GET /api/companies/invitations`
 - `POST /api/companies/invitations`
+- `POST /api/companies/switch`
+- `GET /api/companies/cvr?cvr=<8-digit>`
 
 All other endpoint groupings in this document are target contracts for phased implementation.
 
@@ -55,6 +57,10 @@ All other endpoint groupings in this document are target contracts for phased im
   - `PATCH /api/companies/members` requires `company.members.manage` and updates member role assignments.
   - `GET /api/companies/invitations` lists pending invitations and requires `company.invitations.read`.
   - `POST /api/companies/invitations` creates pending invitations and requires `company.invitations.manage`.
+  - `POST /api/companies/switch` validates target membership and persists `profiles.active_company_id`.
+  - `GET /api/companies/cvr?cvr=<8-digit>` uses an adapter interface; when provider integration is unavailable it returns explicit manual fallback guidance.
+  - Active company context is resolved from `profiles.active_company_id` (with safe first-membership fallback).
+  - Company-scoped finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) resolve and enforce active-company membership plus `company_id` filtering.
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
   - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
 

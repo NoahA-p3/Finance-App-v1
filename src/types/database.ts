@@ -5,18 +5,21 @@ export type Database = {
     Tables: {
       categories: {
         Row: {
+          company_id: string | null;
           created_at: string;
           id: string;
           name: string;
           user_id: string;
         };
         Insert: {
+          company_id?: string | null;
           created_at?: string;
           id?: string;
           name: string;
           user_id: string;
         };
         Update: {
+          company_id?: string | null;
           created_at?: string;
           id?: string;
           name?: string;
@@ -128,24 +131,54 @@ export type Database = {
       company_settings: {
         Row: {
           base_currency: string;
+          branch_label: string | null;
+          cvr_number: string | null;
           company_id: string;
           created_at: string;
           fiscal_year_start_month: number;
+          invoice_due_days: number | null;
+          invoice_prefix: string | null;
+          invoice_terms: string | null;
+          logo_content_type: string | null;
+          logo_file_name: string | null;
+          logo_file_size_bytes: number | null;
+          logo_storage_path: string | null;
           updated_at: string;
+          department_label: string | null;
         };
         Insert: {
           base_currency?: string;
+          branch_label?: string | null;
+          cvr_number?: string | null;
           company_id: string;
           created_at?: string;
           fiscal_year_start_month?: number;
+          invoice_due_days?: number | null;
+          invoice_prefix?: string | null;
+          invoice_terms?: string | null;
+          logo_content_type?: string | null;
+          logo_file_name?: string | null;
+          logo_file_size_bytes?: number | null;
+          logo_storage_path?: string | null;
           updated_at?: string;
+          department_label?: string | null;
         };
         Update: {
           base_currency?: string;
+          branch_label?: string | null;
+          cvr_number?: string | null;
           company_id?: string;
           created_at?: string;
           fiscal_year_start_month?: number;
+          invoice_due_days?: number | null;
+          invoice_prefix?: string | null;
+          invoice_terms?: string | null;
+          logo_content_type?: string | null;
+          logo_file_name?: string | null;
+          logo_file_size_bytes?: number | null;
+          logo_storage_path?: string | null;
           updated_at?: string;
+          department_label?: string | null;
         };
       };
       permissions: {
@@ -167,6 +200,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          active_company_id: string | null;
           created_at: string;
           email: string;
           first_name: string | null;
@@ -178,6 +212,7 @@ export type Database = {
           username: string | null;
         };
         Insert: {
+          active_company_id?: string | null;
           created_at?: string;
           email: string;
           first_name?: string | null;
@@ -189,6 +224,7 @@ export type Database = {
           username?: string | null;
         };
         Update: {
+          active_company_id?: string | null;
           created_at?: string;
           email?: string;
           first_name?: string | null;
@@ -202,6 +238,7 @@ export type Database = {
       };
       receipts: {
         Row: {
+          company_id: string | null;
           created_at: string;
           id: string;
           path: string;
@@ -209,6 +246,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          company_id?: string | null;
           created_at?: string;
           id?: string;
           path: string;
@@ -216,6 +254,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          company_id?: string | null;
           created_at?: string;
           id?: string;
           path?: string;
@@ -264,6 +303,7 @@ export type Database = {
         Row: {
           amount: number;
           category_id: string | null;
+          company_id: string | null;
           created_at: string;
           date: string;
           description: string;
@@ -275,6 +315,7 @@ export type Database = {
         Insert: {
           amount: number;
           category_id?: string | null;
+          company_id?: string | null;
           created_at?: string;
           date: string;
           description: string;
@@ -286,6 +327,7 @@ export type Database = {
         Update: {
           amount?: number;
           category_id?: string | null;
+          company_id?: string | null;
           created_at?: string;
           date?: string;
           description?: string;

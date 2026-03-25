@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireAuthenticatedApiUser } from "@/lib/auth";
+import { getCompanyMembershipContext } from "@/lib/company-permissions";
 
 const TRANSACTION_TYPES = new Set(["expense", "revenue"] as const);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -110,26 +111,29 @@ function validateTransactionInput(payload: unknown): { value?: ValidTransactionI
 }
 
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const authContext = await requireAuthenticatedApiUser();
+  if (!authContext) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
+  if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
 
-  const { data, error } = await supabase.from("transactions").select("*").eq("user_id", user.id).order("date", { ascending: false });
+  const { data, error } = await authContext.supabase
+    .from("transactions")
+    .select("*")
+    .eq("user_id", authContext.user.id)
+    .eq("company_id", membership.companyId)
+    .order("date", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const authContext = await requireAuthenticatedApiUser();
+  if (!authContext) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
+  if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
 
   let payload: unknown;
 
@@ -145,6 +149,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: validation.error ?? "Invalid request body." }, { status: 400 });
   }
 
+  if (validation.value.category_id) {
+    const { data: category } = await authContext.supabase
+      .from("categories")
+      .select("id")
+      .eq("id", validation.value.category_id)
+      .eq("user_id", authContext.user.id)
+      .eq("company_id", membership.companyId)
+      .maybeSingle();
+
+    if (!category) {
+      return NextResponse.json({ error: "category_id does not exist in active company context." }, { status: 400 });
+    }
+  }
+
+  if (validation.value.receipt_id) {
+    const { data: receipt } = await authContext.supabase
+      .from("receipts")
+      .select("id")
+      .eq("id", validation.value.receipt_id)
+      .eq("user_id", authContext.user.id)
+      .eq("company_id", membership.companyId)
+      .maybeSingle();
+
+    if (!receipt) {
+      return NextResponse.json({ error: "receipt_id does not exist in active company context." }, { status: 400 });
+    }
+  }
+
   const insertPayload = {
     description: validation.value.description,
     amount: validation.value.amount,
@@ -152,10 +184,11 @@ export async function POST(req: NextRequest) {
     date: validation.value.date,
     category_id: validation.value.category_id,
     receipt_id: validation.value.receipt_id,
-    user_id: user.id
+    user_id: authContext.user.id,
+    company_id: membership.companyId
   };
 
-  const { data, error } = await supabase.from("transactions").insert(insertPayload).select().single();
+  const { data, error } = await authContext.supabase.from("transactions").insert(insertPayload).select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json(data, { status: 201 });
