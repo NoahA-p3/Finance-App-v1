@@ -7,6 +7,7 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Middleware redirects unauthenticated users away from protected routes.
 - Route handlers call `supabase.auth.getUser()` to enforce authenticated access.
 - Session-management routes derive ownership from the authenticated Supabase context and never trust client-supplied user identifiers.
+- Account-security routes expose only authenticated-user profile/session/MFA data (`/api/me/account`, `/api/me/devices`, `/api/me/login-alerts`, `/api/me/mfa/*`).
 
 ## Current role model
 - Company-scoped RBAC baseline is implemented with `roles`, `permissions`, `role_permissions`, and `company_memberships.role`.
