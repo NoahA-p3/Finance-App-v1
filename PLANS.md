@@ -533,3 +533,37 @@ Add an internal (non-provider-coupled) plans/subscriptions/entitlements data mod
 - **Assumption:** voucher counting maps to transaction creation volume in MVP until invoices/vouchers are split into dedicated ledgers.
 - **Assumption:** rolling turnover cap uses 12-month revenue sum from `transactions` where `type = 'revenue'`.
 - **TODO:** provider-coupled subscription sync remains a future milestone; subscription state remains internal source of truth in this slice.
+
+## Remove temporary placeholder data slice (March 25, 2026)
+
+### Goal
+Remove temporary/mock placeholder finance data from dashboard and transactions surfaces so UI reflects persisted data or explicit empty states.
+
+### Current behavior
+- `src/lib/mock-data.ts` seeds KPI/chart/transaction values used by active dashboard and transactions pages.
+- Reports summary cards also render fixed hardcoded amounts.
+- Legacy `src/components/dashboard-ui/*` components include embedded dummy arrays and labels.
+
+### Proposed approach
+1. Add a shared dashboard data mapper that reads canonical `transactions` and `categories` in active company context.
+2. Compute KPI cards, monthly trend points, expense breakdown, and recent transactions from persisted rows using decimal-safe cent parsing.
+3. Update dashboard/reports/transactions pages and finance components to consume mapped persisted data and render empty states when no data exists.
+4. Remove `src/lib/mock-data.ts` and replace legacy dashboard-ui embedded mock datasets with explicit empty-state rendering.
+
+### Affected files
+- `src/lib/dashboard-data.ts` (new)
+- `src/app/(dashboard)/dashboard/page.tsx`
+- `src/app/(dashboard)/reports/page.tsx`
+- `src/app/(dashboard)/transactions/page.tsx`
+- `src/components/finance/*`
+- `src/components/dashboard-ui/*`
+- `src/lib/mock-data.ts` (delete)
+
+### Risks
+- Numeric formatting drift if amount parsing is inconsistent across views.
+- Empty-company onboarding experience must remain understandable when no transactions exist.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
