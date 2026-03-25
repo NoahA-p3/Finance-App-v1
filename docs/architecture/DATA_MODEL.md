@@ -1,140 +1,104 @@
 # Data Model
 
-Source inputs inspected:
-- `supabase/migrations/*.sql`
-- `src/types/database.ts`
-- API queries in `src/app/api/*` and `src/lib/data.ts`
+Source inputs:
+- current runtime references in `supabase/migrations/*.sql`, `src/types/database.ts`, and `src/app/api/*`
+- target relational model from the technical spec used in this documentation pass
 
-Related docs: [System Overview](./SYSTEM_OVERVIEW.md), [DK Accounting Rules](../domain/DK_ACCOUNTING_RULES.md).
+Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [API Contracts](./API_CONTRACTS.md), [Product Module Map](../product/PRODUCT_MODULE_MAP.md).
 
-## Current entities (observed)
+## Modeling conventions (target)
+- PostgreSQL with UUID primary keys.
+- `created_at` and `updated_at` on mutable entities.
+- `deleted_at` soft-delete on user-facing business entities.
+- Money represented as `amount_minor BIGINT` + `currency_code CHAR(3)` for exactness.
+- Enums for stable states (`status`, `role`, `document_type`, etc.).
+- Audit logging for finance-relevant changes.
 
-### `public.profiles`
-- Purpose: app profile mirror of auth user.
-- Key fields: `id` (auth user FK), `email`, `first_name`, `last_name`, phone fields, timestamps.
-- Constraints:
-  - `id` PK to `auth.users(id)`.
-  - unique index on `lower(username)` when non-null.
-- RLS: user can select/insert/update own profile.
+## Current runtime baseline (implemented)
+Current code and active API routes primarily use:
+- `auth.users` -> `public.profiles`
+- `public.transactions`
+- `public.categories`
+- `public.receipts`
+- Supabase Storage `receipts` bucket
 
-### `public.transactions`
-- Purpose: core income/expense records.
-- Key fields: `id`, `user_id`, `category_id`, `receipt_id`, `type`, `description`, `amount numeric(12,2)`, `date`, `created_at`.
-- Constraints:
-  - `type` in (`expense`, `revenue`).
-  - non-negative amount check.
-- Relationships:
-  - belongs to auth user (`user_id`).
-  - optional category link.
-  - optional receipt link.
-- RLS: user manages own rows.
+This remains the active MVP runtime path today. The module-aligned model below defines planned schema expansion.
 
-### `public.categories`
-- Purpose: user-defined transaction categories.
-- Key fields: `id`, `user_id`, `name`, `created_at`.
-- RLS: user manages own rows.
+## Module-aligned schema map (target)
 
-### `public.receipts`
-- Purpose: metadata link to files stored in Supabase Storage.
-- Key fields (active branch): `id`, `user_id`, `path`, `transaction_id`, `created_at`.
-- Relationships:
-  - belongs to auth user.
-  - optional link to `transactions`.
-- RLS: user manages own rows.
+### 1) User and Company Management
+- Identity/security: `users`, `auth_identities`, `user_sessions`, `password_reset_tokens`, `email_verification_tokens`, `mfa_methods`, `mfa_backup_codes`
+- Access control: `roles`, `permissions`, `role_permissions`, `company_memberships`, `company_invitations`
+- Company profile/settings: `companies`, `company_addresses`, `company_settings`, `company_branding`, `company_registry_snapshots`
+- Plans/entitlements: `plans`, `plan_features`, `subscriptions`, `subscription_addons`, `usage_counters`
 
-### Supabase Storage `receipts` bucket
-- Private bucket.
-- Policies enforce folder prefix equals `auth.uid()` for CRUD operations.
+### 2) Contacts and Master Data
+- Contact domain: `contacts`, `contact_addresses`, `contact_people`, `contact_tags`, `contact_tag_links`
+- Catalog domain: `products`, `price_lists`, `price_list_items`
 
+### 3) Sales, Quotes, Orders, and Invoicing
+- Sales documents: `sales_documents`, `sales_document_lines`, `sales_document_attachments`, `sales_document_events`, `quote_approvals`
+- Recurring billing: `recurring_schedules`, `recurring_schedule_runs`
+- Collections: `invoice_reminders`, `debt_collection_cases`
 
-## Canonical schema decision (to keep)
-Use only the auth-user keyed model as canonical runtime:
-- `auth.users` identity provider
-- `public.profiles` keyed by `profiles.id = auth.users.id`
-- `public.transactions`, `public.categories`, `public.receipts` keyed by `user_id = auth.uid()`
-- private storage bucket `receipts` with per-user folder policies
+### 4) Accounting Core
+- Ledger/fiscal: `fiscal_periods`, `accounts`, `journal_entries`, `journal_lines`
+- Cashbook/manual posting: `cashbook_entries`, `posting_templates`, `posting_import_jobs`
+- VAT: `vat_codes`, `vat_returns`, `vat_return_lines`, `vat_submission_logs`
+- Reporting: `report_runs`, `saved_reports`
+- Fixed assets: `fixed_assets`, `depreciation_schedules`
 
-All schema and API evolution should build on this path.
+### 5) Receipts, Expenses, and Bookkeeping Automation
+- Files/receipts: `files`, `receipt_extractions`, `file_links`
+- Expenses: `expenses`, `expense_allocations`
+- Bank/reconciliation: `bank_connections`, `bank_accounts`, `bank_transactions`, `bank_matches`, `reconciliation_runs`
+- Automation/assistant: `automation_rules`, `suggestions`, `suggestion_feedback`, `assistant_tasks`
 
+### 6) Payments and Checkout
+- Payments: `payment_provider_accounts`, `payment_links`, `payment_transactions`
 
-### Canonical-path guardrail
-Do not introduce new schema work against `public.users` or `public.accounts`. New runtime features must use the auth-keyed tables above.
+### 7) Payroll
+- Employees: `employees`, `employee_compensation_profiles`, `employee_benefits`, `employee_pension_profiles`
+- Payroll processing: `payroll_runs`, `payslips`, `payslip_lines`, `payroll_liabilities`, `payroll_submission_logs`
 
-## Legacy artifacts to avoid (deprecate over time)
-The following artifacts from `202603200004_finance_assistant_mvp.sql` are considered divergent and should not be extended:
-- `public.users`
-- `public.accounts`
-- alternate `public.transactions` columns (`merchant`, `account_id`, `category` text)
-- alternate `public.receipts` columns (`file_url`, `merchant`, `amount`, `vat`)
-- receipt RLS design based on transaction join ownership instead of direct `receipts.user_id`
+### 8) Integrations and Developer Platform
+- Marketplace and installs: `integration_apps`, `integration_connections`
+- Developer access: `developer_apps`, `oauth_clients`, `api_keys`, `webhook_endpoints`
+- Sync/observability: `integration_sync_jobs`, `integration_sync_job_items`, `integration_field_mappings`, `webhook_events`
 
-## Legacy / conflicting schema branch (observed)
-`202603200004_finance_assistant_mvp.sql` also defines `public.users`, `public.accounts`, and an alternate `transactions/receipts` shape.
+### 9) Year-End, Tax Return, and Filing Help
+- Tax return flow: `tax_return_packages`, `tax_return_fields`, `tax_return_instructions`
+- Annual accounts: `annual_accounts_cases`, `annual_accounts_tasks`, `annual_accounts_outputs`, `advisor_notes`
 
-Status: appears older or divergent from currently queried tables.
+### 10) Support, Onboarding, Learning, and Migration
+- Support: `support_tickets`, `support_messages`, `help_articles`
+- Migration: `migration_cases`, `migration_files`, `migration_validation_issues`
+- Onboarding/learning: `onboarding_checklists`, `onboarding_tasks`, `learning_courses`, `learning_lessons`
 
-**Assumption:** active runtime path is auth-user keyed schema matching `src/types/database.ts` and route handlers.
+### 11) Financing and Partner Services
+- Partner flows: `financing_partners`, `financing_leads`, `consent_records`
 
-## Relationships (current runtime assumption)
-- `auth.users (1) -> (1) public.profiles`
-- `auth.users (1) -> (n) public.transactions`
-- `auth.users (1) -> (n) public.categories`
-- `auth.users (1) -> (n) public.receipts`
-- `public.categories (1) -> (n) public.transactions` (optional FK)
-- `public.receipts (1) <-> (0..1) public.transactions` via nullable references
+### 12) Home Dashboard and Navigation
+- Dashboard data: `dashboard_preferences`, `activity_events`, `dashboard_snapshots`
 
-## Finance-specific modeling concerns
-- DB uses decimal-compatible `numeric(12,2)` for amount storage.
-- TypeScript generated type maps `amount` to `number` (precision risk if used in arithmetic without decimal library).
-- No immutable posting state or journal-balance constraints.
-- No explicit VAT fields in active schema.
-- No document metadata schema beyond storage path and optional linkage.
-- No audit-event table for sensitive changes.
+## Key relationship patterns
+- Multi-tenant root: most business tables include `company_id -> companies.id`.
+- Membership model: users join companies through `company_memberships`; role assignments flow through `roles` + `role_permissions`.
+- Accounting traceability:
+  - `journal_entries` -> `journal_lines`
+  - operational sources reference ledger via `source_type/source_id` or direct `journal_entry_id`.
+- Sales and payments linkage:
+  - `sales_documents` -> `sales_document_lines`
+  - `payment_links` / `payment_transactions` -> `sales_documents`.
+- File attachments as shared infrastructure:
+  - `files` with `file_links` and direct nullable FKs in selected tables.
 
+## Implementation-status alignment
+- Implemented today: auth/profile + transaction/category/receipt baseline tables.
+- Planned: most company-scoped, ledger-grade, and workflow-specific tables listed above.
+- Important: do not describe planned tables as already migrated unless present in `supabase/migrations` and reflected in `src/types/database.ts`.
 
-
-## Legacy-schema reference audit (current codebase)
-Observed runtime code references:
-- No active route handlers reference `public.users` or `public.accounts`.
-- Active API routes query `transactions`, `categories`, and `receipts` under auth-user ownership.
-
-Documented drift still to fix (non-destructive):
-- `src/types/database.ts` has a manual reconciliation for canonical `profiles.username`, but full CLI-based regeneration/verification is still required to ensure complete parity.
-- Legacy migration branch remains present and can still confuse future contributors without guardrails.
-
-
-### Inventory mechanism (non-destructive)
-Migration `202603230001_legacy_schema_inventory.sql` adds `public.legacy_schema_inventory` for environment checks.
-Run:
-```sql
-select * from public.legacy_schema_inventory order by artifact_key;
-```
-Use this output to confirm whether legacy artifacts still exist before any cleanup planning.
-
-## Migration convergence sequence (proposed)
-1. Align docs and planning artifacts with canonical model.
-2. Add non-destructive inventory/guard migrations to detect legacy artifacts in deployed environments.
-3. Regenerate `src/types/database.ts` against canonical schema and resolve any type drift.
-4. After verification window and backups, execute controlled cleanup migration for legacy artifacts.
-
-### Rollback / recovery guidance
-- Docs-only and guard migration steps: revert commit/migration file.
-- Cleanup step: require pre-drop backup snapshot and scripted recreation SQL for removed legacy tables/policies.
-- Re-run RLS/policy verification after restore.
-
-### Type regeneration requirement
-Any schema convergence migration must be followed by regenerating `src/types/database.ts` and checking for accidental legacy entities.
-
-
-### Generated type reconciliation note
-If Supabase CLI is unavailable in the working environment, document the blocker and required generation command, then apply only clearly proven canonical drift fixes.
-
-## Planned entities (not implemented)
-- `businesses` / organization tenant model.
-- `memberships` + role/permission tables.
-- Double-entry ledger tables (journal header + lines).
-- VAT configuration and VAT posting tables.
-- period close/lock tables.
-- report snapshot/export tracking tables.
-
-Mark these as planned until backed by migrations.
+## Known drift and caution
+- Existing migrations include a legacy/divergent branch (`public.users`, `public.accounts`, alternate transaction/receipt definitions).
+- Current runtime evidence still points to auth-keyed MVP tables (`profiles`, `transactions`, `categories`, `receipts`).
+- When implementing this target model, migration sequencing and generated type regeneration must be handled in lockstep.

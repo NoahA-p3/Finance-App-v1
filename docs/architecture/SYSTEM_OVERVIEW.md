@@ -1,6 +1,6 @@
 # System Overview
 
-Related docs: [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md), [Security Rules](../security/SECURITY_RULES.md).
+Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md), [Security Rules](../security/SECURITY_RULES.md).
 
 ## Architecture summary (current)
 - Single Next.js App Router application.
@@ -63,6 +63,13 @@ Related docs: [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md)
 - `src/lib/data.ts`: transaction summary query helpers.
 - `src/types/database.ts`: generated-ish TypeScript schema contract.
 - `supabase/migrations/*`: source of truth for schema/policies.
+
+
+## Module-aligned technical documentation
+- Product modules and status: `docs/product/PRODUCT_MODULE_MAP.md`
+- Technical module boundaries (schema + API ownership): `docs/architecture/TECHNICAL_MODULES.md`
+- Target relational domains: `docs/architecture/DATA_MODEL.md`
+- Target resource/endpoints map: `docs/architecture/API_CONTRACTS.md`
 
 ## Major gaps / TODOs
 - Canonical schema direction needs consolidation (active vs legacy migration branch).
