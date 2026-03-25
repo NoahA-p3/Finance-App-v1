@@ -1,16 +1,85 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [bootstrappingSession, setBootstrappingSession] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const bootstrapRecoverySession = async () => {
+      const code = searchParams.get("code");
+      const tokenHash = searchParams.get("token_hash");
+      const type = searchParams.get("type");
+
+      const done = () => {
+        if (mounted) {
+          setBootstrappingSession(false);
+        }
+      };
+
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (exchangeError) {
+          if (mounted) {
+            setError("Reset link is invalid or expired. Please request a new reset link.");
+          }
+          done();
+          return;
+        }
+
+        done();
+        return;
+      }
+
+      if (tokenHash && type === "recovery") {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery"
+        });
+
+        if (verifyError) {
+          if (mounted) {
+            setError("Reset link is invalid or expired. Please request a new reset link.");
+          }
+          done();
+          return;
+        }
+
+        done();
+        return;
+      }
+
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session && mounted) {
+        setError("Reset link is invalid or expired. Please request a new reset link.");
+      }
+
+      done();
+    };
+
+    void bootstrapRecoverySession();
+
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams, supabase]);
 
   const passwordStrength = useMemo(() => {
     if (!password) {
@@ -35,6 +104,11 @@ export function ResetPasswordForm() {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+
+    if (bootstrappingSession) {
+      setError("Validating reset link. Please wait a moment and try again.");
+      return;
+    }
 
     if (password.length < 8) {
       setError("Use at least 8 characters for better security.");
@@ -113,6 +187,11 @@ export function ResetPasswordForm() {
           />
         </div>
 
+        {bootstrappingSession && (
+          <p className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            Validating reset link…
+          </p>
+        )}
         {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
         {success && (
           <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
@@ -122,7 +201,7 @@ export function ResetPasswordForm() {
 
         <button
           className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-medium text-white shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus:ring-indigo-900"
-          disabled={loading}
+          disabled={loading || bootstrappingSession}
           type="submit"
         >
           {loading ? "Please wait..." : "Update password"}
