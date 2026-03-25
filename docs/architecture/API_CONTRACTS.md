@@ -18,6 +18,8 @@ Currently implemented route handlers in `src/app/api/*`:
 - `POST /api/auth/forgot-password`
 - `POST /api/auth/reset-password`
 - `POST /api/auth/resend-verification`
+- `GET /api/me/sessions`
+- `DELETE /api/me/sessions/{session_id}`
 - `GET /api/transactions`
 - `POST /api/transactions`
 - `POST /api/categories`
@@ -33,6 +35,10 @@ All other endpoint groupings in this document are target contracts for phased im
   - `POST /api/auth/reset-password` updates password for an active recovery session only.
 - Verification resend flow:
   - `POST /api/auth/resend-verification` returns minimal, non-sensitive errors and generic success messaging.
+- Session management flow:
+  - `GET /api/me/sessions` returns only the authenticated user's active sessions.
+  - `DELETE /api/me/sessions/{session_id}` validates session id format, enforces authenticated ownership, and blocks revoking the current session.
+  - Session revoke responses avoid leaking cross-user session existence details.
 - No local password tables are used; identity remains Supabase Auth (`auth.users`).
 
 ## Module-aligned endpoint groupings (target)
