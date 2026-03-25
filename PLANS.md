@@ -614,3 +614,27 @@ Complete the MVP account-security flow using existing Supabase-auth architecture
 - **Assumption:** Supabase project supports MFA TOTP endpoints from authenticated session context.
 - **Assumption:** login alerts in this slice are in-app account alerts derived from new/unknown session activity; external alert channel wiring remains TODO.
 - **TODO:** add persistent audit events/notification delivery once notification subsystem exists.
+
+## Account/auth full-set completion follow-up (March 25, 2026)
+
+### Goal
+Close remaining quality and completeness gaps for the full account/auth feature set, including verification UX polish, MFA challenge UX for existing factors, non-interactive lint/test validation setup, and explicit notification-architecture constraints.
+
+### Gap analysis snapshot
+- Core signup/login/logout/reset/verification/session APIs already exist in runtime code.
+- Account page exists, but verification resend and existing-factor MFA challenge/confirm UX are incomplete.
+- Lint command is interactive due missing repo ESLint config.
+- No test script/tooling exists, preventing required validation.
+
+### Proposed approach
+1. Add repo-consistent ESLint configuration so `npm run lint` runs non-interactively.
+2. Add minimal TypeScript test runner setup (`node --import tsx --test`) and targeted tests for auth utility validation + account-security mappings.
+3. Extend account security UI to support verification resend and explicit MFA challenge/confirm flow for already enrolled factors.
+4. Document notification-system constraint and MVP-equivalent login-alert behavior in docs.
+
+### Verification
+- `npm install`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npm run build`

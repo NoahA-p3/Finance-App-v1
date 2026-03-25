@@ -62,6 +62,7 @@ All other endpoint groupings in this document are target contracts for phased im
   - `GET /api/me/account` returns authenticated profile + security status snapshot (email verification, last login, active session count, MFA enabled).
   - `GET /api/me/devices` returns authenticated device/session history derived from Auth sessions.
   - `GET /api/me/login-alerts` returns recent non-current-session login activity alerts for in-app review.
+  - **Current delivery channel:** in-app account surface only (no outbound email/SMS notification subsystem is implemented in this repo today).
 - MFA TOTP management flow:
   - `GET /api/me/mfa` returns enrolled factors for the authenticated user.
   - `POST /api/me/mfa/enroll` creates a TOTP factor enrollment and returns setup URI/QR payload.

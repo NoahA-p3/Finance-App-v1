@@ -48,6 +48,7 @@ export function AccountSecurityPanel() {
   const [mfaUri, setMfaUri] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function load() {
     setError(null);
@@ -84,6 +85,7 @@ export function AccountSecurityPanel() {
   const primaryFactor = useMemo(() => factors[0] ?? null, [factors]);
 
   async function startMfaSetup() {
+    setIsSubmitting(true);
     setError(null);
     setMessage(null);
 
@@ -92,6 +94,7 @@ export function AccountSecurityPanel() {
 
     if (!enrollRes.ok || !enrollPayload.factorId) {
       setError(enrollPayload.error ?? "Unable to start MFA setup.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -104,6 +107,7 @@ export function AccountSecurityPanel() {
     const challengePayload = (await challengeRes.json()) as { challengeId?: string; error?: string };
     if (!challengeRes.ok || !challengePayload.challengeId) {
       setError(challengePayload.error ?? "Unable to create MFA challenge.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -111,6 +115,7 @@ export function AccountSecurityPanel() {
     setChallengeId(challengePayload.challengeId);
     setMfaUri(enrollPayload.uri ?? null);
     setMessage("Scan the URI in your authenticator app and enter the 6-digit code.");
+    setIsSubmitting(false);
   }
 
   async function verifyMfa() {
@@ -121,6 +126,7 @@ export function AccountSecurityPanel() {
 
     setError(null);
     setMessage(null);
+    setIsSubmitting(true);
 
     const verifyRes = await fetch("/api/me/mfa/verify", {
       method: "POST",
@@ -132,6 +138,7 @@ export function AccountSecurityPanel() {
 
     if (!verifyRes.ok) {
       setError(verifyPayload.error ?? "Invalid MFA code.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -141,6 +148,7 @@ export function AccountSecurityPanel() {
     setPendingFactorId(null);
     setMfaUri(null);
     await load();
+    setIsSubmitting(false);
   }
 
   async function disableMfa() {
@@ -149,16 +157,72 @@ export function AccountSecurityPanel() {
     }
 
     setError(null);
+    setIsSubmitting(true);
     const response = await fetch(`/api/me/mfa/${primaryFactor.id}`, { method: "DELETE" });
     const payload = (await response.json()) as { error?: string };
 
     if (!response.ok) {
       setError(payload.error ?? "Unable to disable MFA.");
+      setIsSubmitting(false);
       return;
     }
 
     setMessage("MFA disabled.");
     await load();
+    setIsSubmitting(false);
+  }
+
+  async function challengeExistingFactor() {
+    if (!primaryFactor) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+    setIsSubmitting(true);
+    const response = await fetch("/api/me/mfa/challenge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ factorId: primaryFactor.id })
+    });
+    const payload = (await response.json()) as { challengeId?: string; error?: string };
+
+    if (!response.ok || !payload.challengeId) {
+      setError(payload.error ?? "Unable to create MFA challenge.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setPendingFactorId(primaryFactor.id);
+    setChallengeId(payload.challengeId);
+    setMfaUri(null);
+    setMessage("Enter your authenticator code to confirm this MFA challenge.");
+    setIsSubmitting(false);
+  }
+
+  async function resendVerification() {
+    if (!profile?.email) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+    setIsSubmitting(true);
+    const response = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: profile.email })
+    });
+    const payload = (await response.json()) as { message?: string; error?: string };
+
+    if (!response.ok) {
+      setError(payload.error ?? "Unable to resend verification email.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setMessage(payload.message ?? "If the account exists, a verification email has been sent.");
+    setIsSubmitting(false);
   }
 
   return (
@@ -178,6 +242,11 @@ export function AccountSecurityPanel() {
         ) : (
           <p className="mt-3 text-sm text-indigo-100/70">Loading account profile…</p>
         )}
+        {profile && !profile.emailVerified ? (
+          <Button className="mt-3" variant="secondary" onClick={resendVerification} disabled={isSubmitting}>
+            Resend verification email
+          </Button>
+        ) : null}
       </Card>
 
       <Card>
@@ -189,12 +258,15 @@ export function AccountSecurityPanel() {
         {challengeId ? (
           <div className="mt-3 space-y-2">
             <Input placeholder="123456" value={code} onChange={(event) => setCode(event.target.value)} maxLength={8} />
-            <Button onClick={verifyMfa}>Verify MFA code</Button>
+            <Button onClick={verifyMfa} disabled={isSubmitting}>Verify MFA code</Button>
           </div>
         ) : primaryFactor ? (
-          <Button className="mt-3" variant="secondary" onClick={disableMfa}>Disable MFA</Button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={challengeExistingFactor} disabled={isSubmitting}>Confirm MFA challenge</Button>
+            <Button variant="secondary" onClick={disableMfa} disabled={isSubmitting}>Disable MFA</Button>
+          </div>
         ) : (
-          <Button className="mt-3" onClick={startMfaSetup}>Enable MFA</Button>
+          <Button className="mt-3" onClick={startMfaSetup} disabled={isSubmitting}>Enable MFA</Button>
         )}
 
         {message ? <p className="mt-3 text-sm text-emerald-300">{message}</p> : null}

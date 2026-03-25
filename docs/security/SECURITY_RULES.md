@@ -56,6 +56,7 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - `DELETE /api/me/sessions/{session_id}` enforces authenticated ownership checks before revocation.
 - Revocation of the current active session is blocked to avoid unexpected lockout.
 - Unauthorized or forbidden requests return minimal `401/403` responses without exposing whether another user session exists.
+- Login-alert delivery in current MVP is in-app (`/api/me/login-alerts`) based on authenticated session history; no outbound notifier (email/SMS/push worker) is present in the repository yet.
 
 ## Audit log expectations (target)
 - Add immutable audit events for sensitive actions:
