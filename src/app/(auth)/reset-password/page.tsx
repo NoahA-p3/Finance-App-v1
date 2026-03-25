@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ResetPasswordForm } from "../_components/reset-password-form";
 import { isPasswordResetEnabled } from "@/lib/auth-flags";
@@ -7,5 +8,9 @@ export default function ResetPasswordPage() {
     notFound();
   }
 
-  return <ResetPasswordForm />;
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
 }

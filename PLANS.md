@@ -703,3 +703,32 @@ Allow unauthenticated users to access password recovery pages (`/forgot-password
 
 ### Assumptions
 - Password-reset flow remains feature-flagged in UI, but routes should stay publicly reachable for valid reset links.
+
+## Reset-link session bootstrap fix (March 25, 2026)
+
+### Goal
+Ensure password reset links establish a valid recovery session before submitting a new password.
+
+### Current behavior
+- `/api/auth/reset-password` correctly requires an authenticated recovery session.
+- Reset page submits directly to API without exchanging reset link params (`code` or `token_hash`) for a session.
+- Users can see `Reset session is invalid or expired.` even with a fresh reset link.
+
+### Proposed approach
+1. In reset-password client form, bootstrap session from URL params:
+   - `code` -> `exchangeCodeForSession`
+   - `token_hash` + `type=recovery` -> `verifyOtp`
+2. Fall back to existing session check when params are absent.
+3. Gate submit until recovery session bootstrap completes and show actionable error for invalid/expired links.
+
+### Affected files
+- `src/app/(auth)/_components/reset-password-form.tsx`
+- `PLANS.md`
+
+### Verification steps
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions
+- Supabase reset emails may use either `code` (PKCE) or `token_hash` recovery link formats depending project settings.
