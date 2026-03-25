@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeEmail, readJsonObject, resolveAuthRedirectUrl } from "../utils";
 
+function normalizeErrorCode(message: string) {
+  return message
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 64);
+}
+
 function classifySignupError(message: string) {
   const lower = message.toLowerCase();
 
@@ -18,10 +26,32 @@ function classifySignupError(message: string) {
     };
   }
 
+  if (lower.includes("signup") && (lower.includes("disabled") || lower.includes("not allowed"))) {
+    return {
+      status: 503,
+      error: "New account signup is currently disabled in Auth settings. Please enable email signups in Supabase."
+    };
+  }
+
+  if (lower.includes("password") && (lower.includes("weak") || lower.includes("least") || lower.includes("length"))) {
+    return {
+      status: 400,
+      error: "Password does not meet policy requirements. Use a stronger password and try again."
+    };
+  }
+
+  if (lower.includes("database error") || lower.includes("saving new user") || lower.includes("handle_new_user")) {
+    return {
+      status: 500,
+      error: "Signup failed while creating the user profile record. Check Supabase DB triggers and profile schema policies."
+    };
+  }
+
   if (
     lower.includes("already") ||
     lower.includes("registered") ||
-    lower.includes("already been registered")
+    lower.includes("already been registered") ||
+    lower.includes("user already exists")
   ) {
     return {
       status: 409,
@@ -29,7 +59,10 @@ function classifySignupError(message: string) {
     };
   }
 
-  return { status: 400, error: "Unable to create account. Please try again." };
+  return {
+    status: 400,
+    error: `Unable to create account. Please try again. (ref: ${normalizeErrorCode(message) || "signup_unknown"})`
+  };
 }
 
 export async function POST(req: Request) {

@@ -732,3 +732,29 @@ Ensure password reset links establish a valid recovery session before submitting
 
 ### Assumptions
 - Supabase reset emails may use either `code` (PKCE) or `token_hash` recovery link formats depending project settings.
+
+## Signup error classification hardening (March 25, 2026)
+
+### Goal
+Reduce opaque signup failures by mapping additional Supabase signup errors to actionable responses while preserving non-sensitive messaging.
+
+### Current behavior
+- Unknown Supabase signup errors return `Unable to create account. Please try again.`
+- This can hide common operational misconfigurations like disabled signups and DB-trigger failures.
+
+### Proposed approach
+1. Extend signup error classifier to include:
+   - signups disabled
+   - password-policy failures
+   - profile-trigger/database-save failures
+2. Include a short support reference code in fallback responses to improve operator diagnostics.
+3. Keep account-enumeration-safe behavior for duplicate-email handling.
+
+### Affected files
+- `src/app/api/auth/signup/route.ts`
+- `PLANS.md`
+
+### Verification steps
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
