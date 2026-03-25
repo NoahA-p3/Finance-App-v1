@@ -638,3 +638,123 @@ Close remaining quality and completeness gaps for the full account/auth feature 
 - `npm run lint`
 - `npm run test`
 - `npm run build`
+
+## Signup failure investigation + fix slice (March 25, 2026)
+
+### Goal
+Restore reliable new-account signup by removing fragile redirect-url assumptions in auth routes and by exposing actionable signup error messages for faster diagnostics.
+
+### Current behavior
+- `POST /api/auth/signup` always sends `emailRedirectTo` computed from `NEXT_PUBLIC_SITE_URL` fallback to request origin.
+- If the computed URL is missing, malformed, or not allow-listed in Supabase Auth redirect settings, Supabase can reject signup with a generic route response (`Unable to create account.`).
+- Similar redirect-url assumptions exist in forgot-password and resend-verification endpoints.
+
+### Proposed approach
+1. Add safe redirect URL resolver that validates configured site URL and proxy-forwarded host/protocol fallback.
+2. Only include redirect URLs in Supabase calls when the resolved URL is valid.
+3. Add targeted signup error classification so redirect misconfiguration and duplicate-account cases return actionable API errors.
+4. Add fallback retry in signup without `emailRedirectTo` when Supabase rejects redirect URL.
+5. Update docs (`README` + architecture contracts) with explicit env/setup guidance and new error semantics.
+
+### Affected files
+- `src/app/api/auth/utils.ts`
+- `src/app/api/auth/signup/route.ts`
+- `src/app/api/auth/forgot-password/route.ts`
+- `src/app/api/auth/resend-verification/route.ts`
+- `README.md`
+- `docs/architecture/API_CONTRACTS.md`
+
+### Risks
+- Overly detailed auth errors can increase account enumeration risk.
+- Proxy header parsing must avoid constructing malformed URLs.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** primary signup failures reported are caused by invalid redirect URL config, not database trigger regressions.
+- **TODO:** add route-level automated tests once test harness supports TS route modules directly.
+
+## Forgot-password route access fix (March 25, 2026)
+
+### Goal
+Allow unauthenticated users to access password recovery pages (`/forgot-password`, `/reset-password`) without middleware redirect loops.
+
+### Current behavior
+- Middleware treats only `/login` and `/signup` as auth-public routes.
+- Unauthenticated requests to `/forgot-password` and `/reset-password` are redirected to `/login`.
+- This makes the “Forgot password?” link appear broken and blocks direct recovery-link navigation.
+
+### Proposed approach
+1. Extend middleware auth-public route matcher to include `/forgot-password` and `/reset-password`.
+2. Preserve existing behavior where authenticated users are redirected away from auth pages to `/dashboard`.
+3. Keep route logic isolated to middleware (no API/auth contract changes).
+
+### Affected files
+- `src/lib/supabase/middleware.ts`
+- `PLANS.md`
+
+### Verification steps
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions
+- Password-reset flow remains feature-flagged in UI, but routes should stay publicly reachable for valid reset links.
+
+## Reset-link session bootstrap fix (March 25, 2026)
+
+### Goal
+Ensure password reset links establish a valid recovery session before submitting a new password.
+
+### Current behavior
+- `/api/auth/reset-password` correctly requires an authenticated recovery session.
+- Reset page submits directly to API without exchanging reset link params (`code` or `token_hash`) for a session.
+- Users can see `Reset session is invalid or expired.` even with a fresh reset link.
+
+### Proposed approach
+1. In reset-password client form, bootstrap session from URL params:
+   - `code` -> `exchangeCodeForSession`
+   - `token_hash` + `type=recovery` -> `verifyOtp`
+2. Fall back to existing session check when params are absent.
+3. Gate submit until recovery session bootstrap completes and show actionable error for invalid/expired links.
+
+### Affected files
+- `src/app/(auth)/_components/reset-password-form.tsx`
+- `PLANS.md`
+
+### Verification steps
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions
+- Supabase reset emails may use either `code` (PKCE) or `token_hash` recovery link formats depending project settings.
+
+## Signup error classification hardening (March 25, 2026)
+
+### Goal
+Reduce opaque signup failures by mapping additional Supabase signup errors to actionable responses while preserving non-sensitive messaging.
+
+### Current behavior
+- Unknown Supabase signup errors return `Unable to create account. Please try again.`
+- This can hide common operational misconfigurations like disabled signups and DB-trigger failures.
+
+### Proposed approach
+1. Extend signup error classifier to include:
+   - signups disabled
+   - password-policy failures
+   - profile-trigger/database-save failures
+2. Include a short support reference code in fallback responses to improve operator diagnostics.
+3. Keep account-enumeration-safe behavior for duplicate-email handling.
+
+### Affected files
+- `src/app/api/auth/signup/route.ts`
+- `PLANS.md`
+
+### Verification steps
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
