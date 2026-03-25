@@ -9,6 +9,8 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Forgot/reset password flow via Supabase Auth recovery email.
 - Optional verification email resend flow for unverified signups.
 - Session management API (`GET /api/me/sessions`, `DELETE /api/me/sessions/{session_id}`) with ownership enforcement.
+- Account security APIs for profile summary, device history, login activity alerts, and MFA TOTP management (`/api/me/account`, `/api/me/devices`, `/api/me/login-alerts`, `/api/me/mfa/*`).
+- Login alerts are currently implemented as in-app account alerts derived from authenticated session activity; no separate outbound notification service is wired in this MVP yet.
 - Protected dashboard routes via Next.js middleware.
 - Basic profile record sync in `public.profiles`.
 - Transaction CRUD surface (currently list + create via `/api/transactions`).
@@ -73,7 +75,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 
 ## Repository structure
 - `src/app/(auth)` — login/signup/forgot-password/reset-password routes
-- `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, settings, onboarding)
+- `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, account, settings, onboarding)
 - `src/app/api` — route handlers for auth, profile sessions, companies, transactions, categories, receipts
 - `src/components` — UI and feature components
 - `src/lib` — auth helper, Supabase clients, data-fetch helpers

@@ -20,6 +20,14 @@ Currently implemented route handlers in `src/app/api/*`:
 - `POST /api/auth/resend-verification`
 - `GET /api/me/sessions`
 - `DELETE /api/me/sessions/{session_id}`
+- `GET /api/me/account`
+- `GET /api/me/devices`
+- `GET /api/me/login-alerts`
+- `GET /api/me/mfa`
+- `POST /api/me/mfa/enroll`
+- `POST /api/me/mfa/challenge`
+- `POST /api/me/mfa/verify`
+- `DELETE /api/me/mfa/{factor_id}`
 - `GET /api/transactions`
 - `POST /api/transactions`
 - `POST /api/categories`
@@ -50,6 +58,16 @@ All other endpoint groupings in this document are target contracts for phased im
   - `GET /api/me/sessions` returns only the authenticated user's active sessions.
   - `DELETE /api/me/sessions/{session_id}` validates session id format, enforces authenticated ownership, and blocks revoking the current session.
   - Session revoke responses avoid leaking cross-user session existence details.
+- Account security summary flow:
+  - `GET /api/me/account` returns authenticated profile + security status snapshot (email verification, last login, active session count, MFA enabled).
+  - `GET /api/me/devices` returns authenticated device/session history derived from Auth sessions.
+  - `GET /api/me/login-alerts` returns recent non-current-session login activity alerts for in-app review.
+  - **Current delivery channel:** in-app account surface only (no outbound email/SMS notification subsystem is implemented in this repo today).
+- MFA TOTP management flow:
+  - `GET /api/me/mfa` returns enrolled factors for the authenticated user.
+  - `POST /api/me/mfa/enroll` creates a TOTP factor enrollment and returns setup URI/QR payload.
+  - `POST /api/me/mfa/challenge` and `POST /api/me/mfa/verify` complete enrollment verification.
+  - `DELETE /api/me/mfa/{factor_id}` disables an enrolled factor.
 - No local password tables are used; identity remains Supabase Auth (`auth.users`).
 - Company profile bootstrap flow:
   - `GET /api/companies` returns the authenticated user's current company profile/settings if membership exists, otherwise `company: null`.

@@ -567,3 +567,74 @@ Remove temporary/mock placeholder finance data from dashboard and transactions s
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
+
+## Account and authentication completion slice (March 25, 2026)
+
+### Goal
+Complete the MVP account-security flow using existing Supabase-auth architecture: signup/login/logout/reset/verification plus profile security surface for MFA status, sessions/devices, and login activity.
+
+### Current behavior
+- Signup/login/logout/forgot/reset/resend-verification routes exist.
+- Session list/revoke API exists and settings page shows active sessions.
+- No dedicated account profile page summarizes security status.
+- No MFA management API/UI currently exists.
+- Device history and login alerts are not exposed as first-class account features (session data exists but is only shown as a revoke list).
+
+### Proposed approach
+1. Add `/api/me/account` endpoint to return profile + security summary from authenticated context.
+2. Add MFA API endpoints under `/api/me/mfa/*` using Supabase Auth MFA APIs (assumption: TOTP factors enabled in project settings).
+3. Add `/api/me/devices` and `/api/me/login-alerts` endpoints derived from authenticated session records.
+4. Add a dashboard account page (`/account`) to display name/email/security status/active sessions/last login/MFA status with device + alert history.
+5. Keep signup/login/logout/reset/verification behavior in existing routes, and tighten login response payload for account summary use.
+6. Add docs updates for newly implemented account endpoints and known MFA/login-alert assumptions.
+
+### Affected files
+- `src/app/api/me/account/route.ts` (new)
+- `src/app/api/me/devices/route.ts` (new)
+- `src/app/api/me/login-alerts/route.ts` (new)
+- `src/app/api/me/mfa/*` (new)
+- `src/lib/session-management.ts` (shared mapping helpers)
+- `src/app/(dashboard)/account/page.tsx` (new)
+- `src/components/shell/sidebar.tsx` (account nav entry)
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+
+### Risks
+- Supabase MFA endpoints may return project-config-dependent errors if MFA is disabled.
+- Login alerts are derived from session activity; no outbound email sender exists in repo beyond Supabase-auth emails.
+- Session API availability differs by Supabase plan/version; endpoint code must fail safely.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- Manual smoke: signup/login, account page load, MFA enroll/challenge/verify path, session revoke path.
+
+### Assumptions / open questions
+- **Assumption:** Supabase project supports MFA TOTP endpoints from authenticated session context.
+- **Assumption:** login alerts in this slice are in-app account alerts derived from new/unknown session activity; external alert channel wiring remains TODO.
+- **TODO:** add persistent audit events/notification delivery once notification subsystem exists.
+
+## Account/auth full-set completion follow-up (March 25, 2026)
+
+### Goal
+Close remaining quality and completeness gaps for the full account/auth feature set, including verification UX polish, MFA challenge UX for existing factors, non-interactive lint/test validation setup, and explicit notification-architecture constraints.
+
+### Gap analysis snapshot
+- Core signup/login/logout/reset/verification/session APIs already exist in runtime code.
+- Account page exists, but verification resend and existing-factor MFA challenge/confirm UX are incomplete.
+- Lint command is interactive due missing repo ESLint config.
+- No test script/tooling exists, preventing required validation.
+
+### Proposed approach
+1. Add repo-consistent ESLint configuration so `npm run lint` runs non-interactively.
+2. Add minimal TypeScript test runner setup (`node --import tsx --test`) and targeted tests for auth utility validation + account-security mappings.
+3. Extend account security UI to support verification resend and explicit MFA challenge/confirm flow for already enrolled factors.
+4. Document notification-system constraint and MVP-equivalent login-alert behavior in docs.
+
+### Verification
+- `npm install`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npm run build`

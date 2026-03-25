@@ -9,7 +9,9 @@ const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
   { href: "/transactions", label: "Transactions", icon: TransactionsIcon },
   { href: "/receipts", label: "Receipts", icon: ReceiptIcon },
-  { href: "/reports", label: "Reports", icon: ReportIcon }
+  { href: "/reports", label: "Reports", icon: ReportIcon },
+  { href: "/account", label: "Account", icon: DashboardIcon },
+  { href: "/settings", label: "Settings", icon: ReportIcon }
 ];
 
 function NavLink({ href, label, icon: Icon, isActive }: { href: string; label: string; icon: typeof DashboardIcon; isActive: boolean }) {

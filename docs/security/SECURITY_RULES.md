@@ -7,6 +7,7 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Middleware redirects unauthenticated users away from protected routes.
 - Route handlers call `supabase.auth.getUser()` to enforce authenticated access.
 - Session-management routes derive ownership from the authenticated Supabase context and never trust client-supplied user identifiers.
+- Account-security routes expose only authenticated-user profile/session/MFA data (`/api/me/account`, `/api/me/devices`, `/api/me/login-alerts`, `/api/me/mfa/*`).
 
 ## Current role model
 - Company-scoped RBAC baseline is implemented with `roles`, `permissions`, `role_permissions`, and `company_memberships.role`.
@@ -55,6 +56,7 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - `DELETE /api/me/sessions/{session_id}` enforces authenticated ownership checks before revocation.
 - Revocation of the current active session is blocked to avoid unexpected lockout.
 - Unauthorized or forbidden requests return minimal `401/403` responses without exposing whether another user session exists.
+- Login-alert delivery in current MVP is in-app (`/api/me/login-alerts`) based on authenticated session history; no outbound notifier (email/SMS/push worker) is present in the repository yet.
 
 ## Audit log expectations (target)
 - Add immutable audit events for sensitive actions:
