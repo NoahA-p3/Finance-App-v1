@@ -337,3 +337,48 @@ Implement authenticated self-session APIs and a Settings session-management pane
 ### Assumptions / open questions
 - **Assumption:** Supabase Auth session-management endpoints are available through project auth REST base URL with authenticated bearer token.
 - **TODO:** replace placeholder audit hook implementation with immutable persistent audit events once audit subsystem exists.
+
+## Company bootstrap + company profile persistence slice (March 25, 2026)
+
+### Goal
+Add canonical, additive company tenancy primitives and persisted company profile editing via onboarding/settings without extending the legacy `public.users/accounts` branch.
+
+### Current behavior
+- No canonical `companies` or `company_memberships` tables exist in runtime schema.
+- Onboarding and settings business fields are placeholder-only and not persisted.
+- No `/api/companies` route group exists.
+
+### Proposed approach
+1. Add a new additive Supabase migration for `companies`, `company_memberships`, and `company_settings` with RLS policies bound to authenticated membership checks.
+2. Include migration rollback/recovery notes and keep changes scoped to canonical `auth.users` identity.
+3. Add `/api/companies` route handler supporting:
+   - `GET` current user company profile/settings via membership.
+   - `POST` bootstrap create for users without an existing membership (single-company bootstrap).
+   - `PATCH` update allowed fields with strict auth + owner membership check.
+4. Wire onboarding/settings forms to persisted API behavior (create first, then update) with no placeholder-only path.
+5. Update docs (`DATA_MODEL`, `API_CONTRACTS`, `README`) and regenerate `src/types/database.ts` contract to include new tables.
+
+### Affected files
+- `supabase/migrations/*` (new additive migration)
+- `src/types/database.ts`
+- `src/app/api/companies/route.ts`
+- `src/app/(dashboard)/onboarding/page.tsx`
+- `src/app/(dashboard)/settings/page.tsx`
+- `docs/architecture/DATA_MODEL.md`
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+
+### Risks
+- Incorrect RLS policy composition could allow unintended cross-tenant access.
+- Bootstrap logic might allow duplicate company creation if membership uniqueness is not enforced.
+- UI route flow may diverge if onboarding/settings do not share the same persisted contract.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- Manual smoke: create company in onboarding, reload/settings edit and confirm values persist.
+
+### Assumptions / open questions
+- Assumption: each user bootstraps exactly one initial company in this MVP slice; multi-company UX remains future work.
+- Assumption: base currency and fiscal year start are stored in `company_settings` to keep profile and operational settings separated.

@@ -25,6 +25,9 @@ Currently implemented route handlers in `src/app/api/*`:
 - `POST /api/categories`
 - `DELETE /api/categories?id=<id>`
 - `POST /api/receipts`
+- `GET /api/companies`
+- `POST /api/companies`
+- `PATCH /api/companies`
 
 All other endpoint groupings in this document are target contracts for phased implementation.
 
@@ -40,6 +43,12 @@ All other endpoint groupings in this document are target contracts for phased im
   - `DELETE /api/me/sessions/{session_id}` validates session id format, enforces authenticated ownership, and blocks revoking the current session.
   - Session revoke responses avoid leaking cross-user session existence details.
 - No local password tables are used; identity remains Supabase Auth (`auth.users`).
+- Company profile bootstrap flow:
+  - `GET /api/companies` returns the authenticated user's current company profile/settings if membership exists, otherwise `company: null`.
+  - `POST /api/companies` creates a first company + owner membership for authenticated users without an existing company membership.
+  - `PATCH /api/companies` updates company profile/settings fields for owner membership only.
+  - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
+
 
 ## Module-aligned endpoint groupings (target)
 

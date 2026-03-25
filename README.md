@@ -14,6 +14,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Transaction CRUD surface (currently list + create via `/api/transactions`).
 - Category create/delete via `/api/categories`.
 - Receipt file upload to private Supabase Storage bucket (`receipts`) via `/api/receipts`.
+- Company bootstrap/profile API (`/api/companies`) with persisted onboarding/settings fields (name, contact/address, VAT status, fiscal year start, base currency).
 - Dashboard/reporting UI is mostly placeholder/mock-data driven.
 
 ## Tech stack (observed in repo)
@@ -63,7 +64,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 ## Repository structure
 - `src/app/(auth)` — login/signup/forgot-password/reset-password routes
 - `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, settings, onboarding)
-- `src/app/api` — route handlers for auth, profile sessions, transactions, categories, receipts
+- `src/app/api` — route handlers for auth, profile sessions, companies, transactions, categories, receipts
 - `src/components` — UI and feature components
 - `src/lib` — auth helper, Supabase clients, data-fetch helpers
 - `supabase/migrations` — schema, triggers, RLS/storage policy definitions
