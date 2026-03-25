@@ -6,6 +6,7 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Supabase Auth (email/password) is used for user authentication.
 - Middleware redirects unauthenticated users away from protected routes.
 - Route handlers call `supabase.auth.getUser()` to enforce authenticated access.
+- Session-management routes derive ownership from the authenticated Supabase context and never trust client-supplied user identifiers.
 
 ## Current role model
 - Effectively single role: authenticated end user.
@@ -40,6 +41,13 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Error responses should avoid leaking internals.
 - **TODO:** centralize structured logging policy once logging stack is introduced.
 
+
+## Session revocation controls (current runtime)
+- `GET /api/me/sessions` scopes responses to sessions belonging to the authenticated user.
+- `DELETE /api/me/sessions/{session_id}` enforces authenticated ownership checks before revocation.
+- Revocation of the current active session is blocked to avoid unexpected lockout.
+- Unauthorized or forbidden requests return minimal `401/403` responses without exposing whether another user session exists.
+
 ## Audit log expectations (target)
 - Add immutable audit events for sensitive actions:
   - auth profile changes,
@@ -61,4 +69,5 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 1. Add formal role model for multi-user businesses.
 2. Add automated security tests for RLS and auth boundaries.
 3. Add explicit data retention/deletion policy for receipts and accounting artifacts.
-4. Add centralized audit event system.
+4. Replace session revoke audit hook placeholder with immutable persistent audit storage.
+5. Add centralized audit event system.

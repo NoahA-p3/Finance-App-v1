@@ -293,3 +293,47 @@ Add a complete Supabase-auth-based password recovery flow (request + reset confi
 ### Assumptions / open questions
 - **Assumption:** reset links will target app route `/reset-password` via `emailRedirectTo`.
 - **Assumption:** optional staged rollout can use a simple env flag with default enabled behavior.
+
+## Session management vertical slice (March 25, 2026)
+
+### Goal
+Implement authenticated self-session APIs and a Settings session-management panel aligned to the API contract target (`GET /me/sessions`, `DELETE /me/sessions/{session_id}`) via Next.js `/api/me/sessions/*` handlers.
+
+### Current behavior
+- No `/api/me/sessions` routes exist.
+- Settings page is static placeholder content and does not surface active auth sessions.
+- No session-specific audit hook interface exists for revocation actions.
+
+### Proposed approach
+1. Add server route handlers:
+   - `GET /api/me/sessions`: authenticate via `supabase.auth.getUser()` and return only sessions from authenticated context.
+   - `DELETE /api/me/sessions/{session_id}`: validate UUID, verify ownership from authenticated context, block revoking current session, then revoke target session.
+2. Implement ownership-safe Supabase Auth REST calls with bearer token from current authenticated session (never trust client user IDs).
+3. Add an audit-ready hook interface for session revoke events (non-persistent placeholder, no sensitive logging).
+4. Add a settings subpanel UI for listing/revoking sessions behind a feature flag so backend can ship first.
+5. Update API contracts and security docs to reflect current runtime support and authz expectations.
+
+### Affected files
+- `src/app/api/me/sessions/route.ts`
+- `src/app/api/me/sessions/[session_id]/route.ts`
+- `src/lib/auth.ts`
+- `src/lib/auth-flags.ts`
+- `src/lib/session-events.ts` (new)
+- `src/components/settings/sessions-panel.tsx` (new)
+- `src/app/(dashboard)/settings/page.tsx`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/security/SECURITY_RULES.md`
+
+### Risks
+- Supabase project/API version differences may affect session-management endpoint availability.
+- Session metadata availability may vary by auth provider/client context.
+- Must avoid accidental current-session revocation and sensitive error leakage.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** Supabase Auth session-management endpoints are available through project auth REST base URL with authenticated bearer token.
+- **TODO:** replace placeholder audit hook implementation with immutable persistent audit events once audit subsystem exists.
