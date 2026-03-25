@@ -482,3 +482,54 @@ Implement explicit multi-company context switching with persisted active-company
 ### Assumptions / open questions
 - **Assumption:** CVR provider credentials/integration are not yet configured in this environment, so adapter returns explicit unavailable state.
 - **Assumption:** Existing finance rows without `company_id` can remain hidden from active-company scoped APIs until remediated.
+
+## Billing entitlements + soft-limit enforcement slice (March 25, 2026)
+
+### Goal
+Add an internal (non-provider-coupled) plans/subscriptions/entitlements data model with server-side limit enforcement for the first two limits: monthly voucher counter and rolling turnover cap.
+
+### Current behavior
+- No runtime tables/API currently expose company plan state, entitlements, or usage counters.
+- Finance write path (`POST /api/transactions`) validates ownership and shape, but does not enforce plan limits.
+- Settings UI has no billing/entitlement visibility or upgrade prompts.
+
+### Proposed approach
+1. Add additive migration for `plans`, `plan_entitlements`, `company_subscriptions`, and `usage_counters` with RLS and baseline seeded plan config.
+2. Add shared entitlement service in `src/lib` for:
+   - active plan + entitlement read
+   - usage snapshot calculation (monthly voucher count and rolling turnover)
+   - enforcement decisioning with warning + soft lock outcomes
+3. Add `/api/entitlements` read endpoint and admin seed endpoint (`/api/entitlements/admin/seed`) for internal config refresh.
+4. Enforce limits server-side in `POST /api/transactions`; return explicit soft-lock payload when blocked.
+5. Add settings UI surface for current plan, usage thresholds, warning/lock messaging, and upgrade prompt.
+6. Add rollout feature-flag support so enforcement can be enabled by plan tier.
+7. Update architecture/product/security docs and DB types to reflect the new runtime behavior.
+
+### Affected files
+- `supabase/migrations/*` (new additive migration)
+- `src/types/database.ts`
+- `src/lib/auth-flags.ts`
+- `src/lib/entitlements.ts` (new)
+- `src/app/api/entitlements/*` (new)
+- `src/app/api/transactions/route.ts`
+- `src/components/settings/entitlements-panel.tsx` (new)
+- `src/app/(dashboard)/settings/page.tsx`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/architecture/DATA_MODEL.md`
+- `docs/product/MVP_SCOPE.md`
+- `docs/security/SECURITY_RULES.md`
+
+### Risks
+- Numeric precision drift if turnover checks are implemented with float math.
+- Locking writes at API layer may impact existing UI flows unless response contract is handled gracefully.
+- RLS/policy mismatches can leak plan configuration or cross-company usage data.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** voucher counting maps to transaction creation volume in MVP until invoices/vouchers are split into dedicated ledgers.
+- **Assumption:** rolling turnover cap uses 12-month revenue sum from `transactions` where `type = 'revenue'`.
+- **TODO:** provider-coupled subscription sync remains a future milestone; subscription state remains internal source of truth in this slice.

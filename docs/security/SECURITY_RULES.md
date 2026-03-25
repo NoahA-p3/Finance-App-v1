@@ -23,6 +23,7 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Active company is persisted in `profiles.active_company_id` and switched only through `POST /api/companies/switch` after membership validation.
 - Company-scoped route handlers resolve active company server-side and do not trust client ownership or company context fields.
 - Finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) enforce active membership + `company_id` scoping.
+- Entitlement enforcement is server-side in `/api/transactions` and gated by rollout flags (`ENABLE_ENTITLEMENT_ENFORCEMENT`, `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS`) to control plan-tier activation.
 - CVR lookup endpoint is adapter-based and returns explicit `manual_entry_required` fallback when provider integration is unavailable.
 
 ## Sensitive data classification
@@ -78,3 +79,4 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 3. Add explicit data retention/deletion policy for receipts and accounting artifacts.
 4. Replace session revoke audit hook placeholder with immutable persistent audit storage.
 5. Add centralized audit event system.
+6. Replace owner-only entitlement seed route with auditable admin workflow before production billing integration.

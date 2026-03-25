@@ -20,6 +20,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Company settings persistence now includes invoice settings, branding/logo metadata placeholders, branch/department placeholders, and CVR number storage.
 - CVR lookup adapter endpoint (`GET /api/companies/cvr?cvr=<8-digit>`) with explicit manual fallback when provider integration is not configured.
 - Finance APIs (`/api/transactions`, `/api/categories`, `/api/receipts`) are active-company scoped and enforce membership + `company_id` isolation.
+- Internal billing baseline includes plans/subscriptions/entitlements (`/api/entitlements`) and server-side soft-limit enforcement on transaction writes for monthly vouchers + rolling 12-month turnover cap.
 - Dashboard/reporting UI is mostly placeholder/mock-data driven.
 
 ## Tech stack (observed in repo)
@@ -46,6 +47,9 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
   - `NEXT_PUBLIC_ENABLE_PASSWORD_RESET` (optional, set to `false` to hide/reset-disable password recovery UX)
   - `NEXT_PUBLIC_ENABLE_SESSION_MANAGEMENT` (optional, set to `false` to hide the Settings session-management panel while backend remains available)
   - `NEXT_PUBLIC_ENABLE_ADVANCED_ROLES` (optional, default `false`; when `true`, allows assigning advanced placeholder roles: accountant, auditor, payroll-only, sales-only, integration-admin)
+  - `NEXT_PUBLIC_ENABLE_ENTITLEMENTS` (optional, default `true`; controls Settings plan/entitlements panel visibility)
+  - `ENABLE_ENTITLEMENT_ENFORCEMENT` (optional, default `true`; global server-side plan-limit enforcement switch)
+  - `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS` (optional CSV allowlist; e.g. `starter,growth` for per-tier rollout)
 4. Start dev server:
    ```bash
    npm run dev

@@ -23,6 +23,10 @@ Current code and active API routes primarily use:
 - `public.companies`
 - `public.company_memberships`
 - `public.company_settings`
+- `public.plans`
+- `public.plan_entitlements`
+- `public.company_subscriptions`
+- `public.usage_counters`
 - Supabase Storage `receipts` bucket
 
 This remains the active MVP runtime path today. The module-aligned model below defines planned schema expansion.
@@ -31,6 +35,8 @@ This remains the active MVP runtime path today. The module-aligned model below d
 - `public.profiles.active_company_id` stores persisted active company context per authenticated user.
 - `public.transactions`, `public.categories`, and `public.receipts` include `company_id` for active-company data isolation.
 - `public.company_settings` includes persisted invoice settings metadata, branding/logo metadata placeholders, branch/department labels, and `cvr_number`.
+- Billing baseline is internal-source-only (provider coupling intentionally deferred): `company_subscriptions.source` + seeded `plans` and `plan_entitlements` drive entitlement checks.
+- Initial enforced limits are `monthly_vouchers` and `rolling_turnover_12m_dkk`; usage is tracked in `usage_counters`.
 
 ## Module-aligned schema map (target)
 
@@ -38,7 +44,7 @@ This remains the active MVP runtime path today. The module-aligned model below d
 - Identity/security: `users`, `auth_identities`, `user_sessions`, `password_reset_tokens`, `email_verification_tokens`, `mfa_methods`, `mfa_backup_codes`
 - Access control: `roles`, `permissions`, `role_permissions`, `company_memberships`, `company_invitations`
 - Company profile/settings: `companies`, `company_addresses`, `company_settings`, `company_branding`, `company_registry_snapshots`
-- Plans/entitlements: `plans`, `plan_features`, `subscriptions`, `subscription_addons`, `usage_counters`
+- Plans/entitlements: `plans`, `plan_entitlements`, `company_subscriptions`, `usage_counters` (current runtime baseline).
 
 ### 2) Contacts and Master Data
 - Contact domain: `contacts`, `contact_addresses`, `contact_people`, `contact_tags`, `contact_tag_links`
