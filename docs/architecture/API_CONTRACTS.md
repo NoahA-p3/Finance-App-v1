@@ -28,6 +28,10 @@ Currently implemented route handlers in `src/app/api/*`:
 - `GET /api/companies`
 - `POST /api/companies`
 - `PATCH /api/companies`
+- `GET /api/companies/members`
+- `PATCH /api/companies/members`
+- `GET /api/companies/invitations`
+- `POST /api/companies/invitations`
 
 All other endpoint groupings in this document are target contracts for phased implementation.
 
@@ -46,7 +50,12 @@ All other endpoint groupings in this document are target contracts for phased im
 - Company profile bootstrap flow:
   - `GET /api/companies` returns the authenticated user's current company profile/settings if membership exists, otherwise `company: null`.
   - `POST /api/companies` creates a first company + owner membership for authenticated users without an existing company membership.
-  - `PATCH /api/companies` updates company profile/settings fields for owner membership only.
+  - `PATCH /api/companies` requires `company.settings.manage` permission (granted to `owner` in baseline).
+  - `GET /api/companies/members` requires `company.members.read`.
+  - `PATCH /api/companies/members` requires `company.members.manage` and updates member role assignments.
+  - `GET /api/companies/invitations` lists pending invitations and requires `company.invitations.read`.
+  - `POST /api/companies/invitations` creates pending invitations and requires `company.invitations.manage`.
+  - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
   - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
 
 

@@ -70,26 +70,58 @@ export type Database = {
           vat_registered?: boolean;
         };
       };
+      company_invitations: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          id: string;
+          invited_by: string;
+          invited_email: string;
+          role: CompanyRoleKey;
+          status: "accepted" | "expired" | "pending" | "revoked";
+          updated_at: string;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          id?: string;
+          invited_by: string;
+          invited_email: string;
+          role: CompanyRoleKey;
+          status?: "accepted" | "expired" | "pending" | "revoked";
+          updated_at?: string;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          id?: string;
+          invited_by?: string;
+          invited_email?: string;
+          role?: CompanyRoleKey;
+          status?: "accepted" | "expired" | "pending" | "revoked";
+          updated_at?: string;
+        };
+      };
       company_memberships: {
         Row: {
           company_id: string;
           created_at: string;
           id: string;
-          role: "member" | "owner";
+          role: CompanyRoleKey;
           user_id: string;
         };
         Insert: {
           company_id: string;
           created_at?: string;
           id?: string;
-          role?: "member" | "owner";
+          role?: CompanyRoleKey;
           user_id: string;
         };
         Update: {
           company_id?: string;
           created_at?: string;
           id?: string;
-          role?: "member" | "owner";
+          role?: CompanyRoleKey;
           user_id?: string;
         };
       };
@@ -114,6 +146,23 @@ export type Database = {
           created_at?: string;
           fiscal_year_start_month?: number;
           updated_at?: string;
+        };
+      };
+      permissions: {
+        Row: {
+          created_at: string;
+          description: string;
+          key: string;
+        };
+        Insert: {
+          created_at?: string;
+          description: string;
+          key: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          key?: string;
         };
       };
       profiles: {
@@ -174,6 +223,43 @@ export type Database = {
           user_id?: string;
         };
       };
+      role_permissions: {
+        Row: {
+          created_at: string;
+          permission_key: string;
+          role_key: CompanyRoleKey;
+        };
+        Insert: {
+          created_at?: string;
+          permission_key: string;
+          role_key: CompanyRoleKey;
+        };
+        Update: {
+          created_at?: string;
+          permission_key?: string;
+          role_key?: CompanyRoleKey;
+        };
+      };
+      roles: {
+        Row: {
+          created_at: string;
+          display_name: string;
+          is_advanced: boolean;
+          key: CompanyRoleKey;
+        };
+        Insert: {
+          created_at?: string;
+          display_name: string;
+          is_advanced?: boolean;
+          key: CompanyRoleKey;
+        };
+        Update: {
+          created_at?: string;
+          display_name?: string;
+          is_advanced?: boolean;
+          key?: CompanyRoleKey;
+        };
+      };
       transactions: {
         Row: {
           amount: number;
@@ -212,3 +298,13 @@ export type Database = {
     };
   };
 };
+
+export type CompanyRoleKey =
+  | "accountant"
+  | "auditor"
+  | "integration_admin"
+  | "owner"
+  | "payroll_only"
+  | "read_only"
+  | "sales_only"
+  | "staff";

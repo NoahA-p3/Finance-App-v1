@@ -15,6 +15,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Category create/delete via `/api/categories`.
 - Receipt file upload to private Supabase Storage bucket (`receipts`) via `/api/receipts`.
 - Company bootstrap/profile API (`/api/companies`) with persisted onboarding/settings fields (name, contact/address, VAT status, fiscal year start, base currency).
+- Company RBAC baseline with seeded roles (`owner`, `staff`, `read_only`), server-enforced permission checks on settings/member management, and invitation skeleton endpoints (`GET/POST /api/companies/invitations`, `GET/PATCH /api/companies/members`).
 - Dashboard/reporting UI is mostly placeholder/mock-data driven.
 
 ## Tech stack (observed in repo)
@@ -40,6 +41,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
    - `SUPABASE_SERVICE_ROLE_KEY` (present in env example; currently not directly consumed in app code)
   - `NEXT_PUBLIC_ENABLE_PASSWORD_RESET` (optional, set to `false` to hide/reset-disable password recovery UX)
   - `NEXT_PUBLIC_ENABLE_SESSION_MANAGEMENT` (optional, set to `false` to hide the Settings session-management panel while backend remains available)
+  - `NEXT_PUBLIC_ENABLE_ADVANCED_ROLES` (optional, default `false`; when `true`, allows assigning advanced placeholder roles: accountant, auditor, payroll-only, sales-only, integration-admin)
 4. Start dev server:
    ```bash
    npm run dev
