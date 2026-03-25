@@ -20,6 +20,9 @@ Current code and active API routes primarily use:
 - `public.transactions`
 - `public.categories`
 - `public.receipts`
+- `public.companies`
+- `public.company_memberships`
+- `public.company_settings`
 - Supabase Storage `receipts` bucket
 
 This remains the active MVP runtime path today. The module-aligned model below defines planned schema expansion.
@@ -94,7 +97,7 @@ This remains the active MVP runtime path today. The module-aligned model below d
   - `files` with `file_links` and direct nullable FKs in selected tables.
 
 ## Implementation-status alignment
-- Implemented today: auth/profile + transaction/category/receipt baseline tables.
+- Implemented today: auth/profile + transaction/category/receipt baseline tables, plus initial company bootstrap tables (`companies`, `company_memberships`, `company_settings`).
 - Planned: most company-scoped, ledger-grade, and workflow-specific tables listed above.
 - Important: do not describe planned tables as already migrated unless present in `supabase/migrations` and reflected in `src/types/database.ts`.
 

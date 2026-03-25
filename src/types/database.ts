@@ -23,6 +23,99 @@ export type Database = {
           user_id?: string;
         };
       };
+      companies: {
+        Row: {
+          address_line1: string | null;
+          address_line2: string | null;
+          city: string | null;
+          contact_email: string | null;
+          contact_phone: string | null;
+          country_code: string | null;
+          created_at: string;
+          created_by: string;
+          id: string;
+          name: string;
+          postal_code: string | null;
+          updated_at: string;
+          vat_registered: boolean;
+        };
+        Insert: {
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          country_code?: string | null;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          name: string;
+          postal_code?: string | null;
+          updated_at?: string;
+          vat_registered?: boolean;
+        };
+        Update: {
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          country_code?: string | null;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          name?: string;
+          postal_code?: string | null;
+          updated_at?: string;
+          vat_registered?: boolean;
+        };
+      };
+      company_memberships: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          id: string;
+          role: "member" | "owner";
+          user_id: string;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          id?: string;
+          role?: "member" | "owner";
+          user_id: string;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          id?: string;
+          role?: "member" | "owner";
+          user_id?: string;
+        };
+      };
+      company_settings: {
+        Row: {
+          base_currency: string;
+          company_id: string;
+          created_at: string;
+          fiscal_year_start_month: number;
+          updated_at: string;
+        };
+        Insert: {
+          base_currency?: string;
+          company_id: string;
+          created_at?: string;
+          fiscal_year_start_month?: number;
+          updated_at?: string;
+        };
+        Update: {
+          base_currency?: string;
+          company_id?: string;
+          created_at?: string;
+          fiscal_year_start_month?: number;
+          updated_at?: string;
+        };
+      };
       profiles: {
         Row: {
           created_at: string;

@@ -1,8 +1,7 @@
 import { DashboardShell } from "@/components/shell/dashboard-shell";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { SessionsPanel } from "@/components/settings/sessions-panel";
+import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { isSessionManagementEnabled } from "@/lib/auth-flags";
 
 export default function SettingsPage() {
@@ -11,23 +10,12 @@ export default function SettingsPage() {
   return (
     <DashboardShell title="Settings">
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h3 className="font-semibold text-white">Business Information</h3>
-          <div className="mt-3 space-y-3 text-indigo-100/90">
-            <Input placeholder="Business name" defaultValue="Acme Studio LLC" />
-            <Input placeholder="Country" defaultValue="United States" />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" className="rounded" /> VAT registered
-            </label>
-          </div>
-        </Card>
+        <CompanyProfileForm />
         <Card>
           <h3 className="font-semibold text-white">Tax Settings</h3>
-          <div className="mt-3 space-y-3">
-            <Input placeholder="Tax rate" defaultValue="26" />
-            <Input placeholder="Bank connection" defaultValue="Plaid (placeholder)" />
-            <Button className="w-full">Save settings</Button>
-          </div>
+          <p className="mt-2 text-sm text-indigo-100/80">
+            TODO: VAT engine and tax-rule automation are planned and not fully implemented yet.
+          </p>
         </Card>
       </div>
 
