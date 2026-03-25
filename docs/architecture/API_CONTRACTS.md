@@ -49,6 +49,10 @@ All other endpoint groupings in this document are target contracts for phased im
 
 
 ### Auth endpoint behavior notes (current runtime)
+- Signup flow:
+  - `POST /api/auth/signup` returns actionable setup guidance when Supabase rejects `emailRedirectTo` configuration.
+  - Route retries signup without `emailRedirectTo` when redirect-url configuration fails, so account creation can still succeed while configuration is corrected.
+  - Existing email conflicts return `409` with a non-sensitive sign-in/reset hint.
 - Password reset flow is Supabase Auth-native:
   - `POST /api/auth/forgot-password` always returns a generic success message when request format is valid to avoid account enumeration.
   - `POST /api/auth/reset-password` updates password for an active recovery session only.

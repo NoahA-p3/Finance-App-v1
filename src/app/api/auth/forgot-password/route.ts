@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { isPasswordResetEnabled, normalizeEmail, readJsonObject, resolveSiteUrl } from "../utils";
+import { isPasswordResetEnabled, normalizeEmail, readJsonObject, resolveAuthRedirectUrl } from "../utils";
 
 export async function POST(req: Request) {
   if (!isPasswordResetEnabled()) {
@@ -19,10 +19,9 @@ export async function POST(req: Request) {
   }
 
   const supabase = await createClient();
-  const siteUrl = resolveSiteUrl(req.url);
 
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/reset-password`
+    redirectTo: resolveAuthRedirectUrl(req, "/reset-password") ?? undefined
   });
 
   return NextResponse.json({

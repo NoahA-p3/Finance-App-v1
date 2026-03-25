@@ -2,6 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import type { SetAllCookies } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const AUTH_PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password"];
+
+function isAuthPublicPath(pathname: string) {
+  return AUTH_PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+}
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -26,7 +32,7 @@ export async function updateSession(request: NextRequest) {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/signup");
+  const isAuthPage = isAuthPublicPath(request.nextUrl.pathname);
 
   if (!user && !isAuthPage && request.nextUrl.pathname !== "/") {
     const url = request.nextUrl.clone();
