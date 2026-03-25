@@ -3,34 +3,27 @@ import { KpiCards } from "@/components/finance/kpi-cards";
 import { OverviewChart } from "@/components/finance/overview-chart";
 import { ExpenseBreakdown } from "@/components/finance/expense-breakdown";
 import { RecentTransactions } from "@/components/finance/recent-transactions";
+import { requireUser } from "@/lib/auth";
+import { getCompanyMembershipContext } from "@/lib/company-permissions";
+import { getDashboardFinanceData } from "@/lib/dashboard-data";
 
-const projectTabs = ["Overview", "Cash Flow", "Budget", "Receipts", "Forecasts"];
+export default async function DashboardPage() {
+  const { supabase, user } = await requireUser();
+  const membership = await getCompanyMembershipContext(supabase, user.id);
 
-export default function DashboardPage() {
+  const data = membership
+    ? await getDashboardFinanceData(supabase, user.id, membership.companyId)
+    : { kpis: [], trendData: [], expenseBreakdown: [], recentTransactions: [] };
+
   return (
     <DashboardShell title="Dashboard">
       <div className="space-y-4">
-        <section className="rounded-2xl border border-white/10 bg-[#22254a] p-3">
-          <div className="flex flex-wrap gap-2">
-            {projectTabs.map((tab, index) => (
-              <button
-                key={tab}
-                className={`rounded-lg px-3 py-1.5 text-sm transition ${
-                  index === 0 ? "bg-cyan-300 text-[#1c1f3e]" : "bg-white/5 text-indigo-100 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </section>
-        <KpiCards />
+        <KpiCards items={data.kpis} />
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-          <OverviewChart />
-          <ExpenseBreakdown />
+          <OverviewChart data={data.trendData} />
+          <ExpenseBreakdown items={data.expenseBreakdown} />
         </div>
-        <RecentTransactions />
+        <RecentTransactions items={data.recentTransactions} />
       </div>
     </DashboardShell>
   );
