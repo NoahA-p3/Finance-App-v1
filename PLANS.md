@@ -382,3 +382,45 @@ Add canonical, additive company tenancy primitives and persisted company profile
 ### Assumptions / open questions
 - Assumption: each user bootstraps exactly one initial company in this MVP slice; multi-company UX remains future work.
 - Assumption: base currency and fiscal year start are stored in `company_settings` to keep profile and operational settings separated.
+
+## Baseline company RBAC slice (March 25, 2026)
+
+### Goal
+Ship a small, testable server-enforced RBAC baseline for company settings/member management using canonical `auth.users` + `companies/company_memberships`.
+
+### Current behavior
+- `company_memberships.role` supports only `owner|member`.
+- `/api/companies` owner check is hardcoded (`role === "owner"`) without reusable permission helpers.
+- No explicit `roles/permissions/role_permissions` schema or invitation endpoint exists.
+
+### Proposed approach
+1. Add additive migration for `roles`, `permissions`, `role_permissions`, and `company_invitations`.
+2. Tie `company_memberships.role` to canonical `roles.key` and backfill `member -> staff`.
+3. Seed baseline roles (`owner`, `staff`, `read_only`) and permission matrix; seed advanced roles as disabled-by-flag placeholders.
+4. Add reusable permission helper module in `src/lib` for company-scoped server checks.
+5. Enforce permissions in `/api/companies` and new member/invitation endpoints.
+6. Update API/security/readme docs for current runtime behavior.
+
+### Affected files
+- `supabase/migrations/*`
+- `src/types/database.ts`
+- `src/lib/auth-flags.ts`
+- `src/lib/company-permissions.ts` (new)
+- `src/app/api/companies/*`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/security/SECURITY_RULES.md`
+- `README.md`
+
+### Risks
+- Existing `member` rows must be safely remapped to `staff` before FK enforcement.
+- RLS and API checks can diverge if permission keys are changed without helper updates.
+- Invitation flow remains skeleton-only (no accept flow yet).
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** this MVP slice allows owner role reassignment only when at least one owner remains.
+- **TODO:** finalize advanced-role permission matrix before enabling advanced role assignment.

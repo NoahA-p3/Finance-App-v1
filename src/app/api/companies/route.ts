@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-
-type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+import { COMPANY_PERMISSIONS, getCompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 
 const ISO_CURRENCY_PATTERN = /^[A-Z]{3}$/;
 const ISO_COUNTRY_CODE_PATTERN = /^[A-Z]{2}$/;
@@ -107,16 +105,6 @@ function validateCompanyPayload(payload: unknown, mode: "create" | "update"): { 
   return { value: nextPayload };
 }
 
-async function getMembershipForUser(supabase: SupabaseServerClient, userId: string) {
-  return supabase
-    .from("company_memberships")
-    .select("company_id,role")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-}
-
 export async function GET() {
   const authContext = await requireAuthenticatedApiUser();
 
@@ -124,19 +112,15 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: membership, error: membershipError } = await getMembershipForUser(authContext.supabase, authContext.user.id);
-
-  if (membershipError) {
-    return NextResponse.json({ error: membershipError.message }, { status: 400 });
-  }
+  const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
 
   if (!membership) {
     return NextResponse.json({ company: null, membership: null });
   }
 
   const [{ data: company, error: companyError }, { data: settings, error: settingsError }] = await Promise.all([
-    authContext.supabase.from("companies").select("*").eq("id", membership.company_id).single(),
-    authContext.supabase.from("company_settings").select("*").eq("company_id", membership.company_id).maybeSingle()
+    authContext.supabase.from("companies").select("*").eq("id", membership.companyId).single(),
+    authContext.supabase.from("company_settings").select("*").eq("company_id", membership.companyId).maybeSingle()
   ]);
 
   if (companyError) {
@@ -147,7 +131,7 @@ export async function GET() {
     return NextResponse.json({ error: settingsError.message }, { status: 400 });
   }
 
-  return NextResponse.json({ company, settings, membership });
+  return NextResponse.json({ company, settings, membership: { company_id: membership.companyId, role: membership.role } });
 }
 
 export async function POST(req: NextRequest) {
@@ -157,11 +141,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: existingMembership, error: membershipError } = await getMembershipForUser(authContext.supabase, authContext.user.id);
-
-  if (membershipError) {
-    return NextResponse.json({ error: membershipError.message }, { status: 400 });
-  }
+  const existingMembership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
 
   if (existingMembership) {
     return NextResponse.json({ error: "Company already exists for this user." }, { status: 409 });
@@ -243,18 +223,14 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: membership, error: membershipError } = await getMembershipForUser(authContext.supabase, authContext.user.id);
-
-  if (membershipError) {
-    return NextResponse.json({ error: membershipError.message }, { status: 400 });
-  }
+  const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
 
   if (!membership) {
     return NextResponse.json({ error: "No company membership found." }, { status: 404 });
   }
 
-  if (membership.role !== "owner") {
-    return NextResponse.json({ error: "Only company owners can update company details." }, { status: 403 });
+  if (!hasCompanyPermission(membership, COMPANY_PERMISSIONS.SETTINGS_MANAGE)) {
+    return NextResponse.json({ error: "Missing required permission: company.settings.manage" }, { status: 403 });
   }
 
   let payload: unknown;
@@ -298,7 +274,7 @@ export async function PATCH(req: NextRequest) {
     const { data: updatedCompany, error: companyError } = await authContext.supabase
       .from("companies")
       .update(companyUpdates)
-      .eq("id", membership.company_id)
+      .eq("id", membership.companyId)
       .select("*")
       .single();
 
@@ -322,7 +298,7 @@ export async function PATCH(req: NextRequest) {
   if (Object.keys(settingsUpdates).length > 0) {
     const { data: updatedSettings, error: settingsError } = await authContext.supabase
       .from("company_settings")
-      .upsert({ company_id: membership.company_id, ...settingsUpdates }, { onConflict: "company_id" })
+      .upsert({ company_id: membership.companyId, ...settingsUpdates }, { onConflict: "company_id" })
       .select("*")
       .single();
 
@@ -335,8 +311,8 @@ export async function PATCH(req: NextRequest) {
 
   if (!companyResult || !settingsResult) {
     const [{ data: currentCompany, error: currentCompanyError }, { data: currentSettings, error: currentSettingsError }] = await Promise.all([
-      authContext.supabase.from("companies").select("*").eq("id", membership.company_id).single(),
-      authContext.supabase.from("company_settings").select("*").eq("company_id", membership.company_id).maybeSingle()
+      authContext.supabase.from("companies").select("*").eq("id", membership.companyId).single(),
+      authContext.supabase.from("company_settings").select("*").eq("company_id", membership.companyId).maybeSingle()
     ]);
 
     if (currentCompanyError) {
@@ -351,5 +327,5 @@ export async function PATCH(req: NextRequest) {
     settingsResult = currentSettings;
   }
 
-  return NextResponse.json({ company: companyResult, settings: settingsResult, membership });
+  return NextResponse.json({ company: companyResult, settings: settingsResult, membership: { company_id: membership.companyId, role: membership.role } });
 }

@@ -9,9 +9,10 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Session-management routes derive ownership from the authenticated Supabase context and never trust client-supplied user identifiers.
 
 ## Current role model
-- Effectively single role: authenticated end user.
-- Authorization is owner-based via `user_id` and RLS policies.
-- No explicit admin/accountant/team roles implemented.
+- Company-scoped RBAC baseline is implemented with `roles`, `permissions`, `role_permissions`, and `company_memberships.role`.
+- Seeded baseline roles: `owner`, `staff`, `read_only`.
+- Permission checks are enforced server-side in API handlers (not UI-only) for company settings/member/invitation actions.
+- Advanced roles (`accountant`, `auditor`, `payroll_only`, `sales_only`, `integration_admin`) are present as feature-flagged placeholders until permission matrix finalization.
 
 ## Supabase security and RLS
 - RLS enabled on key tables (`profiles`, `transactions`, `categories`, `receipts`, legacy tables).
@@ -66,7 +67,7 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - **TODO:** document restore runbook and migration rollback/recovery process in ops docs.
 
 ## Security gaps / TODOs
-1. Add formal role model for multi-user businesses.
+1. Expand and finalize advanced-role permission matrix before enabling advanced roles in production.
 2. Add automated security tests for RLS and auth boundaries.
 3. Add explicit data retention/deletion policy for receipts and accounting artifacts.
 4. Replace session revoke audit hook placeholder with immutable persistent audit storage.
