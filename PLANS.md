@@ -676,3 +676,30 @@ Restore reliable new-account signup by removing fragile redirect-url assumptions
 ### Assumptions / open questions
 - **Assumption:** primary signup failures reported are caused by invalid redirect URL config, not database trigger regressions.
 - **TODO:** add route-level automated tests once test harness supports TS route modules directly.
+
+## Forgot-password route access fix (March 25, 2026)
+
+### Goal
+Allow unauthenticated users to access password recovery pages (`/forgot-password`, `/reset-password`) without middleware redirect loops.
+
+### Current behavior
+- Middleware treats only `/login` and `/signup` as auth-public routes.
+- Unauthenticated requests to `/forgot-password` and `/reset-password` are redirected to `/login`.
+- This makes the “Forgot password?” link appear broken and blocks direct recovery-link navigation.
+
+### Proposed approach
+1. Extend middleware auth-public route matcher to include `/forgot-password` and `/reset-password`.
+2. Preserve existing behavior where authenticated users are redirected away from auth pages to `/dashboard`.
+3. Keep route logic isolated to middleware (no API/auth contract changes).
+
+### Affected files
+- `src/lib/supabase/middleware.ts`
+- `PLANS.md`
+
+### Verification steps
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions
+- Password-reset flow remains feature-flagged in UI, but routes should stay publicly reachable for valid reset links.
