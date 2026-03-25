@@ -34,6 +34,8 @@ Currently implemented route handlers in `src/app/api/*`:
 - `POST /api/companies/invitations`
 - `POST /api/companies/switch`
 - `GET /api/companies/cvr?cvr=<8-digit>`
+- `GET /api/entitlements`
+- `POST /api/entitlements/admin/seed`
 
 All other endpoint groupings in this document are target contracts for phased implementation.
 
@@ -59,10 +61,14 @@ All other endpoint groupings in this document are target contracts for phased im
   - `POST /api/companies/invitations` creates pending invitations and requires `company.invitations.manage`.
   - `POST /api/companies/switch` validates target membership and persists `profiles.active_company_id`.
   - `GET /api/companies/cvr?cvr=<8-digit>` uses an adapter interface; when provider integration is unavailable it returns explicit manual fallback guidance.
+  - `GET /api/entitlements` returns active company plan, entitlement limits, and usage snapshots.
+  - `POST /api/entitlements/admin/seed` allows owner-only internal subscription seeding/switching for rollout/testing (provider-agnostic source).
   - Active company context is resolved from `profiles.active_company_id` (with safe first-membership fallback).
   - Company-scoped finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) resolve and enforce active-company membership plus `company_id` filtering.
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
   - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
+  - `POST /api/transactions` enforces plan limits server-side for `monthly_vouchers` and `rolling_turnover_12m_dkk`; responses include `entitlement_warning` and soft-lock `upgrade_prompt` payloads when thresholds are reached.
+  - Enforcement rollout is feature-flagged by plan tier via `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS`.
 
 
 ## Module-aligned endpoint groupings (target)

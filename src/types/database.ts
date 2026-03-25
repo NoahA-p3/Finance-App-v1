@@ -181,6 +181,99 @@ export type Database = {
           department_label?: string | null;
         };
       };
+      company_subscriptions: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          current_period_end: string | null;
+          current_period_start: string | null;
+          id: string;
+          plan_id: string;
+          source: "billing_provider" | "internal_admin" | "internal_seed";
+          status: "active" | "cancelled" | "paused" | "trialing";
+          updated_at: string;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          id?: string;
+          plan_id: string;
+          source?: "billing_provider" | "internal_admin" | "internal_seed";
+          status?: "active" | "cancelled" | "paused" | "trialing";
+          updated_at?: string;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          id?: string;
+          plan_id?: string;
+          source?: "billing_provider" | "internal_admin" | "internal_seed";
+          status?: "active" | "cancelled" | "paused" | "trialing";
+          updated_at?: string;
+        };
+      };
+      plan_entitlements: {
+        Row: {
+          created_at: string;
+          entitlement_key: string;
+          id: string;
+          is_enforced: boolean;
+          limit_value: string | null;
+          plan_id: string;
+          updated_at: string;
+          warning_threshold_percent: number;
+        };
+        Insert: {
+          created_at?: string;
+          entitlement_key: string;
+          id?: string;
+          is_enforced?: boolean;
+          limit_value?: string | null;
+          plan_id: string;
+          updated_at?: string;
+          warning_threshold_percent?: number;
+        };
+        Update: {
+          created_at?: string;
+          entitlement_key?: string;
+          id?: string;
+          is_enforced?: boolean;
+          limit_value?: string | null;
+          plan_id?: string;
+          updated_at?: string;
+          warning_threshold_percent?: number;
+        };
+      };
+      plans: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          key: string;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          key: string;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          key?: string;
+          name?: string;
+          updated_at?: string;
+        };
+      };
       permissions: {
         Row: {
           created_at: string;
@@ -299,9 +392,44 @@ export type Database = {
           key?: CompanyRoleKey;
         };
       };
+      usage_counters: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          entitlement_key: string;
+          id: string;
+          metadata: Json;
+          period_end: string;
+          period_start: string;
+          updated_at: string;
+          usage_value: string;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          entitlement_key: string;
+          id?: string;
+          metadata?: Json;
+          period_end: string;
+          period_start: string;
+          updated_at?: string;
+          usage_value?: string;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          entitlement_key?: string;
+          id?: string;
+          metadata?: Json;
+          period_end?: string;
+          period_start?: string;
+          updated_at?: string;
+          usage_value?: string;
+        };
+      };
       transactions: {
         Row: {
-          amount: number;
+          amount: number | string;
           category_id: string | null;
           company_id: string | null;
           created_at: string;
@@ -313,7 +441,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
-          amount: number;
+          amount: number | string;
           category_id?: string | null;
           company_id?: string | null;
           created_at?: string;
@@ -325,7 +453,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
-          amount?: number;
+          amount?: number | string;
           category_id?: string | null;
           company_id?: string | null;
           created_at?: string;

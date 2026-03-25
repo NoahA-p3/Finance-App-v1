@@ -2,10 +2,12 @@ import { DashboardShell } from "@/components/shell/dashboard-shell";
 import { Card } from "@/components/ui/card";
 import { SessionsPanel } from "@/components/settings/sessions-panel";
 import { CompanyProfileForm } from "@/components/settings/company-profile-form";
-import { isSessionManagementEnabled } from "@/lib/auth-flags";
+import { EntitlementsPanel } from "@/components/settings/entitlements-panel";
+import { isEntitlementReadEnabled, isSessionManagementEnabled } from "@/lib/auth-flags";
 
 export default function SettingsPage() {
   const isSessionPanelEnabled = isSessionManagementEnabled();
+  const isEntitlementsEnabled = isEntitlementReadEnabled();
 
   return (
     <DashboardShell title="Settings">
@@ -18,6 +20,12 @@ export default function SettingsPage() {
           </p>
         </Card>
       </div>
+
+      {isEntitlementsEnabled ? (
+        <div className="mt-4">
+          <EntitlementsPanel />
+        </div>
+      ) : null}
 
       {isSessionPanelEnabled ? (
         <div className="mt-4">

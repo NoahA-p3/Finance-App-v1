@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
 import { getCompanyMembershipContext } from "@/lib/company-permissions";
+import { evaluateTransactionWriteLimit, getCompanyEntitlementsState, upsertUsageCounters } from "@/lib/entitlements";
 
 const TRANSACTION_TYPES = new Set(["expense", "revenue"] as const);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -9,7 +10,7 @@ const DECIMAL_2DP_PATTERN = /^\d+(\.\d{1,2})?$/;
 
 interface ValidTransactionInput {
   description: string;
-  amount: number;
+  amount: string;
   type: "expense" | "revenue";
   date: string;
   category_id?: string | null;
@@ -42,7 +43,8 @@ function parseAmount(value: unknown) {
     return { error: "Amount must be a non-negative number." } as const;
   }
 
-  return { value: parsed } as const;
+  const [whole, decimal = ""] = normalized.split(".");
+  return { value: `${whole}.${decimal.padEnd(2, "0")}` } as const;
 }
 
 function parseOptionalUuid(fieldName: "category_id" | "receipt_id", value: unknown) {
@@ -177,6 +179,26 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const entitlementDecision = await evaluateTransactionWriteLimit(authContext.supabase, authContext.user.id, {
+    type: validation.value.type,
+    amount: validation.value.amount
+  });
+
+  if (!entitlementDecision.allow) {
+    return NextResponse.json(
+      {
+        error: entitlementDecision.softLock?.message ?? "Plan limit reached.",
+        soft_lock: entitlementDecision.softLock,
+        upgrade_prompt: {
+          title: "Upgrade required",
+          body: "Your current plan limit is reached. Upgrade to continue.",
+          cta_label: "View plans"
+        }
+      },
+      { status: 429 }
+    );
+  }
+
   const insertPayload = {
     description: validation.value.description,
     amount: validation.value.amount,
@@ -191,5 +213,24 @@ export async function POST(req: NextRequest) {
   const { data, error } = await authContext.supabase.from("transactions").insert(insertPayload).select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json(data, { status: 201 });
+
+  const refreshedState = await getCompanyEntitlementsState(authContext.supabase, authContext.user.id);
+  if (refreshedState) {
+    await upsertUsageCounters(authContext.supabase, refreshedState);
+  }
+
+  return NextResponse.json(
+    {
+      ...data,
+      entitlement_warning: entitlementDecision.warning,
+      upgrade_prompt: entitlementDecision.warning
+        ? {
+            title: "Approaching plan limit",
+            body: entitlementDecision.warning.message,
+            cta_label: "Compare plans"
+          }
+        : null
+    },
+    { status: 201 }
+  );
 }

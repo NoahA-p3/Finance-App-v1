@@ -12,6 +12,7 @@ Define the MVP baseline that is either implemented today or required to stabiliz
 - Receipt upload and secure storage
 - Dashboard/reports scaffold with progressively real data
 - Early onboarding and settings surfaces
+- Internal plan/entitlement read path with server-enforced soft limits (monthly voucher counter + rolling turnover cap)
 
 ## Explicitly out of scope for stabilized MVP
 - Full invoice/quote/order lifecycle
@@ -19,6 +20,7 @@ Define the MVP baseline that is either implemented today or required to stabiliz
 - Automated bank sync and reconciliation engine
 - Payroll, year-end filing workspace, and developer platform
 - Compliance-grade VAT/tax automation
+- External billing provider coupling (subscriptions remain internal-source in current MVP)
 
 ## Launch segment
 - Denmark-based freelancers and very small businesses
