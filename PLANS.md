@@ -638,3 +638,41 @@ Close remaining quality and completeness gaps for the full account/auth feature 
 - `npm run lint`
 - `npm run test`
 - `npm run build`
+
+## Signup failure investigation + fix slice (March 25, 2026)
+
+### Goal
+Restore reliable new-account signup by removing fragile redirect-url assumptions in auth routes and by exposing actionable signup error messages for faster diagnostics.
+
+### Current behavior
+- `POST /api/auth/signup` always sends `emailRedirectTo` computed from `NEXT_PUBLIC_SITE_URL` fallback to request origin.
+- If the computed URL is missing, malformed, or not allow-listed in Supabase Auth redirect settings, Supabase can reject signup with a generic route response (`Unable to create account.`).
+- Similar redirect-url assumptions exist in forgot-password and resend-verification endpoints.
+
+### Proposed approach
+1. Add safe redirect URL resolver that validates configured site URL and proxy-forwarded host/protocol fallback.
+2. Only include redirect URLs in Supabase calls when the resolved URL is valid.
+3. Add targeted signup error classification so redirect misconfiguration and duplicate-account cases return actionable API errors.
+4. Add fallback retry in signup without `emailRedirectTo` when Supabase rejects redirect URL.
+5. Update docs (`README` + architecture contracts) with explicit env/setup guidance and new error semantics.
+
+### Affected files
+- `src/app/api/auth/utils.ts`
+- `src/app/api/auth/signup/route.ts`
+- `src/app/api/auth/forgot-password/route.ts`
+- `src/app/api/auth/resend-verification/route.ts`
+- `README.md`
+- `docs/architecture/API_CONTRACTS.md`
+
+### Risks
+- Overly detailed auth errors can increase account enumeration risk.
+- Proxy header parsing must avoid constructing malformed URLs.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** primary signup failures reported are caused by invalid redirect URL config, not database trigger regressions.
+- **TODO:** add route-level automated tests once test harness supports TS route modules directly.

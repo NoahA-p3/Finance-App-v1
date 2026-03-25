@@ -46,6 +46,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` (present in env example; currently not directly consumed in app code)
+  - `NEXT_PUBLIC_SITE_URL` (**recommended for auth email links**; must match an allowed Supabase Auth redirect URL such as `https://app.example.com`)
   - `NEXT_PUBLIC_ENABLE_PASSWORD_RESET` (optional, set to `false` to hide/reset-disable password recovery UX)
   - `NEXT_PUBLIC_ENABLE_SESSION_MANAGEMENT` (optional, set to `false` to hide the Settings session-management panel while backend remains available)
   - `NEXT_PUBLIC_ENABLE_ADVANCED_ROLES` (optional, default `false`; when `true`, allows assigning advanced placeholder roles: accountant, auditor, payroll-only, sales-only, integration-admin)
@@ -111,4 +112,5 @@ Documentation is structured around 12 product modules (user/company management t
 ## Deployment notes
 - Intended deployment target is Vercel.
 - No `vercel.json` is currently present; deployment relies on framework defaults + configured env vars.
-- Ensure Supabase Auth URL settings include the deployed app domain and redirect URLs.
+- Ensure Supabase Auth URL settings include the deployed app domain and redirect URLs (signup/resend/reset use this allow-list).
+- If signup fails with a redirect-configuration message, set `NEXT_PUBLIC_SITE_URL` and add the exact URL to Supabase Auth redirect settings.
