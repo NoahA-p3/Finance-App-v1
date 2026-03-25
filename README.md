@@ -66,7 +66,8 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - `tasks/EPICS.md` — prioritized implementation roadmap
 
 ## Documentation map
-- Product: `docs/product/PRD.md`, `docs/product/MVP_SCOPE.md`
+- Product index: `docs/product/README.md`
+- Product core docs: `docs/product/PRD.md`, `docs/product/PRODUCT_MODULE_MAP.md`, `docs/product/DELIVERY_PHASES.md`, `docs/product/MVP_SCOPE.md`
 - Domain: `docs/domain/DK_ACCOUNTING_RULES.md`, `docs/domain/DK_VAT_RULES.md`, `docs/domain/LEGAL_FORM_RULES.md`
 - Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`, `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`
 - Testing: `docs/testing/TEST_STRATEGY.md`, `docs/testing/GOLDEN_DATASETS.md`
@@ -74,6 +75,14 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - UX: `docs/ux/USER_FLOWS.md`
 - Roadmap: `tasks/EPICS.md`
 - Agent instructions: `AGENTS.md`
+
+
+## Product module coverage (docs)
+Documentation is structured around 12 product modules (user/company management through dashboard/navigation) plus phased delivery priorities.
+
+- Module boundaries and status: `docs/product/PRODUCT_MODULE_MAP.md`
+- Delivery phases and priority outcomes: `docs/product/DELIVERY_PHASES.md`
+- User journeys across modules: `docs/ux/USER_FLOWS.md`
 
 ## Working with Codex in this repo
 - Read `AGENTS.md` first.

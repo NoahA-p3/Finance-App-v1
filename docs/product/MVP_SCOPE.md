@@ -1,51 +1,46 @@
 # MVP Scope
 
-Related docs: [PRD](./PRD.md), [System Overview](../architecture/SYSTEM_OVERVIEW.md), [Epics](../../tasks/EPICS.md).
+Related docs: [Product Index](./README.md), [PRD](./PRD.md), [Product Module Map](./PRODUCT_MODULE_MAP.md), [Delivery Phases](./DELIVERY_PHASES.md), [System Overview](../architecture/SYSTEM_OVERVIEW.md), [Epics](../../tasks/EPICS.md).
 
-## In scope
-- Email/password auth and account access control.
-- Basic profile setup and updates.
-- Create and list transactions.
-- Basic category CRUD.
-- Receipt upload and secure storage.
-- Basic dashboard/reports UI scaffold.
+## Scope intent
+Define the MVP baseline that is either implemented today or required to stabilize before broader module expansion.
 
-## Out of scope (for current codebase)
-- Full double-entry ledger with posting controls.
-- Automated bank integrations.
-- OCR extraction and auto-reconciliation.
-- VAT return filing output automation.
-- End-to-end year-end closing workflows for both legal forms.
+## In scope for MVP baseline
+- Auth and protected route access
+- Profile persistence
+- Transaction and category primitives
+- Receipt upload and secure storage
+- Dashboard/reports scaffold with progressively real data
+- Early onboarding and settings surfaces
+
+## Explicitly out of scope for stabilized MVP
+- Full invoice/quote/order lifecycle
+- Full double-entry ledger engine and period locking
+- Automated bank sync and reconciliation engine
+- Payroll, year-end filing workspace, and developer platform
+- Compliance-grade VAT/tax automation
 
 ## Launch segment
-- Denmark-based solo freelancers first.
-- Secondary segment: very small ApS businesses with simple bookkeeping needs.
+- Denmark-based freelancers and very small businesses
+- Legal forms targeted in docs: enkeltmandsvirksomhed and ApS
+
+## Acceptance criteria (MVP baseline)
+1. Users can authenticate and reach protected dashboard routes.
+2. Users can create and review transactions and categories.
+3. Users can upload receipts into private storage paths.
+4. Users can view period-oriented summaries from persisted data (not only mock values).
+5. Tenant boundaries are enforced through auth and RLS.
+
+## Phase alignment
+- MVP baseline aligns with **Phase 1 foundation work** from [Delivery Phases](./DELIVERY_PHASES.md).
+- Phase 2 and Phase 3 capabilities are documented as future work and must not be described as currently shipped.
+
+## Gaps to close before MVP stabilization
+- Stronger transaction validation and decimal-safe amount handling
+- Clear receipt-linking workflow from upload to posting review
+- Reduced mock-data dependency in dashboard/report pages
+- Role/permission expansion plan beyond owner-only assumptions
 
 ## Assumptions
-- **Assumption:** Product intends Supabase-only backend for MVP (no separate API service).
-- **Assumption:** Initial users can tolerate partial/manual accounting workflows before full compliance automation.
-
-## Acceptance criteria (MVP target)
-1. User can sign up, log in, and access protected dashboard routes.
-2. User can add transactions and categorize them.
-3. User can upload and link receipts to transactions.
-4. User can review period totals (revenue/expense) from persisted data.
-5. Multi-user isolation enforced via RLS.
-
-## Milestone view
-1. Foundation: auth, schema, app shell. (mostly present)
-2. Core bookkeeping: transaction + category + receipt flows. (partial)
-3. Compliance layer: VAT/tax rules and period controls. (planned)
-4. Reporting and launch hardening: exports, tests, ops/security. (planned)
-
-## Current repo status vs target MVP
-
-| Area | Current | Target MVP | Gap |
-|---|---|---|---|
-| Auth and access | Implemented | Stable | Small hardening + tests |
-| Transactions | Partial | Production-ready flow | Validation, edit/reversal policy, safer money handling |
-| Categories | Partial | Production-ready flow | Stronger constraints and UX integration |
-| Receipts | Partial | Production-ready flow | Linking workflow, metadata extraction, error handling |
-| VAT/tax | Planned | Minimum Denmark-ready review | Data model + rule implementation |
-| Reports | Placeholder-heavy | Data-backed summaries | Reporting queries and exports |
-| Tests | Minimal/none | Targeted automated coverage | Add unit/integration/e2e suites |
+- **Assumption:** Next.js + Supabase remains the primary MVP runtime path.
+- **Assumption:** Teams accept manual workflows in areas where deep automation is planned but not yet built.

@@ -1,68 +1,72 @@
-# PRD — Finance Assistant MVP
+# PRD — Finance Assistant
+
+Related docs: [Product Index](./README.md), [Product Module Map](./PRODUCT_MODULE_MAP.md), [Delivery Phases](./DELIVERY_PHASES.md), [System Overview](../architecture/SYSTEM_OVERVIEW.md), [User Flows](../ux/USER_FLOWS.md).
 
 ## Product summary
-Finance Assistant aims to make daily bookkeeping simple for Danish freelancers and small businesses, especially users without accounting expertise.
+Finance Assistant is a Denmark-focused bookkeeping and accounting platform for freelancers and small businesses.
 
-Current repo state is an MVP foundation with authentication, profile management, transaction/category/receipt primitives, and dashboard scaffolding.
+The current repository is an MVP foundation. It already includes authentication, protected routing, profile sync, transaction/category/receipt primitives, and dashboard/report scaffolding. Many advanced accounting workflows are still planned.
 
 ## Target users
-- Freelancers and solo operators
-- Small businesses in Denmark
-- Legal forms in scope: enkeltmandsvirksomhed and ApS
-- Users who need compliant records but want low-friction workflows
+- Freelancers and sole proprietors
+- Small teams and small companies
+- Legal forms currently prioritized in product scope: enkeltmandsvirksomhed and ApS
+- Users who need compliant bookkeeping workflows with low operational friction
 
-## Jobs to be done
-1. Capture income/expense events quickly.
-2. Keep receipts and source documentation linked to entries.
-3. Categorize transactions with minimal manual effort.
-4. Track VAT/tax exposure over time.
-5. Produce period and year-end reporting outputs.
+## Product goals
+1. Make daily bookkeeping fast and understandable.
+2. Preserve traceability from source document to accounting output.
+3. Support period review workflows (monthly, VAT period, and year-end).
+4. Expand from MVP primitives into a full accounting operations platform in phased delivery.
 
 ## Product principles
-- Fast daily use over deep accounting complexity.
-- Safe defaults for compliance-sensitive areas.
-- Explainable automation (especially categorization/VAT suggestions).
-- Strong audit trail; no silent destructive edits.
+- **Clarity first:** workflows should expose why an action is needed.
+- **Traceability by default:** accounting-relevant records should remain auditable.
+- **Progressive automation:** suggestions and helpers should be explainable and reviewable.
+- **Scope honesty:** planned modules are documented as planned until implemented.
 
-## Core requirements
+## Module scope and status
+The product roadmap is organized into numbered modules for traceability:
 
-| Requirement | Status | Evidence / notes |
-|---|---|---|
-| Authenticated user accounts | Implemented | Supabase Auth API routes and middleware protection are present. |
-| Basic profile persistence | Implemented | `public.profiles` table + trigger + RLS exist. |
-| Transaction capture and retrieval | Partial | `GET/POST /api/transactions` exists, but no journal/period controls. |
-| Category management | Partial | Create/delete categories exists; no taxonomy governance yet. |
-| Receipt upload and storage | Partial | Upload API + private bucket policies exist; OCR/extraction missing. |
-| Danish VAT engine | Planned | VAT fields/rules are not modeled in active tables. |
-| Tax and deduction guidance | Planned | No tax rule engine in code. |
-| Compliance-grade reporting | Planned | Reports page is currently UI placeholders/mock values. |
-| Legal-form specific flows (enkeltmandsvirksomhed/ApS) | Planned | No legal-form-specific model/logic observed. |
+1. User and company management — **Partial**
+2. Contacts and master data — **Planned**
+3. Sales, quotes, orders, and invoicing — **Planned**
+4. Accounting core — **Partial**
+5. Receipts, expenses, and bookkeeping automation — **Partial**
+6. Payments and checkout — **Planned**
+7. Payroll — **Planned**
+8. Integrations and developer platform — **Planned**
+9. Year-end, tax return, and filing help — **Planned**
+10. Support, onboarding, learning, and migration — **Partial**
+11. Financing and partner services — **Planned**
+12. Home dashboard and navigation — **Partial**
 
-## Success metrics (MVP)
-- Time to add and categorize a transaction < 30 seconds.
-- ≥ 90% of records have supporting source references where required.
-- Zero cross-tenant data leaks (RLS/auth correctness).
-- VAT-ready monthly review flow available (target state; not yet implemented).
+See [Product Module Map](./PRODUCT_MODULE_MAP.md) for detailed boundaries and ownership.
 
-## Constraints
-- Keep architecture simple (Next.js + Supabase).
-- No heavy ops burden before product-market validation.
-- Domain behavior must align with Danish accounting requirements (as product guidance, not legal advice).
+## Current implementation baseline (repo-verified)
+- Auth lifecycle (signup/login/logout) and protected routes
+- Profile persistence linked to authenticated users
+- Transaction/category/receipt primitives
+- Dashboard and report scaffolding (partly placeholder-driven)
 
-## Non-goals (current MVP)
-- Payroll processing.
-- Multi-entity consolidated accounting.
-- Advanced ERP/inventory modules.
-- Fully automated statutory filing submission.
+## Phased delivery priorities
+- **Phase 1:** foundational bookkeeping credibility
+- **Phase 2:** accounting-platform parity workflows (reconciliation, recurring, integrations)
+- **Phase 3:** advanced retention modules (payroll, filing support, developer platform)
 
-## Risks
-- Current transaction model is single-entry style; not a full ledger.
-- Money is represented as JS `number` in TypeScript layer (precision risk).
-- Existing migrations include parallel schema directions (`public.users/accounts` vs auth-user keyed tables), creating drift risk.
-- Limited automated test coverage for finance-critical logic.
+See [Delivery Phases](./DELIVERY_PHASES.md) for capability breakdown.
 
-## Open questions
-1. Canonical accounting model: evolve current transaction table or introduce double-entry journal tables?
-2. Canonical user/business ownership model: continue direct `auth.users` reference or introduce organizations/tenancy tables?
-3. Which VAT filing outputs are required in v1 (human-readable summary vs export formats)?
-4. What minimum year-end outputs are required per legal form?
+## Non-goals for this product-doc pass
+- Full schema specification for all modules
+- Full REST/API contract documentation for all planned capabilities
+- Legal advice or unsupported statutory claims
+
+## Key risks and constraints
+- Canonical runtime schema and legacy artifacts still require careful convergence.
+- Some UI sections remain mock/placeholder-heavy and should not be presented as production-complete.
+- VAT/tax and legal-form-specific logic are roadmap areas and require deeper domain implementation.
+
+## Open documentation questions
+1. Which module-specific docs should be split first as implementation accelerates (invoicing, reconciliation, or VAT)?
+2. What release criteria define “Phase 1 complete” for PM/design/engineering sign-off?
+3. Which workflows need explicit persona variants (owner, employee, accountant) in future docs?
