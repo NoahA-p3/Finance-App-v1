@@ -16,6 +16,10 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Receipt file upload to private Supabase Storage bucket (`receipts`) via `/api/receipts`.
 - Company bootstrap/profile API (`/api/companies`) with persisted onboarding/settings fields (name, contact/address, VAT status, fiscal year start, base currency).
 - Company RBAC baseline with seeded roles (`owner`, `staff`, `read_only`), server-enforced permission checks on settings/member management, and invitation skeleton endpoints (`GET/POST /api/companies/invitations`, `GET/PATCH /api/companies/members`).
+- Company context switching via `POST /api/companies/switch`, persisted in `profiles.active_company_id`, and exposed in dashboard top navigation.
+- Company settings persistence now includes invoice settings, branding/logo metadata placeholders, branch/department placeholders, and CVR number storage.
+- CVR lookup adapter endpoint (`GET /api/companies/cvr?cvr=<8-digit>`) with explicit manual fallback when provider integration is not configured.
+- Finance APIs (`/api/transactions`, `/api/categories`, `/api/receipts`) are active-company scoped and enforce membership + `company_id` isolation.
 - Dashboard/reporting UI is mostly placeholder/mock-data driven.
 
 ## Tech stack (observed in repo)

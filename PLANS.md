@@ -424,3 +424,61 @@ Ship a small, testable server-enforced RBAC baseline for company settings/member
 ### Assumptions / open questions
 - **Assumption:** this MVP slice allows owner role reassignment only when at least one owner remains.
 - **TODO:** finalize advanced-role permission matrix before enabling advanced role assignment.
+
+## Active company context + switcher + settings expansion slice (March 25, 2026)
+
+### Goal
+Implement explicit multi-company context switching with persisted active-company selection, company-scoped API resolution, expanded persisted company settings fields, and a safe CVR lookup adapter interface with manual fallback.
+
+### Current behavior
+- Company context resolution defaults to first membership and is not persisted as user preference.
+- No `/api/companies/switch` endpoint exists.
+- Dashboard nav has no company switch control.
+- Company settings persist only profile basics plus base currency/fiscal month.
+- No CVR lookup route/adapter exists.
+- Finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) are user-scoped, not active-company scoped.
+
+### Proposed approach
+1. Add additive migration for:
+   - `profiles.active_company_id` (persisted active context)
+   - `company_settings` expansion fields for invoice settings, branding/logo metadata, and branch/department placeholders
+   - `company_id` columns + constraints/policies for finance tables (`transactions`, `categories`, `receipts`)
+2. Update company context helper to resolve active company via `profiles.active_company_id` with safe fallback to first valid membership.
+3. Add `POST /api/companies/switch` endpoint to validate membership and persist `active_company_id`.
+4. Add top-nav company switch UI wired to switch endpoint and refresh.
+5. Expand settings UI payload/fields and add a CVR lookup panel calling new CVR endpoint.
+6. Add CVR adapter interface with default `not_configured` provider state and explicit manual-entry fallback path.
+7. Enforce active-company membership + company_id filters on company-scoped endpoints (`companies`, `members`, `invitations`, `transactions`, `categories`, `receipts`).
+8. Update docs (`API_CONTRACTS`, `DATA_MODEL`, `SECURITY_RULES`, `README`) to reflect runtime behavior and fallback semantics.
+
+### Affected files
+- `supabase/migrations/*` (new additive migration)
+- `src/types/database.ts`
+- `src/lib/company-permissions.ts`
+- `src/lib/cvr/*` (new)
+- `src/app/api/companies/switch/*`
+- `src/app/api/companies/cvr/*`
+- `src/app/api/transactions/route.ts`
+- `src/app/api/categories/route.ts`
+- `src/app/api/receipts/route.ts`
+- `src/components/shell/*`
+- `src/components/settings/company-profile-form.tsx`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/architecture/DATA_MODEL.md`
+- `docs/security/SECURITY_RULES.md`
+- `README.md`
+
+### Risks
+- Incorrect policy updates could lock legitimate access or permit cross-company reads.
+- Backfilling `company_id` on existing finance rows may be incomplete where users lack memberships.
+- Active-company fallback behavior may surprise users with multiple memberships until they explicitly switch.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- Manual smoke: switch company in dashboard, verify settings and finance APIs isolate by active company.
+
+### Assumptions / open questions
+- **Assumption:** CVR provider credentials/integration are not yet configured in this environment, so adapter returns explicit unavailable state.
+- **Assumption:** Existing finance rows without `company_id` can remain hidden from active-company scoped APIs until remediated.

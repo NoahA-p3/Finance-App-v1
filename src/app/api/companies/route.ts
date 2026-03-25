@@ -17,6 +17,16 @@ interface CompanyWritePayload {
   country_code?: string | null;
   base_currency?: string;
   fiscal_year_start_month?: number;
+  invoice_prefix?: string | null;
+  invoice_terms?: string | null;
+  invoice_due_days?: number | null;
+  logo_storage_path?: string | null;
+  logo_file_name?: string | null;
+  logo_content_type?: string | null;
+  logo_file_size_bytes?: number | null;
+  branch_label?: string | null;
+  department_label?: string | null;
+  cvr_number?: string | null;
 }
 
 function normalizeOptionalText(value: unknown) {
@@ -96,6 +106,62 @@ function validateCompanyPayload(payload: unknown, mode: "create" | "update"): { 
     }
 
     nextPayload.fiscal_year_start_month = month;
+  }
+
+  const invoicePrefix = normalizeOptionalText(raw.invoice_prefix);
+  if ("invoice_prefix" in raw) {
+    nextPayload.invoice_prefix = invoicePrefix;
+  }
+
+  const invoiceTerms = normalizeOptionalText(raw.invoice_terms);
+  if ("invoice_terms" in raw) {
+    nextPayload.invoice_terms = invoiceTerms;
+  }
+
+  if ("invoice_due_days" in raw) {
+    if (raw.invoice_due_days === null) {
+      nextPayload.invoice_due_days = null;
+    } else if (
+      typeof raw.invoice_due_days === "number" &&
+      Number.isInteger(raw.invoice_due_days) &&
+      raw.invoice_due_days >= 1 &&
+      raw.invoice_due_days <= 365
+    ) {
+      nextPayload.invoice_due_days = raw.invoice_due_days;
+    } else {
+      return { error: "invoice_due_days must be null or an integer between 1 and 365." };
+    }
+  }
+
+  if ("logo_storage_path" in raw) nextPayload.logo_storage_path = normalizeOptionalText(raw.logo_storage_path);
+  if ("logo_file_name" in raw) nextPayload.logo_file_name = normalizeOptionalText(raw.logo_file_name);
+  if ("logo_content_type" in raw) nextPayload.logo_content_type = normalizeOptionalText(raw.logo_content_type);
+
+  if ("logo_file_size_bytes" in raw) {
+    if (raw.logo_file_size_bytes === null) {
+      nextPayload.logo_file_size_bytes = null;
+    } else if (
+      typeof raw.logo_file_size_bytes === "number" &&
+      Number.isInteger(raw.logo_file_size_bytes) &&
+      raw.logo_file_size_bytes >= 0
+    ) {
+      nextPayload.logo_file_size_bytes = raw.logo_file_size_bytes;
+    } else {
+      return { error: "logo_file_size_bytes must be null or a non-negative integer." };
+    }
+  }
+
+  if ("branch_label" in raw) nextPayload.branch_label = normalizeOptionalText(raw.branch_label);
+  if ("department_label" in raw) nextPayload.department_label = normalizeOptionalText(raw.department_label);
+
+  if ("cvr_number" in raw) {
+    const cvrNumber = normalizeOptionalText(raw.cvr_number);
+
+    if (cvrNumber !== null && cvrNumber !== undefined && !/^[0-9]{8}$/.test(cvrNumber)) {
+      return { error: "cvr_number must be 8 digits." };
+    }
+
+    nextPayload.cvr_number = cvrNumber;
   }
 
   if (mode === "update" && Object.keys(nextPayload).length === 0) {
@@ -197,7 +263,17 @@ export async function POST(req: NextRequest) {
     .insert({
       company_id: company.id,
       base_currency: validation.value.base_currency ?? "DKK",
-      fiscal_year_start_month: validation.value.fiscal_year_start_month ?? 1
+      fiscal_year_start_month: validation.value.fiscal_year_start_month ?? 1,
+      invoice_prefix: validation.value.invoice_prefix ?? null,
+      invoice_terms: validation.value.invoice_terms ?? null,
+      invoice_due_days: validation.value.invoice_due_days ?? null,
+      logo_storage_path: validation.value.logo_storage_path ?? null,
+      logo_file_name: validation.value.logo_file_name ?? null,
+      logo_content_type: validation.value.logo_content_type ?? null,
+      logo_file_size_bytes: validation.value.logo_file_size_bytes ?? null,
+      branch_label: validation.value.branch_label ?? null,
+      department_label: validation.value.department_label ?? null,
+      cvr_number: validation.value.cvr_number ?? null
     })
     .select("*")
     .single();
@@ -294,6 +370,16 @@ export async function PATCH(req: NextRequest) {
   if ("fiscal_year_start_month" in validation.value) {
     settingsUpdates.fiscal_year_start_month = validation.value.fiscal_year_start_month;
   }
+  if ("invoice_prefix" in validation.value) settingsUpdates.invoice_prefix = validation.value.invoice_prefix;
+  if ("invoice_terms" in validation.value) settingsUpdates.invoice_terms = validation.value.invoice_terms;
+  if ("invoice_due_days" in validation.value) settingsUpdates.invoice_due_days = validation.value.invoice_due_days;
+  if ("logo_storage_path" in validation.value) settingsUpdates.logo_storage_path = validation.value.logo_storage_path;
+  if ("logo_file_name" in validation.value) settingsUpdates.logo_file_name = validation.value.logo_file_name;
+  if ("logo_content_type" in validation.value) settingsUpdates.logo_content_type = validation.value.logo_content_type;
+  if ("logo_file_size_bytes" in validation.value) settingsUpdates.logo_file_size_bytes = validation.value.logo_file_size_bytes;
+  if ("branch_label" in validation.value) settingsUpdates.branch_label = validation.value.branch_label;
+  if ("department_label" in validation.value) settingsUpdates.department_label = validation.value.department_label;
+  if ("cvr_number" in validation.value) settingsUpdates.cvr_number = validation.value.cvr_number;
 
   if (Object.keys(settingsUpdates).length > 0) {
     const { data: updatedSettings, error: settingsError } = await authContext.supabase

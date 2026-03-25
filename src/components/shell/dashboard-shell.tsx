@@ -2,6 +2,7 @@ import { PropsWithChildren } from "react";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopNav } from "@/components/shell/top-nav";
 import { requireUser } from "@/lib/auth";
+import { getCompanyMembershipContext, listUserCompanyMemberships } from "@/lib/company-permissions";
 
 function resolveDisplayName(params: {
   profileFirstName: string | null;
@@ -42,12 +43,26 @@ export async function DashboardShell({ children, title }: PropsWithChildren<{ ti
     email: userEmail
   });
 
+  const [memberships, activeMembership] = await Promise.all([
+    listUserCompanyMemberships(supabase, user.id),
+    getCompanyMembershipContext(supabase, user.id)
+  ]);
+
   return (
     <div className="min-h-screen bg-[#171a36] text-slate-100 lg:h-screen lg:overflow-hidden">
       <div className="mx-auto w-full max-w-[1500px] p-3 lg:p-4">
         <Sidebar user={{ id: user.id, name: displayName, email: userEmail }} />
         <div className="flex min-w-0 flex-1 flex-col gap-4 lg:h-[calc(100vh-2rem)] lg:pl-[266px]">
-          <TopNav title={title} user={{ id: user.id, name: displayName, email: userEmail }} />
+          <TopNav
+            title={title}
+            user={{ id: user.id, name: displayName, email: userEmail }}
+            companies={memberships.map((membership) => ({
+              company_id: membership.companyId,
+              name: membership.companyName ?? "Unnamed company",
+              role: membership.role
+            }))}
+            activeCompanyId={activeMembership?.companyId ?? null}
+          />
           <main className="flex-1 lg:overflow-y-auto">{children}</main>
         </div>
       </div>
