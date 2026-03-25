@@ -15,6 +15,9 @@ Currently implemented route handlers in `src/app/api/*`:
 - `POST /api/auth/signup`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
+- `POST /api/auth/resend-verification`
 - `GET /api/transactions`
 - `POST /api/transactions`
 - `POST /api/categories`
@@ -22,6 +25,15 @@ Currently implemented route handlers in `src/app/api/*`:
 - `POST /api/receipts`
 
 All other endpoint groupings in this document are target contracts for phased implementation.
+
+
+### Auth endpoint behavior notes (current runtime)
+- Password reset flow is Supabase Auth-native:
+  - `POST /api/auth/forgot-password` always returns a generic success message when request format is valid to avoid account enumeration.
+  - `POST /api/auth/reset-password` updates password for an active recovery session only.
+- Verification resend flow:
+  - `POST /api/auth/resend-verification` returns minimal, non-sensitive errors and generic success messaging.
+- No local password tables are used; identity remains Supabase Auth (`auth.users`).
 
 ## Module-aligned endpoint groupings (target)
 

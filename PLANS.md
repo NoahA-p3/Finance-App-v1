@@ -252,3 +252,44 @@ Replace Recharts with a modern, maintainable charting approach across dashboard 
 ### Assumptions
 - Existing chart surfaces are presentation-focused and may continue using mock data where already used.
 - No new chart types are required beyond existing line and donut/pie charts in this migration.
+
+## Auth password reset vertical slice (March 25, 2026)
+
+### Goal
+Add a complete Supabase-auth-based password recovery flow (request + reset confirmation + optional verification resend) across API routes and auth UI while keeping responses minimal and non-sensitive.
+
+### Current behavior
+- API currently supports signup/login/logout only under `src/app/api/auth/*`.
+- Auth UI currently includes login/signup pages and shared `AuthForm` component, without reset-password UX.
+- Security rules require minimal error messaging and no token/secrets logging.
+
+### Proposed approach
+1. Add API endpoints under `src/app/api/auth/*` for:
+   - forgot-password email request
+   - password update/reset confirmation for recovery sessions
+   - resend verification email (optional endpoint)
+2. Add auth pages/components for `/forgot-password` and `/reset-password` in `src/app/(auth)`.
+3. Update login/signup/auth navigation links to include reset + verification message paths.
+4. Keep boundary input validation strict and return generic/non-sensitive errors per security rules.
+5. Keep identity source in Supabase Auth only (no local password storage/tables).
+
+### Affected files
+- `src/app/api/auth/*` (new route handlers + minor login/signup response hardening)
+- `src/app/(auth)/*` (new reset pages/components and login message handling)
+- `src/components/ui/auth-form.tsx`
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+
+### Risks
+- Supabase reset flow depends on correctly configured redirect URLs.
+- Overly generic API errors can reduce UX clarity if client messaging is not explicit.
+- Verification resend behavior may vary if user is already confirmed.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** reset links will target app route `/reset-password` via `emailRedirectTo`.
+- **Assumption:** optional staged rollout can use a simple env flag with default enabled behavior.

@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { isPasswordResetEnabled } from "@/lib/auth-flags";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -41,7 +43,9 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const router = useRouter();
+  const resetEnabled = isPasswordResetEnabled();
 
   const passwordStrength = useMemo(() => {
     if (!password) {
@@ -97,6 +101,40 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setFieldErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
+  };
+
+
+  const handleResendVerification = async () => {
+    setError(null);
+    setSuccess(null);
+
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      setError("Enter a valid email to resend verification.");
+      return;
+    }
+
+    setResendLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email: email.trim() })
+      });
+
+      if (!response.ok) {
+        setError(await getErrorMessage(response));
+        return;
+      }
+
+      setSuccess("If the account exists, a verification email has been sent.");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -295,6 +333,25 @@ export function AuthForm({ mode }: AuthFormProps) {
           </p>
         )}
       </div>
+
+      {mode === "login" && resetEnabled && (
+        <div className="text-right">
+          <Link href="/forgot-password" className="text-xs font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400">
+            Forgot password?
+          </Link>
+        </div>
+      )}
+
+      {mode === "signup" && resetEnabled && success && (
+        <button
+          type="button"
+          onClick={handleResendVerification}
+          disabled={resendLoading}
+          className="w-full rounded-xl border border-slate-300 bg-transparent py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+        >
+          {resendLoading ? "Resending..." : "Resend verification email"}
+        </button>
+      )}
 
       <button
         className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-medium text-white shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus:ring-indigo-900"
