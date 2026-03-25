@@ -1,106 +1,126 @@
-# API Contracts (Current)
+# API Contracts
 
-Related docs: [System Overview](./SYSTEM_OVERVIEW.md), [Security Rules](../security/SECURITY_RULES.md).
+Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model](./DATA_MODEL.md), [System Overview](./SYSTEM_OVERVIEW.md), [Product Module Map](../product/PRODUCT_MODULE_MAP.md).
 
-Current backend pattern: Next.js route handlers in `src/app/api/*` using Supabase server client directly.
+This document is a technical API map organized by the same 12-module product structure.
 
-## Auth APIs
+## API style and conventions (target)
+- Resource-oriented HTTP endpoints.
+- Company-scoped resources primarily under `/companies/{company_id}/...`.
+- Auth/session resources under `/auth/*` and user profile/session resources under `/me*`.
+- Webhook receiver endpoints for external providers where relevant.
 
-### `POST /api/auth/signup`
-- Purpose: create new user account.
-- Auth boundary: public endpoint.
-- Inputs:
-  - JSON: `email`, `password`, `firstName`, `lastName`.
-- Outputs:
-  - `201`: `{ user, requiresEmailConfirmation }`
-  - `400`: `{ error }`
-- Files: `src/app/api/auth/signup/route.ts`, `src/lib/supabase/server.ts`.
-- Validation/side effects:
-  - requires all fields.
-  - writes user metadata for profile trigger sync.
+## Current runtime implementation (today)
+Currently implemented route handlers in `src/app/api/*`:
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/transactions`
+- `POST /api/transactions`
+- `POST /api/categories`
+- `DELETE /api/categories?id=<id>`
+- `POST /api/receipts`
 
-### `POST /api/auth/login`
-- Purpose: sign in existing user.
-- Auth boundary: public endpoint.
-- Inputs: JSON `email`, `password`.
-- Outputs:
-  - `200`: `{ user }`
-  - `400/401`: `{ error }`
-- Files: `src/app/api/auth/login/route.ts`.
+All other endpoint groupings in this document are target contracts for phased implementation.
 
-### `POST /api/auth/logout`
-- Purpose: terminate session.
-- Auth boundary: authenticated session expected.
-- Inputs: none.
-- Outputs:
-  - `200`: `{ success: true }`
-  - `400`: `{ error }`
-- Files: `src/app/api/auth/logout/route.ts`.
+## Module-aligned endpoint groupings (target)
 
-## Transaction APIs
+### 1) User and Company Management
+- Auth and account:
+  - `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/logout-all`
+  - password/email verification and MFA endpoints
+  - `GET /me`, `PATCH /me`, `GET /me/sessions`, `DELETE /me/sessions/{session_id}`
+- Roles/memberships:
+  - company members CRUD, invitations, role CRUD, `GET /permissions`
+- Company profile/settings:
+  - company CRUD, settings, branding, company-switch endpoint, CVR lookup endpoint
+- Billing/entitlements:
+  - plans listing, subscription lifecycle endpoints, usage and entitlement endpoints
 
-### `GET /api/transactions`
-- Purpose: list current user transactions by date desc.
-- Auth boundary: authenticated user required.
-- Inputs: none.
-- Outputs:
-  - `200`: transaction array (`select("*")`)
-  - `401/400`: `{ error }`
-- Files: `src/app/api/transactions/route.ts`.
-- Side effects: none.
+### 2) Contacts and Master Data
+- Contacts:
+  - contact CRUD, import/export, timeline, balances
+- Products and price lists:
+  - product CRUD, import/export, price-list CRUD
 
-### `POST /api/transactions`
-- Purpose: create transaction for current user.
-- Auth boundary: authenticated user required.
-- Inputs (allowlisted):
-  - required: `description` (string), `amount` (number or decimal-like string, max 2 decimals), `type` (`expense`|`revenue`), `date` (`YYYY-MM-DD`)
-  - optional: `category_id` (UUID or `null`), `receipt_id` (UUID or `null`)
-  - ownership fields like `user_id` are ignored and set from authenticated session.
-- Outputs:
-  - `201`: inserted transaction row
-  - `401/400`: `{ error }`
-- Files: `src/app/api/transactions/route.ts`.
-- Validation notes:
-  - rejects invalid JSON or non-object payloads.
-  - rejects unsupported enum/date/amount formats.
-  - maps only allowlisted fields into insert payload.
+### 3) Sales, Quotes, Orders, and Invoicing
+- Sales documents:
+  - sales document CRUD, send/view/convert/approve actions, attachment upload, PDF and timeline retrieval
+- Recurring schedules:
+  - schedule CRUD, pause/resume/run-now, run history
+- Collections:
+  - overdue queue, reminder create/list, debt-collection handoff and case listing
 
-## Category APIs
+### 4) Accounting Core
+- Ledger and periods:
+  - account CRUD, journal entry list/create/detail, reversal endpoint
+  - fiscal period list/create/lock/unlock
+- Cashbook:
+  - cashbook entry CRUD, posting-template CRUD, posting import
+- VAT:
+  - VAT code CRUD, VAT return prepare/detail/transaction drilldown/submit/export
+- Reports and assets:
+  - financial report resources, report exports, saved reports CRUD, fixed-asset workflow endpoints
 
-### `POST /api/categories`
-- Purpose: create user category.
-- Auth boundary: authenticated user required.
-- Inputs: JSON `{ name }`.
-- Outputs: created category row or error.
-- Files: `src/app/api/categories/route.ts`.
+### 5) Receipts, Expenses, and Bookkeeping Automation
+- Files and receipt inbox:
+  - file list/upload/detail/delete, receipt inbox, extraction trigger/detail
+- Expenses:
+  - expense CRUD, posting action, expense-from-file creation
+- Bank and reconciliation:
+  - bank connection resources, sync/import actions, transaction suggestions/match/split/undo, reconciliation view
+- Automation and assistant:
+  - automation rules CRUD, suggestions feed accept/reject, assistant tasks list/update/complete
 
-### `DELETE /api/categories?id=<id>`
-- Purpose: delete user category.
-- Auth boundary: authenticated user required.
-- Inputs: query param `id`.
-- Outputs: `{ success: true }` or error.
-- Files: `src/app/api/categories/route.ts`.
+### 6) Payments and Checkout
+- Payment provider accounts CRUD
+- payment link creation per sales document
+- payment transaction listing per sales document
+- payment provider webhook endpoint
+- manual mark-paid endpoint
 
-## Receipt API
+### 7) Payroll
+- Employee resource CRUD and setup-profile update endpoints
+- payroll run CRUD and workflow actions (generate payslips/finalize/submit)
+- payslip detail and PDF retrieval
+- payroll liabilities list
 
-### `POST /api/receipts`
-- Purpose: upload receipt file and persist path.
-- Auth boundary: authenticated user required.
-- Inputs: multipart/form-data with `file`.
-- Outputs:
-  - `201`: `{ id, path }`
-  - `401/400`: `{ error }`
-- Files: `src/app/api/receipts/route.ts`.
-- Side effects:
-  - uploads file to `receipts` bucket at `${user.id}/${timestamp}-${name}`.
-  - inserts row in `public.receipts`.
+### 8) Integrations and Developer Platform
+- Integration marketplace and connection lifecycle resources
+- developer app console resources:
+  - app CRUD/publish
+  - OAuth client creation
+  - API key issuance/revocation
+  - webhook endpoint registration
+  - docs/test-events endpoints
+- sync logs/mapping resources and retry actions
 
-## Additional backend surfaces
-- Middleware auth redirect behavior: `src/middleware.ts`, `src/lib/supabase/middleware.ts`.
-- Supabase trigger/function contracts in SQL migrations (`handle_new_user`, `set_updated_at`, `email_for_login_identifier`).
+### 9) Year-End, Tax Return, and Filing Help
+- tax return package lifecycle, calculate, instructions, advisor assignment, filing mark endpoints
+- annual accounts case lifecycle, tasks, output generation, advisor assignment, filing mark endpoints
 
-## Missing or informal contracts (gaps)
-- No OpenAPI/typed API schema.
-- No idempotency or concurrency contract for mutable operations.
-- No explicit error code taxonomy.
-- No webhook/background job contract currently.
+### 10) Support, Onboarding, Learning, and Migration
+- help article retrieval endpoints
+- support ticket lifecycle + message posting + close action
+- migration case lifecycle + file upload + validation view + completion
+- onboarding task state updates and learning catalog endpoints
+
+### 11) Financing and Partner Services
+- financing partners listing
+- financing lead create/list/detail
+- consent create endpoint
+
+### 12) Home Dashboard and Navigation
+- dashboard summary and KPI endpoints
+- activity-event feed endpoint
+- dashboard preference read/update endpoints
+
+## Endpoint grouping guidance for implementation
+- Keep endpoint namespaces aligned to module boundaries in [Technical Module Boundaries](./TECHNICAL_MODULES.md).
+- Prefer adding route groups incrementally by module subsection (for example, Module 3.1 before Module 3.2).
+- Keep company scoping explicit for business data resources.
+
+## Known mismatches to track
+- Current runtime uses `/api/*` prefixed Next.js handlers with a limited MVP subset.
+- Target map above is broader and written as product-facing REST resources; concrete Next.js route paths can stay `/api/*` while preserving resource grouping semantics.
+- No OpenAPI artifact exists yet; this document is the canonical reference until machine-readable contracts are introduced.

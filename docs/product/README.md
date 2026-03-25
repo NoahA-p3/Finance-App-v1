@@ -11,6 +11,9 @@ Use this section for product scope, module boundaries, and delivery priorities.
 ## Related references
 - [User Flows](../ux/USER_FLOWS.md)
 - [System Overview](../architecture/SYSTEM_OVERVIEW.md)
+- [Technical Module Boundaries](../architecture/TECHNICAL_MODULES.md)
+- [Data Model](../architecture/DATA_MODEL.md)
+- [API Contracts](../architecture/API_CONTRACTS.md)
 - [Engineering Roadmap Epics](../../tasks/EPICS.md)
 
 ## Scope note
