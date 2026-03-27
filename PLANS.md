@@ -837,3 +837,25 @@ Add the remaining optional Settings tabs (Automation, Payroll, Developer, Securi
 
 ### Assumptions
 - New feature flags can be introduced with safe defaults (off) without changing runtime behavior for existing environments.
+
+## Settings default visibility adjustment (March 27, 2026)
+
+### Goal
+Make all Settings tabs visible by default, including optional tabs, unless explicitly disabled.
+
+### Current behavior
+- Optional tabs are hidden unless explicit `NEXT_PUBLIC_ENABLE_SETTINGS_*` flags are set to `true`.
+- Additional advanced-role checks can hide payroll/developer tabs even when users expect to see full IA.
+
+### Proposed approach
+1. Change optional tab flag logic to default-on (only hide when a flag is explicitly `false`).
+2. Remove unnecessary advanced-role gate from optional tab visibility so full tab IA is visible by default for eligible company users.
+3. Keep baseline membership/permission checks already used for company settings visibility.
+
+### Affected files
+- `src/lib/settings/navigation.ts`
+- `PLANS.md`
+
+### Verification steps
+- `npm run typecheck`
+- `npm run build`

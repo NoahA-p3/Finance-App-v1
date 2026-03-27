@@ -15,7 +15,7 @@ The Settings area now uses these top-level sections:
 7. **Integrations** — third-party app connections and integration diagnostics.
 
 Optional tabs (Automation, Payroll, Developer, Security & Audit) should only be exposed when backed by implemented, non-trivial features.
-In the current implementation they are feature-gated and hidden by default:
+In the current implementation they are feature-gated and enabled by default (set a flag to `false` to hide):
 - `NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION`
 - `NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL`
 - `NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER`

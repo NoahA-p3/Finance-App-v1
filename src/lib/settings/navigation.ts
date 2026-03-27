@@ -1,5 +1,5 @@
-import { isAdvancedRolesEnabled, isEntitlementReadEnabled } from "@/lib/auth-flags";
-import { COMPANY_PERMISSIONS, CompanyMembershipContext, hasCompanyPermission, isAdvancedRole } from "@/lib/company-permissions";
+import { isEntitlementReadEnabled } from "@/lib/auth-flags";
+import { COMPANY_PERMISSIONS, CompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 
 export type SettingsTabKey =
   | "personal"
@@ -92,19 +92,19 @@ const TAB_DEFINITIONS: SettingsTabDefinition[] = [
 
 function isOptionalTabEnabled(key: SettingsTabKey) {
   if (key === "automation") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION === "true";
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION !== "false";
   }
 
   if (key === "payroll") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL === "true";
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL !== "false";
   }
 
   if (key === "developer") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER === "true";
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER !== "false";
   }
 
   if (key === "security-audit") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT === "true";
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT !== "false";
   }
 
   return true;
@@ -118,15 +118,8 @@ export function getSettingsTabs(membership: CompanyMembershipContext | null) {
     hasCompanyPermission(membership, COMPANY_PERMISSIONS.INVITATIONS_READ) ||
     hasCompanyPermission(membership, COMPANY_PERMISSIONS.INVITATIONS_MANAGE);
 
-  const isAdvancedRoleEnabled = isAdvancedRolesEnabled();
-  const memberRole = membership?.role ?? null;
-  const canAccessPayroll =
-    canManageCompanySettings &&
-    isOptionalTabEnabled("payroll") &&
-    isAdvancedRoleEnabled &&
-    Boolean(memberRole && (memberRole === "owner" || memberRole === "payroll_only" || memberRole === "accountant" || isAdvancedRole(memberRole)));
-
-  const canAccessDeveloper = canManageCompanySettings && isOptionalTabEnabled("developer") && isAdvancedRoleEnabled;
+  const canAccessPayroll = canManageCompanySettings && isOptionalTabEnabled("payroll");
+  const canAccessDeveloper = canManageCompanySettings && isOptionalTabEnabled("developer");
   const canAccessAutomation = canManageCompanySettings && isOptionalTabEnabled("automation");
   const canAccessSecurityAudit = canManageCompanySettings && isOptionalTabEnabled("security-audit");
 
