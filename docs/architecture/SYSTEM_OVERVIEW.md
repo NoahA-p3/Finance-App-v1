@@ -2,6 +2,13 @@
 
 Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md), [Security Rules](../security/SECURITY_RULES.md).
 
+**Last verified:** 2026-03-27.
+
+## Last-verified policy
+- Keep this date as the evidence timestamp for architecture claims in this file.
+- Update the date when claims are re-checked against current repository evidence (code, migrations, and scripts).
+- If a section is partially inferred, label it explicitly as **Assumption**.
+
 ## Architecture summary (current)
 - Single Next.js App Router application.
 - Supabase provides Auth, Postgres, and Storage.
@@ -14,17 +21,17 @@ Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model
   - `dashboard`, `transactions`, `receipts`, `reports`, `settings`, `onboarding`.
 - `src/components/*`:
   - `shell` for app layout/navigation/account menu,
-  - `finance`/`dashboard` for KPI and charts,
-  - `transactions` for transaction/receipt/category components.
+  - `finance` for KPI and chart cards,
+  - `settings` for account/company/team access surfaces,
+  - `transactions` and `receipts` for operations.
 
 ## Backend/API structure
-- Route handlers:
-  - `src/app/api/auth/signup/route.ts`
-  - `src/app/api/auth/login/route.ts`
-  - `src/app/api/auth/logout/route.ts`
-  - `src/app/api/transactions/route.ts`
-  - `src/app/api/categories/route.ts`
-  - `src/app/api/receipts/route.ts`
+- Route handlers include:
+  - auth (`/api/auth/*`),
+  - account (`/api/me/*`),
+  - companies/member access (`/api/companies*`),
+  - finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`),
+  - posting endpoints (`/api/postings*`).
 - Auth gating in middleware:
   - `src/middleware.ts`
   - `src/lib/supabase/middleware.ts`
@@ -33,37 +40,37 @@ Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model
 - Supabase Auth as identity provider.
 - Canonical runtime identity/data path:
   - `auth.users` -> `public.profiles`
-  - `public.transactions`, `public.categories`, `public.receipts`
-- Legacy/divergent artifacts exist in one migration branch (`public.users`, `public.accounts`, alternate transaction/receipt columns) and are documented as deprecated for new work.
-- Do not extend legacy branch tables for new features unless task scope explicitly targets legacy support.
-- RLS policies enforce per-user ownership on major tables.
+  - company-scoped records in `public.transactions`, `public.categories`, `public.receipts`
+- RLS and company-membership checks enforce workspace isolation.
 - Auth trigger `handle_new_user()` syncs `auth.users` to `public.profiles`.
+
+## Dashboard and reports data source (current)
+- Dashboard and Reports pages call `getDashboardFinanceData(...)` in `src/lib/dashboard-data.ts`.
+- Data is loaded from persisted tables, not static mock fixtures:
+  - `transactions` filtered by `company_id`,
+  - `categories` filtered by `company_id`,
+  - `company_settings.base_currency` for display currency.
+- KPI totals, trend series, expense mix, and recent transaction rows are computed server-side from these persisted rows.
 
 ## Supabase usage
 - Server client: `src/lib/supabase/server.ts`
 - Browser client: `src/lib/supabase/client.ts`
 - Middleware client/session refresh: `src/lib/supabase/middleware.ts`
-- Storage bucket: `receipts` (private) with folder-per-user policy pattern.
-
-## Vercel deployment shape
-- Standard Next.js deployment (assumption based on repo).
-- Required public env vars for runtime client/server operations.
-- No repo-level deployment automation docs beyond README currently.
+- Storage bucket: `receipts` (private) with company/user-scoped path policy pattern.
 
 ## Data flow (simplified)
 1. User authenticates via `/api/auth/*` route handlers.
 2. Middleware verifies session and redirects auth/non-auth routes.
 3. Protected pages use `requireUser()` for server-side auth checks.
-4. UI calls `/api/transactions`, `/api/categories`, `/api/receipts`.
-5. Route handlers use Supabase server client; RLS enforces tenant boundaries.
-6. Receipt files stored in Supabase Storage; DB stores `path` references.
+4. UI calls company-scoped APIs (`/api/transactions`, `/api/categories`, `/api/receipts`, `/api/postings*`).
+5. Route handlers use Supabase server client; RLS + membership enforcement protect tenancy boundaries.
+6. Receipt files are stored in Supabase Storage; DB stores receipt metadata/path references.
 
 ## Key modules and responsibilities
 - `src/lib/auth.ts`: protected-route helper.
-- `src/lib/data.ts`: transaction summary query helpers.
-- `src/types/database.ts`: generated-ish TypeScript schema contract.
+- `src/lib/dashboard-data.ts`: dashboard/report aggregation from persisted company data.
+- `src/types/database.ts`: generated TypeScript schema contract.
 - `supabase/migrations/*`: source of truth for schema/policies.
-
 
 ## Module-aligned technical documentation
 - Product modules and status: `docs/product/PRODUCT_MODULE_MAP.md`
@@ -71,22 +78,12 @@ Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model
 - Target relational domains: `docs/architecture/DATA_MODEL.md`
 - Target resource/endpoints map: `docs/architecture/API_CONTRACTS.md`
 
-## Major gaps / TODOs
-- Canonical schema direction needs consolidation (active vs legacy migration branch).
-- No formal service layer between route handlers and data store.
-- No background jobs or webhook consumers.
-- No explicit ledger posting/period-close subsystem.
-- No automated test suite in repo.
-
+## Explicit placeholders and planned gaps
+- **Settings placeholder tabs:** several settings tabs intentionally render placeholder content until backed by persisted feature models (`banking-payments`, `integrations`, `automation`, `payroll`, `developer`, `security-audit`, plus partially placeholder guidance in `sales-documents` and `accounting-tax`).
+- **Invitation acceptance:** invitation creation/listing is implemented, but invite acceptance flow is explicitly not implemented yet in current UI/runtime.
+- **VAT engine:** VAT/tax rule automation is still planned; current settings copy explicitly marks this as TODO.
 
 ## Schema convergence notes
-- Treat auth-user keyed tables as the only canonical runtime model for API and feature work.
-- Plan schema cleanup in phased migrations: inventory -> guardrails -> type regeneration -> controlled legacy cleanup.
-- Inventory helper view for convergence checks: `public.legacy_schema_inventory` (added via non-destructive migration).
-- Require backup/recovery procedures before any destructive legacy-table removal.
-
-
-## Generated type workflow guardrail
-- After schema-affecting migrations, regenerate `src/types/database.ts` before merge.
-- Confirm canonical runtime entities (`profiles`, `transactions`, `categories`, `receipts`) are represented correctly and legacy runtime entities are not reintroduced in app contracts.
-- If migrations and generated types disagree, treat migrations as source of truth and resolve drift in the same PR.
+- Treat auth-user and company-scoped tables as the canonical runtime model for API and feature work.
+- Legacy/divergent artifacts remain in migrations and should not be extended for new work unless explicitly scoped.
+- After schema-affecting migrations, regenerate `src/types/database.ts` and resolve drift in the same PR.

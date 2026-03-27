@@ -2,7 +2,9 @@
 
 Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancers and small businesses in Denmark.
 
-> Current product state: early MVP foundation. Auth, profile, transaction/category/receipt data paths, and dashboard scaffolding exist. Danish accounting and VAT domain depth is mostly planned.
+> Current product state: early MVP foundation. Auth, profile, transaction/category/receipt data paths, and dashboard/report persisted-data views exist. Danish accounting and VAT domain depth is mostly planned.
+
+**Last verified:** 2026-03-27.
 
 ## What the app does (current)
 - User signup/login/logout with Supabase Auth.
@@ -26,7 +28,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Posting APIs (`/api/postings`, `/api/postings/{posting_id}/reverse`, `/api/postings/period-locks`) provide append-only journal posting, reversal traceability, and period lock enforcement.
 - Posted transaction records are protected against destructive update/delete by database-level immutability guards; corrections are made through reversal flows.
 - Internal billing baseline includes plans/subscriptions/entitlements (`/api/entitlements`) and server-side soft-limit enforcement on transaction writes for monthly vouchers + rolling 12-month turnover cap.
-- Dashboard/reporting UI is mostly placeholder/mock-data driven.
+- Dashboard/reporting pages currently read persisted company-scoped data via `src/lib/dashboard-data.ts` (`transactions`, `categories`, `company_settings.base_currency`) and compute KPI/trend/breakdown outputs server-side.
 
 ## Tech stack (observed in repo)
 - Next.js `15.2.6` + React `19` + TypeScript
@@ -72,6 +74,24 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run build` — production build
 - `npm run start` — run built app
+- `npm run test` — run Node test suite (`node --test tests/*.test.js`)
+
+
+## Documentation verification policy
+- Major docs should include a **Last verified** date.
+- Update that date when claims are re-checked against current repository evidence (code, migrations, scripts).
+- If evidence is incomplete, mark the statement as **Assumption** or **TODO**.
+
+## Current automated test coverage and limitations
+- `npm run test` executes Node built-in tests under `tests/*.test.js`.
+- Current tests focus on repository contract checks (API/migration/source assertions), not full live integration behavior.
+- No e2e browser test suite is currently wired in package scripts.
+- Use `npm run lint` + `npm run typecheck` as baseline quality checks for all changes.
+
+## Explicit placeholders still remaining
+- **Settings tabs:** multiple settings tabs intentionally render placeholder guidance until backed by persisted feature models.
+- **Invitation acceptance:** pending invitation listing/creation exists, but acceptance flow is not implemented yet.
+- **VAT engine:** VAT/tax automation engine remains planned and is not fully implemented in this repository.
 
 ## Supabase and database
 - SQL migrations: `supabase/migrations/`
