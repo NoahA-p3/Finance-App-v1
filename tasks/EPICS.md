@@ -35,15 +35,22 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 
 ## 3) Auth, tenancy, and roles
 - Objective: secure multi-tenant behavior and role-aware collaboration.
-- Current status: **partial** (owner-only via RLS).
-- Main gaps: no business entity, no memberships/roles.
+- Current status: **partial/implemented baseline**.
+- Implemented baseline:
+  - company tenancy API surface exists under `src/app/api/companies/*` (company profile CRUD, company switch, members, and invitations),
+  - permission helpers and role checks exist in `src/lib/company-permissions.ts`,
+  - foundational schema + RLS are in migrations `202603250001_companies_bootstrap.sql` and `202603250002_company_rbac_baseline.sql`.
+- Main gaps:
+  - invitation lifecycle is not end-to-end (acceptance/onboarding flow still missing),
+  - role model is still baseline-first and needs a richer, production-ready matrix across advanced roles.
 - Epics:
-  - business tenancy tables,
-  - role matrix and permission checks,
-  - auth flow hardening.
+  - invitation acceptance and membership activation flow,
+  - richer role matrix and permission policy hardening,
+  - auth flow hardening and tenancy integration test coverage.
 - Task ideas:
-  - add organization + membership migrations,
-  - permission integration tests.
+  - implement invitation acceptance endpoint + UI handoff,
+  - define and apply expanded role matrix constraints,
+  - add permission/tenancy integration tests for same-company vs cross-company access.
 - Major risks: unauthorized access if expanded without rigorous RLS.
 
 ## 4) Ledger core
