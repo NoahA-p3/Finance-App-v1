@@ -2,7 +2,7 @@
 
 Purpose: define deterministic business scenarios for future automated regression tests.
 
-> Status: specification only; datasets are not yet encoded in test fixtures.
+> Status: partially encoded in deterministic fixtures at `tests/fixtures/golden-datasets.js` (Datasets 1, 4, and 5). Remaining datasets are still specification-only.
 
 Related docs: [Test Strategy](./TEST_STRATEGY.md), [DK Accounting Rules](../domain/DK_ACCOUNTING_RULES.md), [DK VAT Rules](../domain/DK_VAT_RULES.md).
 
@@ -129,3 +129,4 @@ Related docs: [Test Strategy](./TEST_STRATEGY.md), [DK Accounting Rules](../doma
 - Use fixed timestamps and deterministic IDs.
 - Keep amounts in decimal-safe format (string/decimal type in test fixtures).
 - Include expected report snapshots for regression comparison.
+- Keep fixture scenario keys stable once introduced to avoid brittle downstream snapshots.

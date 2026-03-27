@@ -1154,3 +1154,48 @@ Harden `/api/receipts` upload boundary validation for file type, size, and filen
 
 ### Assumptions
 - A 10 MB max upload size is acceptable for MVP receipt capture until product defines legal archival constraints.
+
+## API security + fixture-backed regression test expansion (March 27, 2026)
+
+### Goal
+Add an executable test plan and initial contract suites for API auth enforcement, company/role isolation, transaction entitlement boundaries, receipt upload boundaries, and deterministic golden-dataset-aligned fixtures.
+
+### Current behavior
+- Tests currently focus on a few contract checks (ownership, posting immutability, receipt validation).
+- There is no dedicated suite asserting auth guards across key API route handlers.
+- There is no deterministic fixture module encoding the golden dataset scenarios from docs.
+
+### Proposed approach
+1. Add a dedicated test plan doc for this expansion under `docs/testing/`.
+2. Add deterministic fixture definitions in `tests/fixtures/` aligned to `docs/testing/GOLDEN_DATASETS.md` naming and scenarios.
+3. Add initial Node test suites that verify:
+   - auth and membership gating on key API routes,
+   - company isolation and permission checks on `/api/companies/*` and finance endpoints,
+   - transaction validation and entitlement enforcement branches in `/api/transactions` and `src/lib/entitlements.ts`,
+   - receipt upload boundary controls in `/api/receipts`.
+4. Add fixture-structure tests to ensure stable IDs, decimal-safe amounts, and deterministic timestamps.
+
+### Affected files
+- `docs/testing/API_SECURITY_AND_BOUNDARY_TEST_PLAN.md` (new)
+- `docs/testing/TEST_STRATEGY.md`
+- `docs/testing/GOLDEN_DATASETS.md`
+- `tests/fixtures/golden-datasets.js` (new)
+- `tests/api-auth-and-permissions.test.js` (new)
+- `tests/transactions-entitlements-boundary.test.js` (new)
+- `tests/receipts-upload-boundary-contract.test.js` (new)
+- `tests/golden-dataset-fixtures.test.js` (new)
+- `PLANS.md`
+
+### Risks
+- Contract-style tests validate implementation markers, not runtime Supabase behavior.
+- Fixture scenarios can drift from future product changes unless docs and fixtures are maintained together.
+
+### Verification steps
+- `npm run test`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / TODO
+- **Assumption:** initial suites in this pass remain source-contract tests due current test harness.
+- **TODO:** add API integration tests against seeded Supabase test data when DB test infra is available.
