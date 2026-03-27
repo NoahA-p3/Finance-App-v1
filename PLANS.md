@@ -1068,3 +1068,50 @@ Define and enforce a canonical ownership policy for `transactions`, `categories`
 ### Assumptions / open questions
 - **Assumption:** canonical policy for MVP is company-shared ownership for `transactions`, `categories`, and `receipts` rows, while preserving `user_id` as creator metadata.
 - **TODO:** add end-to-end DB policy tests against a live Supabase test database in a follow-up if CI gains DB test infra.
+
+## Posting immutability + reversal infrastructure slice (March 27, 2026)
+
+### Goal
+Introduce an append-only posting workflow foundation with immutable audit events, period locking semantics, and reversal-first correction APIs.
+
+### Current behavior
+- Transactions are persisted and company-scoped, but there is no posting state model or journal entity separation.
+- No reversal endpoint exists for correcting posted accounting records.
+- No period lock table/semantics exist for preventing late posting into closed periods.
+- No immutable audit-event table exists for posting lifecycle traceability.
+
+### Proposed approach
+1. Add architecture spec documenting posting states, reversal/adjustment rules, period lock semantics, and audit-event schema.
+2. Add additive migrations for posting/journal entities, period locks, audit events, and non-destructive immutability triggers.
+3. Add `src/lib/postings/service.ts` as the posting domain boundary for validation, posting, reversal, lock checks, and audit writes.
+4. Add API routes under `src/app/api/postings/*` for list/create posting, period lock list/create, and reversal actions.
+5. Add tests that verify immutability guardrails and reversal traceability contracts.
+6. Update generated DB types and API docs/README for new runtime contracts.
+
+### Affected files
+- `docs/architecture/POSTING_IMMUTABILITY_SPEC.md` (new)
+- `supabase/migrations/202603270002_posting_and_audit_immutability.sql` (new)
+- `src/lib/postings/service.ts` (new)
+- `src/app/api/postings/route.ts` (new)
+- `src/app/api/postings/[posting_id]/reverse/route.ts` (new)
+- `src/app/api/postings/period-locks/route.ts` (new)
+- `src/types/database.ts`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/architecture/DATA_MODEL.md`
+- `README.md`
+- `tests/posting-immutability-and-reversal.test.js` (new)
+
+### Risks
+- Immutability trigger scope could block expected draft edits if state transitions are not explicit.
+- Reversal logic can create duplicate reversals without strict source-entry checks.
+- Period lock checks are date-based and could be bypassed if posting date semantics drift.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions / TODO
+- **Assumption:** account-side double-entry detail remains MVP-level and does not yet encode full Danish chart-of-accounts rules.
+- **TODO:** add integration tests against a live Supabase test DB for trigger and RLS behavior when CI DB infra is available.

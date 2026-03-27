@@ -30,6 +30,11 @@ Currently implemented route handlers in `src/app/api/*`:
 - `DELETE /api/me/mfa/{factor_id}`
 - `GET /api/transactions`
 - `POST /api/transactions`
+- `GET /api/postings`
+- `POST /api/postings`
+- `POST /api/postings/{posting_id}/reverse`
+- `GET /api/postings/period-locks`
+- `POST /api/postings/period-locks`
 - `GET /api/categories`
 - `POST /api/categories`
 - `DELETE /api/categories?id=<id>`
@@ -97,6 +102,9 @@ All other endpoint groupings in this document are target contracts for phased im
   - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
   - `POST /api/transactions` enforces plan limits server-side for `monthly_vouchers` and `rolling_turnover_12m_dkk`; responses include `entitlement_warning` and soft-lock `upgrade_prompt` payloads when thresholds are reached.
   - Enforcement rollout is feature-flagged by plan tier via `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS`.
+  - `POST /api/postings` posts an existing transaction into `journal_entries` + `journal_lines` and writes immutable `audit_events`.
+  - `POST /api/postings/{posting_id}/reverse` creates a reversal entry, marks the source posting as `reversed`, and records reversal trace metadata.
+  - `POST /api/postings/period-locks` creates accounting period locks that block posting/reversal into locked date ranges.
 
 
 ## Module-aligned endpoint groupings (target)

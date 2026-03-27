@@ -3,6 +3,38 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      audit_events: {
+        Row: {
+          actor_user_id: string | null;
+          company_id: string;
+          entity_id: string;
+          entity_table: string;
+          event_type: string;
+          id: string;
+          metadata: Json;
+          occurred_at: string;
+        };
+        Insert: {
+          actor_user_id?: string | null;
+          company_id: string;
+          entity_id: string;
+          entity_table: string;
+          event_type: string;
+          id?: string;
+          metadata?: Json;
+          occurred_at?: string;
+        };
+        Update: {
+          actor_user_id?: string | null;
+          company_id?: string;
+          entity_id?: string;
+          entity_table?: string;
+          event_type?: string;
+          id?: string;
+          metadata?: Json;
+          occurred_at?: string;
+        };
+      };
       categories: {
         Row: {
           company_id: string | null;
@@ -248,6 +280,38 @@ export type Database = {
           warning_threshold_percent?: number;
         };
       };
+      period_locks: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          end_date: string;
+          id: string;
+          locked_at: string;
+          locked_by: string;
+          reason: string | null;
+          start_date: string;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          end_date: string;
+          id?: string;
+          locked_at?: string;
+          locked_by: string;
+          reason?: string | null;
+          start_date: string;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          end_date?: string;
+          id?: string;
+          locked_at?: string;
+          locked_by?: string;
+          reason?: string | null;
+          start_date?: string;
+        };
+      };
       plans: {
         Row: {
           created_at: string;
@@ -272,6 +336,91 @@ export type Database = {
           key?: string;
           name?: string;
           updated_at?: string;
+        };
+      };
+      journal_entries: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          description: string;
+          id: string;
+          posted_at: string | null;
+          posted_by: string | null;
+          posting_date: string;
+          reversal_of_journal_entry_id: string | null;
+          reversal_reason: string | null;
+          reversed_at: string | null;
+          reversed_by: string | null;
+          source_transaction_id: string | null;
+          status: PostingStatus;
+          updated_at: string;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          description: string;
+          id?: string;
+          posted_at?: string | null;
+          posted_by?: string | null;
+          posting_date: string;
+          reversal_of_journal_entry_id?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          source_transaction_id?: string | null;
+          status?: PostingStatus;
+          updated_at?: string;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          description?: string;
+          id?: string;
+          posted_at?: string | null;
+          posted_by?: string | null;
+          posting_date?: string;
+          reversal_of_journal_entry_id?: string | null;
+          reversal_reason?: string | null;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+          source_transaction_id?: string | null;
+          status?: PostingStatus;
+          updated_at?: string;
+        };
+      };
+      journal_lines: {
+        Row: {
+          account_code: string;
+          amount: number | string;
+          company_id: string;
+          created_at: string;
+          description: string | null;
+          direction: "credit" | "debit";
+          id: string;
+          journal_entry_id: string;
+          line_no: number;
+        };
+        Insert: {
+          account_code: string;
+          amount: number | string;
+          company_id: string;
+          created_at?: string;
+          description?: string | null;
+          direction: "credit" | "debit";
+          id?: string;
+          journal_entry_id: string;
+          line_no: number;
+        };
+        Update: {
+          account_code?: string;
+          amount?: number | string;
+          company_id?: string;
+          created_at?: string;
+          description?: string | null;
+          direction?: "credit" | "debit";
+          id?: string;
+          journal_entry_id?: string;
+          line_no?: number;
         };
       };
       permissions: {
@@ -468,6 +617,8 @@ export type Database = {
     };
   };
 };
+
+export type PostingStatus = "draft" | "posted" | "reversed";
 
 export type CompanyRoleKey =
   | "accountant"
