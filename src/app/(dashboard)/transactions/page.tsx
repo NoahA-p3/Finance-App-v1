@@ -1,6 +1,12 @@
 import { DashboardShell } from "@/components/shell/dashboard-shell";
 import { TransactionsWorkspace } from "@/components/transactions/transactions-workspace";
 import { NoCompanyState } from "@/components/shell/no-company-state";
+import { requireUser } from "@/lib/auth";
+import { getCompanyMembershipContext } from "@/lib/company-permissions";
+
+export default async function TransactionsPage() {
+  const { supabase, user } = await requireUser();
+  const membership = await getCompanyMembershipContext(supabase, user.id);
 
   if (!membership) {
     return (
@@ -10,9 +16,6 @@ import { NoCompanyState } from "@/components/shell/no-company-state";
     );
   }
 
-  const data = await getDashboardFinanceData(supabase, user.id, membership.companyId);
-
-export default function TransactionsPage() {
   return (
     <DashboardShell title="Transactions">
       <TransactionsWorkspace />
