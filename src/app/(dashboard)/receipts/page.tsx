@@ -8,16 +8,9 @@ export default async function ReceiptsPage() {
   const { supabase, user } = await requireUser();
   const membership = await getCompanyMembershipContext(supabase, user.id);
 
-  if (!membership) {
-    return (
-      <DashboardShell title="Receipts">
-        <NoCompanyState />
-      </DashboardShell>
-    );
-  }
-
   return (
     <DashboardShell title="Receipts">
+      {!membership ? <NoCompanyState /> : null}
       <ReceiptInboxClient />
     </DashboardShell>
   );

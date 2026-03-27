@@ -10,18 +10,17 @@ export default async function ReportsPage() {
   const { supabase, user } = await requireUser();
   const membership = await getCompanyMembershipContext(supabase, user.id);
 
-  if (!membership) {
-    return (
-      <DashboardShell title="Reports">
-        <NoCompanyState />
-      </DashboardShell>
-    );
-  }
-
-  const data = await getDashboardFinanceData(supabase, user.id, membership.companyId);
+  const data = membership
+    ? await getDashboardFinanceData(supabase, user.id, membership.companyId)
+    : {
+        currencyCode: "DKK",
+        kpis: [],
+        trendData: []
+      };
 
   return (
     <DashboardShell title="Reports">
+      {!membership ? <NoCompanyState /> : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {data.kpis.map((kpi) => (
           <Card key={kpi.title}>

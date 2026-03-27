@@ -12,19 +12,20 @@ export default async function DashboardPage() {
   const { supabase, user } = await requireUser();
   const membership = await getCompanyMembershipContext(supabase, user.id);
 
-  if (!membership) {
-    return (
-      <DashboardShell title="Dashboard">
-        <NoCompanyState />
-      </DashboardShell>
-    );
-  }
-
-  const data = await getDashboardFinanceData(supabase, user.id, membership.companyId);
+  const data = membership
+    ? await getDashboardFinanceData(supabase, user.id, membership.companyId)
+    : {
+        currencyCode: "DKK",
+        kpis: [],
+        trendData: [],
+        expenseBreakdown: [],
+        recentTransactions: []
+      };
 
   return (
     <DashboardShell title="Dashboard">
       <div className="space-y-4">
+        {!membership ? <NoCompanyState /> : null}
         <KpiCards items={data.kpis} currencyCode={data.currencyCode} />
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           <OverviewChart data={data.trendData} />
