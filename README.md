@@ -76,6 +76,17 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - `npm run build` — production build
 - `npm run start` — run built app
 - `npm run test` — run Node test suite (`node --test tests/*.test.js`)
+- `npm run deadcode:audit-dashboard-components` — import-graph audit from `src/app/**` into legacy dashboard component scopes
+
+## Dead-code import audit process
+- Run `npm run deadcode:audit-dashboard-components` before major dashboard refactors and at least once per sprint to catch stale component paths early.
+- The audit traverses imports from `src/app/**` and verifies reachability into:
+  - `src/components/dashboard/*`
+  - `src/components/dashboard-ui/*`
+- Legacy files retired on 2026-03-27 were moved to:
+  - `archive/components/retired-dashboard-2026-03-27/`
+  - `archive/components/retired-dashboard-ui-2026-03-27/`
+- If you intentionally reintroduce one of these archived components, move it back into `src/components/**` and rerun lint/typecheck/build in the same PR.
 
 
 ## Documentation verification policy
@@ -113,6 +124,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, settings, onboarding, with `/account` redirect compatibility)
 - `src/app/api` — route handlers for auth, profile sessions, companies, transactions, categories, receipts
 - `src/components` — UI and feature components
+- `archive/components` — retired non-runtime component references kept for historical context
 - `src/lib` — auth helper, Supabase clients, data-fetch helpers
 - `supabase/migrations` — schema, triggers, RLS/storage policy definitions
 - `docs/` — product, domain, architecture, testing, security, UX docs

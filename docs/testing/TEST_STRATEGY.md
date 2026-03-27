@@ -14,6 +14,7 @@ Current executable commands in `package.json`:
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
+- `npm run deadcode:audit-dashboard-components` (import-graph reachability audit from `src/app/**` into legacy dashboard component scopes)
 
 ## Current automated test scope (and limitations)
 Implemented test files currently validate codebase contracts such as:
@@ -64,8 +65,16 @@ Limitations to state explicitly:
 2. `npm run typecheck`
 3. `npm run test`
 4. `npm run build` (recommended for schema/API/route changes)
+5. `npm run deadcode:audit-dashboard-components` when refactoring dashboard/navigation component trees
 
 For docs-only changes, lint/typecheck are the baseline minimum.
+
+## Periodic dead-code audit process
+- Run `npm run deadcode:audit-dashboard-components` at least once per sprint even if no dashboard PR is in flight.
+- Treat any newly reachable file under archived/legacy dashboard scopes as a review trigger:
+  - verify the import is intentional,
+  - move the file back to an active component path if needed,
+  - update README/docs paths in the same PR.
 
 ## Current gaps summary
 - No executable integration/e2e test harness yet.
