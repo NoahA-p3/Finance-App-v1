@@ -5,6 +5,9 @@ This note is migration-adjacent guidance only. It does **not** change runtime be
 ## Canonical runtime schema path
 - identity: `auth.users` -> `public.profiles`
 - finance: `public.transactions`, `public.categories`, `public.receipts`
+- company context: `public.companies`, `public.company_memberships`, `public.company_settings`
+- RBAC: `public.roles`, `public.permissions`, `public.role_permissions`, `public.company_invitations`
+- entitlements/billing: `public.plans`, `public.plan_entitlements`, `public.company_subscriptions`, `public.usage_counters`
 
 ## Legacy artifacts (do not extend)
 Legacy/divergent artifacts currently visible in one branch migration:
@@ -27,8 +30,34 @@ select * from public.legacy_schema_inventory order by artifact_key;
 ```
 
 ## Generated type workflow
-If Supabase CLI is available, regenerate types with:
-- `supabase gen types typescript --local > src/types/database.ts`
-- or `supabase gen types typescript --project-id <PROJECT_ID> > src/types/database.ts`
+Run regeneration from repo root (requires Supabase CLI and canonical DB state):
 
-If CLI is not available in the environment, document the blocker and reconcile only clearly verified canonical drift.
+```bash
+supabase gen types typescript --local > src/types/database.ts
+```
+
+If using a linked remote project instead of local DB:
+
+```bash
+supabase gen types typescript --project-id <PROJECT_ID> > src/types/database.ts
+```
+
+## Checksum and contract verification workflow
+After regeneration, record and verify a deterministic checksum plus canonical/legacy contract checks:
+
+```bash
+sha256sum src/types/database.ts
+```
+
+```bash
+# Structural sanity: exactly one Database contract section.
+rg -n "^export type Database =" src/types/database.ts
+
+# Canonical tables expected in active app contract.
+rg -n "^      (profiles|transactions|categories|receipts|companies|company_memberships|company_settings|roles|permissions|role_permissions|company_invitations|plans|plan_entitlements|company_subscriptions|usage_counters):" src/types/database.ts
+
+# Legacy runtime entities must not be present in active contract.
+rg -n "^      (users|accounts):" src/types/database.ts && echo "unexpected legacy entity" && exit 1 || true
+```
+
+If CLI is unavailable in the current environment, do **not** handcraft large type edits. Document the blocker and run the verification checks against the existing generated file.
