@@ -1349,3 +1349,40 @@ Confirm whether `src/components/dashboard-ui/*` and `src/components/dashboard/*`
 ### Assumptions or open questions
 - Assumption: dashboard component files with no path from any `src/app/**` module are safe to retire from runtime.
 - Open question: whether additional legacy component folders should be folded into the same audit later.
+
+## Migration audit + sequencing documentation (March 27, 2026)
+
+### Goal
+Audit existing SQL migrations for reliability issues and document explicit execution order/dependencies for environments where sequence matters.
+
+### Current behavior
+- Migrations are timestamp-named and generally intended to run in lexical order.
+- Dependency edges (for example, function/table prerequisites across migration files) are implicit rather than documented in one canonical runbook.
+- Some policy-creation statements in `202603270003_finance_write_permissions_and_rls_alignment.sql` are not safely repeatable if the migration is replayed in drifted/staging environments.
+
+### Proposed approach
+1. Patch SQL policy creation blocks that can fail on replay by adding missing `drop policy if exists` guards before recreate.
+2. Add a migration-order runbook under `supabase/migrations/` with:
+   - canonical full run order,
+   - dependency checkpoints,
+   - explicit sequence-sensitive notes,
+   - rollback/recovery operational guidance references.
+3. Link this runbook from README so contributors apply the same sequence.
+
+### Affected files
+- `supabase/migrations/202603270003_finance_write_permissions_and_rls_alignment.sql`
+- `supabase/migrations/MIGRATION_ORDER.md` (new)
+- `README.md`
+
+### Risks
+- Editing existing migrations can diverge from already-applied production histories; this pass assumes repository migrations are still the canonical source for new environment setup.
+- Sequence docs may become stale unless updated with future migration additions.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- manual SQL diff review for policy idempotency guards and migration-order documentation accuracy.
+
+### Assumptions / open questions
+- **Assumption:** Environments consuming this repository may need replay-safe behavior during drift reconciliation.
+- **Open question:** whether future work should freeze historical migrations and move all fixes into forward-only corrective migrations.

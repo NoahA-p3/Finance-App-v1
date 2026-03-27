@@ -52,6 +52,7 @@ create policy "Members mutate company transactions" on public.transactions
     )
   );
 
+drop policy if exists "Members update company transactions" on public.transactions;
 create policy "Members update company transactions" on public.transactions
   for update to authenticated
   using (
@@ -77,6 +78,7 @@ create policy "Members update company transactions" on public.transactions
     )
   );
 
+drop policy if exists "Members delete company transactions" on public.transactions;
 create policy "Members delete company transactions" on public.transactions
   for delete to authenticated
   using (
@@ -121,6 +123,7 @@ create policy "Members mutate company receipts" on public.receipts
     )
   );
 
+drop policy if exists "Members update company receipts" on public.receipts;
 create policy "Members update company receipts" on public.receipts
   for update to authenticated
   using (
@@ -146,6 +149,7 @@ create policy "Members update company receipts" on public.receipts
     )
   );
 
+drop policy if exists "Members delete company receipts" on public.receipts;
 create policy "Members delete company receipts" on public.receipts
   for delete to authenticated
   using (
