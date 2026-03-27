@@ -2,6 +2,24 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
 import { getCompanyMembershipContext } from "@/lib/company-permissions";
 
+export async function GET() {
+  const authContext = await requireAuthenticatedApiUser();
+  if (!authContext) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
+  if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+
+  const { data, error } = await authContext.supabase
+    .from("receipts")
+    .select("id,path,created_at,transaction_id")
+    .eq("company_id", membership.companyId)
+    .order("created_at", { ascending: false });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  return NextResponse.json({ receipts: data ?? [] });
+}
+
 export async function POST(req: Request) {
   const authContext = await requireAuthenticatedApiUser();
   if (!authContext) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +40,7 @@ export async function POST(req: Request) {
   const { data, error } = await authContext.supabase
     .from("receipts")
     .insert({ user_id: authContext.user.id, company_id: membership.companyId, path: filePath })
-    .select("id,path")
+    .select("id,path,created_at,transaction_id")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
