@@ -82,6 +82,12 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Update that date when claims are re-checked against current repository evidence (code, migrations, scripts).
 - If evidence is incomplete, mark the statement as **Assumption** or **TODO**.
 
+### Documentation consistency checklist (include in same PR as feature changes)
+- [ ] Updated status docs when runtime behavior changed: `tasks/EPICS.md`, `docs/product/PRODUCT_MODULE_MAP.md`, and `AGENTS.md`.
+- [ ] Added an explicit **As of: YYYY-MM-DD** date in every updated status section.
+- [ ] Added direct evidence links to changed claims (prefer `src/app/api/*`, `src/lib/*`, `supabase/migrations/*`).
+- [ ] If docs and runtime evidence still disagree, documented the gap explicitly in the PR summary.
+
 ## Current automated test coverage and limitations
 - `npm run test` executes Node built-in tests under `tests/*.test.js`.
 - Current tests focus on repository contract checks (API/migration/source assertions), not full live integration behavior.

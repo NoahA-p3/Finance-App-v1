@@ -1235,3 +1235,35 @@ Regenerate `src/types/database.ts` from the current canonical schema and verify 
 ### Assumptions / open questions
 - **Assumption:** canonical active contract intentionally excludes legacy `public.users`/`public.accounts` entities.
 - **Open question:** should CI enforce checksum drift detection for `src/types/database.ts` in future.
+
+## Documentation status alignment pass (March 27, 2026)
+
+### Goal
+Align module-status documentation with runtime evidence from `src/app/api/*`, `src/lib/*`, and `supabase/migrations/*`.
+
+### Current behavior
+- Status claims across `tasks/EPICS.md`, `docs/product/PRODUCT_MODULE_MAP.md`, and `AGENTS.md` were partially inconsistent with new posting/audit/RBAC runtime evidence.
+
+### Proposed approach
+1. Build one module-status table from runtime evidence.
+2. Update conflicting statements in the three status docs.
+3. Add explicit **As of** dates and evidence links in updated sections.
+4. Add a lightweight doc-consistency checklist to `README.md`.
+
+### Affected files
+- `tasks/EPICS.md`
+- `docs/product/PRODUCT_MODULE_MAP.md`
+- `AGENTS.md`
+- `README.md`
+
+### Risks
+- Overstating implementation depth (especially VAT/tax and advanced role workflows).
+- Linking evidence outside requested scope.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: status evidence should prioritize canonical runtime path over legacy migration artifacts.
+- Assumption: onboarding/support UX remains outside this specific runtime evidence table when not represented in `src/app/api/*`.
