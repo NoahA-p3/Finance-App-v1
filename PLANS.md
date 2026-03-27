@@ -1310,3 +1310,42 @@ Add explicit finance write/manage permission keys and enforce them consistently 
 ### Assumptions / open questions
 - Assumption: `owner` and `staff` should keep finance write permissions; `read_only` should not.
 - TODO: advanced-role permission matrix remains partial and may need future explicit assignments.
+
+## Dashboard dead-code retirement (March 27, 2026)
+
+### Goal
+Confirm whether `src/components/dashboard-ui/*` and `src/components/dashboard/*` are reachable from `src/app/**`, retire unreachable files, and add a repeatable import-graph audit process.
+
+### Current behavior
+- `src/app/**` imports active dashboard views from `src/components/finance/*`.
+- `src/components/dashboard-ui/*` and `src/components/dashboard/*` appear to be a legacy UI set and may no longer be wired into route entrypoints.
+- No lightweight, repo-native periodic import-graph check exists for this legacy component scope.
+
+### Proposed approach
+1. Trace imports starting at `src/app/**` and follow transitive `@/` or relative imports to confirm reachability into the two target component folders.
+2. Archive unreachable files to a clearly labeled non-runtime directory for reference.
+3. Update docs to reflect retired paths and add a periodic dead-code audit command.
+4. Run lint/typecheck/build to verify no runtime regressions.
+
+### Affected files
+- `src/components/dashboard-ui/*` (moved to archive if unreachable)
+- `src/components/dashboard/*` (moved to archive if unreachable)
+- `archive/components/*` (new archived location and readme)
+- `scripts/*` (new import-graph audit script)
+- `package.json` (new npm script)
+- `README.md` and/or `docs/testing/*` (audit process docs)
+
+### Risks
+- False negatives in import tracing if resolver aliases are not handled correctly.
+- Accidental removal of files that are only loaded dynamically by string paths.
+- Drift between docs and actual script behavior.
+
+### Verification steps
+- `npm run deadcode:audit-dashboard-components`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions or open questions
+- Assumption: dashboard component files with no path from any `src/app/**` module are safe to retire from runtime.
+- Open question: whether additional legacy component folders should be folded into the same audit later.
