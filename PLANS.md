@@ -885,6 +885,37 @@ Introduce a reusable empty/onboarding state across dashboard surfaces when a use
 ### Risks
 - Slight UX/content mismatch if onboarding/settings routes evolve independently.
 - Additional membership checks in pages duplicate shell-level checks (acceptable for explicit page gating).
+## Receipts inbox persisted-data slice (March 27, 2026)
+
+### Goal
+Replace the mock-backed receipts dashboard page with a real persisted receipt inbox UI using company-scoped API data and uploads.
+
+### Current behavior
+- `src/app/(dashboard)/receipts/page.tsx` renders a hardcoded in-memory receipts array.
+- `src/app/api/receipts/route.ts` supports `POST` upload/insert only.
+- No `GET /api/receipts` metadata listing endpoint exists for persisted receipts.
+
+### Proposed approach
+1. Add `GET /api/receipts` route handler in `src/app/api/receipts/route.ts` with auth + active-company membership enforcement.
+2. Return only persisted receipt metadata rows required by the UI: `id`, `path`, `created_at`, `transaction_id`.
+3. Rebuild `src/app/(dashboard)/receipts/page.tsx` as a persisted-data inbox with:
+   - upload form posting to `/api/receipts`
+   - loading/error states
+   - empty state
+   - list/grid of persisted receipts
+4. Avoid raw private storage-path exposure as clickable preview links; show metadata only until a controlled signed-URL flow is introduced.
+5. Update API/runtime docs for the new `GET /api/receipts` contract.
+
+### Affected files
+- `src/app/api/receipts/route.ts`
+- `src/app/(dashboard)/receipts/page.tsx`
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- Leaking private receipt storage paths via direct links if UI adds naive preview behavior.
+- Missing membership checks could permit cross-company reads.
 
 ### Verification steps
 - `npm run lint`
@@ -893,3 +924,5 @@ Introduce a reusable empty/onboarding state across dashboard surfaces when a use
 
 ### Assumptions / open questions
 - **Assumption:** `null` from `getCompanyMembershipContext(...)` should consistently mean "show onboarding gate" for these four pages.
+### Assumptions
+- Current inbox requirement is metadata listing + upload; receipt preview/download will use a future controlled signed URL endpoint.
