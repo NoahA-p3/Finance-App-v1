@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
-import { getCompanyMembershipContext } from "@/lib/company-permissions";
+import { COMPANY_PERMISSIONS, getCompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 import { createPeriodLock, listPeriodLocks } from "@/lib/postings/service";
 
 function parsePeriodLockPayload(payload: unknown) {
@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
 
   const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
   if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+  if (!hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_PERIOD_LOCKS_MANAGE)) {
+    return NextResponse.json({ error: "Missing required permission: finance.period_locks.manage" }, { status: 403 });
+  }
 
   let payload: unknown;
 

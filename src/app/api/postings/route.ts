@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
-import { getCompanyMembershipContext } from "@/lib/company-permissions";
+import { COMPANY_PERMISSIONS, getCompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 import { createPostingForTransaction, listPostings } from "@/lib/postings/service";
 
 function readTransactionId(payload: unknown) {
@@ -39,6 +39,9 @@ export async function POST(req: NextRequest) {
 
   const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
   if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+  if (!hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_POSTINGS_WRITE)) {
+    return NextResponse.json({ error: "Missing required permission: finance.postings.write" }, { status: 403 });
+  }
 
   let payload: unknown;
 

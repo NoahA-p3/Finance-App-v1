@@ -66,3 +66,31 @@ test('finance routes use active company scoping instead of trusting client owner
   assert.match(receiptsRoute, /user_id:\s*authContext\.user\.id/);
   assert.doesNotMatch(receiptsRoute, /company_id:\s*formData\./);
 });
+
+test('finance mutation routes enforce explicit finance write permissions', () => {
+  const transactionsRoute = read('src/app/api/transactions/route.ts');
+  const receiptsRoute = read('src/app/api/receipts/route.ts');
+  const postingsRoute = read('src/app/api/postings/route.ts');
+  const reverseRoute = read('src/app/api/postings/[posting_id]/reverse/route.ts');
+  const periodLocksRoute = read('src/app/api/postings/period-locks/route.ts');
+
+  assert.match(transactionsRoute, /COMPANY_PERMISSIONS\.FINANCE_TRANSACTIONS_WRITE/);
+  assert.match(transactionsRoute, /Missing required permission: finance\.transactions\.write/);
+  assert.match(transactionsRoute, /status:\s*403/);
+
+  assert.match(receiptsRoute, /COMPANY_PERMISSIONS\.FINANCE_RECEIPTS_WRITE/);
+  assert.match(receiptsRoute, /Missing required permission: finance\.receipts\.write/);
+  assert.match(receiptsRoute, /status:\s*403/);
+
+  assert.match(postingsRoute, /COMPANY_PERMISSIONS\.FINANCE_POSTINGS_WRITE/);
+  assert.match(postingsRoute, /Missing required permission: finance\.postings\.write/);
+  assert.match(postingsRoute, /status:\s*403/);
+
+  assert.match(reverseRoute, /COMPANY_PERMISSIONS\.FINANCE_POSTINGS_WRITE/);
+  assert.match(reverseRoute, /Missing required permission: finance\.postings\.write/);
+  assert.match(reverseRoute, /status:\s*403/);
+
+  assert.match(periodLocksRoute, /COMPANY_PERMISSIONS\.FINANCE_PERIOD_LOCKS_MANAGE/);
+  assert.match(periodLocksRoute, /Missing required permission: finance\.period_locks\.manage/);
+  assert.match(periodLocksRoute, /status:\s*403/);
+});

@@ -5,7 +5,11 @@ export const COMPANY_PERMISSIONS = {
   MEMBERS_READ: "company.members.read",
   MEMBERS_MANAGE: "company.members.manage",
   INVITATIONS_READ: "company.invitations.read",
-  INVITATIONS_MANAGE: "company.invitations.manage"
+  INVITATIONS_MANAGE: "company.invitations.manage",
+  FINANCE_TRANSACTIONS_WRITE: "finance.transactions.write",
+  FINANCE_RECEIPTS_WRITE: "finance.receipts.write",
+  FINANCE_POSTINGS_WRITE: "finance.postings.write",
+  FINANCE_PERIOD_LOCKS_MANAGE: "finance.period_locks.manage"
 } as const;
 
 export type CompanyPermissionKey = (typeof COMPANY_PERMISSIONS)[keyof typeof COMPANY_PERMISSIONS];
@@ -99,6 +103,22 @@ export async function getCompanyMembershipContext(
 
 export function hasCompanyPermission(membership: CompanyMembershipContext | null, permission: CompanyPermissionKey) {
   return Boolean(membership && membership.permissions.has(permission));
+}
+
+export function canWriteFinanceTransactions(membership: CompanyMembershipContext | null) {
+  return hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_TRANSACTIONS_WRITE);
+}
+
+export function canWriteFinanceReceipts(membership: CompanyMembershipContext | null) {
+  return hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_RECEIPTS_WRITE);
+}
+
+export function canWriteFinancePostings(membership: CompanyMembershipContext | null) {
+  return hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_POSTINGS_WRITE);
+}
+
+export function canManageFinancePeriodLocks(membership: CompanyMembershipContext | null) {
+  return hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_PERIOD_LOCKS_MANAGE);
 }
 
 export const BASELINE_ROLES = ["owner", "staff", "read_only"] as const;

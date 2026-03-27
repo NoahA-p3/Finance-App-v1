@@ -13,11 +13,13 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Company-scoped RBAC baseline is implemented with `roles`, `permissions`, `role_permissions`, and `company_memberships.role`.
 - Seeded baseline roles: `owner`, `staff`, `read_only`.
 - Permission checks are enforced server-side in API handlers (not UI-only) for company settings/member/invitation actions.
+- Finance mutations are server-gated by explicit permission keys (`finance.transactions.write`, `finance.receipts.write`, `finance.postings.write`, `finance.period_locks.manage`); baseline seeding grants these to `owner` and `staff` but not `read_only`.
 - Advanced roles (`accountant`, `auditor`, `payroll_only`, `sales_only`, `integration_admin`) are present as feature-flagged placeholders until permission matrix finalization.
 
 ## Supabase security and RLS
 - RLS enabled on key tables (`profiles`, `transactions`, `categories`, `receipts`, legacy tables).
 - Policies for `transactions`, `categories`, and `receipts` constrain CRUD by same-company membership + `company_id` (company-shared visibility), not per-row `user_id = auth.uid()` ownership.
+- Policies for posting/audit tables (`journal_entries`, `journal_lines`, `period_locks`, `audit_events`) and finance writes now split read access (same-company membership) from mutation access (role-permission checks via `role_permissions`).
 - Storage bucket policies restrict receipt object paths to per-user folder prefixes.
 
 ## Company isolation controls (current runtime)

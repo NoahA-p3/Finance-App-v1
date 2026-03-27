@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
-import { getCompanyMembershipContext } from "@/lib/company-permissions";
+import { COMPANY_PERMISSIONS, getCompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 
 const ALLOWED_RECEIPT_MIME_TYPES = new Set([
   "application/pdf",
@@ -61,6 +61,9 @@ export async function POST(req: Request) {
 
   const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
   if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+  if (!hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_RECEIPTS_WRITE)) {
+    return NextResponse.json({ error: "Missing required permission: finance.receipts.write" }, { status: 403 });
+  }
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
