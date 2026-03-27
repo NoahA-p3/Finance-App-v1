@@ -758,3 +758,82 @@ Reduce opaque signup failures by mapping additional Supabase signup errors to ac
 - `npm run typecheck`
 - `npm test`
 - `npm run build`
+
+## Settings information architecture refactor (March 27, 2026)
+
+### Goal
+Refactor the Settings area into clear top-level tabs (Personal, Company, Team & Access, Sales & Documents, Accounting & Tax, Banking & Payments, Integrations) while preserving existing forms, permissions, and save behavior.
+
+### Current behavior
+- `/settings` renders a mixed page that combines `CompanyProfileForm`, a tax placeholder, entitlements, and sessions.
+- `/account` separately renders `AccountSecurityPanel`, splitting user security workflows away from settings.
+- Sidebar contains both `Account` and `Settings`, creating overlapping navigation for account/security configuration.
+- There is no nested settings navigation or tab-specific routing.
+
+### Proposed approach
+1. Add a shared settings IA config that defines top-level tabs, descriptions, and visibility gates.
+2. Add a nested settings layout/navigation (`/settings` landing + `/settings/[tab]`) with stable links.
+3. Rehome existing settings UI:
+   - Account security and sessions into Personal.
+   - Company profile and entitlements into Company.
+   - Tax placeholder into Accounting & Tax.
+4. Add placeholder index content for Team & Access, Sales & Documents, Banking & Payments, and Integrations.
+5. Preserve old deep links by redirecting `/account` to `/settings/personal`.
+6. Update global nav labels and docs note describing the new settings IA.
+
+### Affected files
+- `src/app/(dashboard)/settings/page.tsx`
+- `src/app/(dashboard)/settings/[tab]/page.tsx` (new)
+- `src/app/(dashboard)/settings/layout.tsx` (new)
+- `src/app/(dashboard)/account/page.tsx`
+- `src/components/shell/sidebar.tsx`
+- `src/components/shell/top-nav.tsx`
+- `src/lib/settings/navigation.ts` (new)
+- `docs/architecture/SETTINGS_INFORMATION_ARCHITECTURE.md` (new)
+- `README.md`
+
+### Risks
+- Tab visibility could drift from permission model if not tied to membership permissions/feature flags.
+- Redirecting `/account` may affect users with saved bookmarks if not handled server-side.
+- Existing mixed `CompanyProfileForm` still contains cross-domain defaults; placeholders need to clearly mark future split without implying completed behavior.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: showing structural placeholder pages for required top-level tabs satisfies “hide empty sections,” because tabs have explicit scope and implementation status text.
+- Assumption: current codebase does not yet include dedicated workspace-level Security & Audit, Payroll, Automation, or Developer settings pages, so optional tabs remain hidden.
+
+## Settings IA optional-tab expansion (March 27, 2026)
+
+### Goal
+Add the remaining optional Settings tabs (Automation, Payroll, Developer, Security & Audit) to the settings information architecture in a safe, feature-gated way.
+
+### Current behavior
+- Settings currently includes only the seven core tabs.
+- Optional tabs from the IA spec are not represented in routing or navigation.
+
+### Proposed approach
+1. Extend settings tab definitions with optional tabs and concise descriptions.
+2. Keep optional tabs hidden by default and expose them only via explicit feature flags and existing role/permission checks.
+3. Add placeholder index content for each optional tab to preserve IA structure without implying full implementation.
+4. Update docs note with optional tab gating behavior.
+
+### Affected files
+- `src/lib/settings/navigation.ts`
+- `src/app/(dashboard)/settings/[tab]/page.tsx`
+- `docs/architecture/SETTINGS_INFORMATION_ARCHITECTURE.md`
+- `PLANS.md`
+
+### Risks
+- Optional tabs could be accidentally visible by default if feature-flag defaults are not defensive.
+- Role checks for payroll/developer surfaces can drift unless tied to existing advanced-role toggles.
+
+### Verification steps
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions
+- New feature flags can be introduced with safe defaults (off) without changing runtime behavior for existing environments.

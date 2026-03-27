@@ -51,6 +51,10 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
   - `NEXT_PUBLIC_ENABLE_SESSION_MANAGEMENT` (optional, set to `false` to hide the Settings session-management panel while backend remains available)
   - `NEXT_PUBLIC_ENABLE_ADVANCED_ROLES` (optional, default `false`; when `true`, allows assigning advanced placeholder roles: accountant, auditor, payroll-only, sales-only, integration-admin)
   - `NEXT_PUBLIC_ENABLE_ENTITLEMENTS` (optional, default `true`; controls Settings plan/entitlements panel visibility)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION` (optional, default `false`; enables optional Automation settings tab)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL` (optional, default `false`; enables optional Payroll settings tab)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER` (optional, default `false`; enables optional Developer settings tab)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT` (optional, default `false`; enables optional Security & Audit settings tab)
   - `ENABLE_ENTITLEMENT_ENFORCEMENT` (optional, default `true`; global server-side plan-limit enforcement switch)
   - `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS` (optional CSV allowlist; e.g. `starter,growth` for per-tier rollout)
 4. Start dev server:
@@ -76,7 +80,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 
 ## Repository structure
 - `src/app/(auth)` — login/signup/forgot-password/reset-password routes
-- `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, account, settings, onboarding)
+- `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, settings, onboarding, with `/account` redirect compatibility)
 - `src/app/api` — route handlers for auth, profile sessions, companies, transactions, categories, receipts
 - `src/components` — UI and feature components
 - `src/lib` — auth helper, Supabase clients, data-fetch helpers
@@ -88,7 +92,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Product index: `docs/product/README.md`
 - Product core docs: `docs/product/PRD.md`, `docs/product/PRODUCT_MODULE_MAP.md`, `docs/product/DELIVERY_PHASES.md`, `docs/product/MVP_SCOPE.md`
 - Domain: `docs/domain/DK_ACCOUNTING_RULES.md`, `docs/domain/DK_VAT_RULES.md`, `docs/domain/LEGAL_FORM_RULES.md`
-- Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`, `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`
+- Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`, `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`, `docs/architecture/SETTINGS_INFORMATION_ARCHITECTURE.md`
 - Testing: `docs/testing/TEST_STRATEGY.md`, `docs/testing/GOLDEN_DATASETS.md`
 - Security: `docs/security/SECURITY_RULES.md`
 - UX: `docs/ux/USER_FLOWS.md`
