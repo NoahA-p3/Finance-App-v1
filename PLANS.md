@@ -1199,3 +1199,39 @@ Add an executable test plan and initial contract suites for API auth enforcement
 ### Assumptions / TODO
 - **Assumption:** initial suites in this pass remain source-contract tests due current test harness.
 - **TODO:** add API integration tests against seeded Supabase test data when DB test infra is available.
+
+## Database types regeneration + schema-contract verification (March 27, 2026)
+
+### Goal
+Regenerate `src/types/database.ts` from the current canonical schema and verify the generated contract is structurally valid, canonically complete, and free of legacy runtime entities.
+
+### Current behavior
+- `src/types/database.ts` exists and currently includes canonical finance, company, RBAC, entitlement, and posting/audit tables.
+- Supabase CLI may be unavailable in constrained environments, which can block direct regeneration.
+- Guardrail docs mention generation commands but do not yet require a checksum verification step.
+
+### Proposed approach
+1. Attempt canonical regeneration command for `src/types/database.ts`.
+2. Validate generated file structure (single `Database` type, no malformed duplicate interface sections).
+3. Verify canonical table coverage (`profiles`, `transactions`, `categories`, `receipts`, company/RBAC/entitlements).
+4. Verify legacy runtime entities (`public.users`, `public.accounts`) are not reintroduced in active contract.
+5. Document regeneration + checksum/verification workflow in `supabase/migrations/README_SCHEMA_GUARDRAILS.md`.
+
+### Affected files
+- `src/types/database.ts`
+- `supabase/migrations/README_SCHEMA_GUARDRAILS.md`
+- `PLANS.md`
+
+### Risks
+- Supabase CLI unavailability can prevent true regeneration in this environment.
+- Manual reconciliation risks drift if migrations change without regeneration.
+
+### Verification steps
+- `npm run typecheck`
+- `npm run lint`
+- Structural grep checks for duplicate/malformed type sections and legacy entities.
+- Checksum command for regenerated types.
+
+### Assumptions / open questions
+- **Assumption:** canonical active contract intentionally excludes legacy `public.users`/`public.accounts` entities.
+- **Open question:** should CI enforce checksum drift detection for `src/types/database.ts` in future.
