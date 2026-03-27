@@ -859,3 +859,43 @@ Make all Settings tabs visible by default, including optional tabs, unless expli
 ### Verification steps
 - `npm run typecheck`
 - `npm run build`
+
+## Receipts inbox persisted-data slice (March 27, 2026)
+
+### Goal
+Replace the mock-backed receipts dashboard page with a real persisted receipt inbox UI using company-scoped API data and uploads.
+
+### Current behavior
+- `src/app/(dashboard)/receipts/page.tsx` renders a hardcoded in-memory receipts array.
+- `src/app/api/receipts/route.ts` supports `POST` upload/insert only.
+- No `GET /api/receipts` metadata listing endpoint exists for persisted receipts.
+
+### Proposed approach
+1. Add `GET /api/receipts` route handler in `src/app/api/receipts/route.ts` with auth + active-company membership enforcement.
+2. Return only persisted receipt metadata rows required by the UI: `id`, `path`, `created_at`, `transaction_id`.
+3. Rebuild `src/app/(dashboard)/receipts/page.tsx` as a persisted-data inbox with:
+   - upload form posting to `/api/receipts`
+   - loading/error states
+   - empty state
+   - list/grid of persisted receipts
+4. Avoid raw private storage-path exposure as clickable preview links; show metadata only until a controlled signed-URL flow is introduced.
+5. Update API/runtime docs for the new `GET /api/receipts` contract.
+
+### Affected files
+- `src/app/api/receipts/route.ts`
+- `src/app/(dashboard)/receipts/page.tsx`
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- Leaking private receipt storage paths via direct links if UI adds naive preview behavior.
+- Missing membership checks could permit cross-company reads.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions
+- Current inbox requirement is metadata listing + upload; receipt preview/download will use a future controlled signed URL endpoint.
