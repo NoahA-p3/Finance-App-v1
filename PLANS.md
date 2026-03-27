@@ -859,3 +859,37 @@ Make all Settings tabs visible by default, including optional tabs, unless expli
 ### Verification steps
 - `npm run typecheck`
 - `npm run build`
+
+## No-company onboarding gate for dashboard pages (March 27, 2026)
+
+### Goal
+Introduce a reusable empty/onboarding state across dashboard surfaces when a user has no active company membership context.
+
+### Current behavior
+- `dashboard`, `transactions`, and `reports` pages fall back to empty datasets when `getCompanyMembershipContext(...)` returns `null`.
+- `receipts` page currently renders scaffold/mock receipt UI without checking membership context.
+- Top navigation already hides the company switcher when no companies are available.
+
+### Proposed approach
+1. Add a reusable `NoCompanyState` shell component with explanation text and CTAs to `/onboarding` and `/settings/company`.
+2. Gate dashboard widgets/tables/receipt scaffolding in each target page by checking membership and rendering `NoCompanyState` early when membership is `null`.
+3. Keep existing `DashboardShell` + `TopNav` membership sourcing unchanged so company switch behavior remains stable in no-membership sessions.
+
+### Affected files
+- `src/components/shell/no-company-state.tsx`
+- `src/app/(dashboard)/dashboard/page.tsx`
+- `src/app/(dashboard)/transactions/page.tsx`
+- `src/app/(dashboard)/reports/page.tsx`
+- `src/app/(dashboard)/receipts/page.tsx`
+
+### Risks
+- Slight UX/content mismatch if onboarding/settings routes evolve independently.
+- Additional membership checks in pages duplicate shell-level checks (acceptable for explicit page gating).
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** `null` from `getCompanyMembershipContext(...)` should consistently mean "show onboarding gate" for these four pages.

@@ -1,5 +1,8 @@
 import { DashboardShell } from "@/components/shell/dashboard-shell";
 import { Card } from "@/components/ui/card";
+import { NoCompanyState } from "@/components/shell/no-company-state";
+import { requireUser } from "@/lib/auth";
+import { getCompanyMembershipContext } from "@/lib/company-permissions";
 
 const receipts = [
   { merchant: "AWS", date: "2026-03-16", amount: 240, linked: "t1" },
@@ -7,7 +10,18 @@ const receipts = [
   { merchant: "Uber", date: "2026-03-12", amount: 41, linked: "t7" }
 ];
 
-export default function ReceiptsPage() {
+export default async function ReceiptsPage() {
+  const { supabase, user } = await requireUser();
+  const membership = await getCompanyMembershipContext(supabase, user.id);
+
+  if (!membership) {
+    return (
+      <DashboardShell title="Receipts">
+        <NoCompanyState />
+      </DashboardShell>
+    );
+  }
+
   return (
     <DashboardShell title="Receipts">
       <Card>
