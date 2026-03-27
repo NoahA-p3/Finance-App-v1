@@ -4,6 +4,24 @@ Status labels: **implemented**, **partial**, **planned**, **unknown**.
 
 Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architecture/SYSTEM_OVERVIEW.md), [Test Strategy](../docs/testing/TEST_STRATEGY.md).
 
+## Runtime status table (module → status)
+**As of:** 2026-03-27.
+
+| Module | Status | Evidence |
+|---|---|---|
+| 1) Repo and developer foundation | partial | Baseline scripts/docs exist; CI/test depth still limited in repo. |
+| 2) Accounting domain model | partial | Transaction/category primitives are live, but full legal-form-aware canonical model is incomplete. [`src/app/api/transactions/route.ts`](../src/app/api/transactions/route.ts), [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
+| 3) Auth, tenancy, and roles | partial | Auth, company membership, role permissions, and invitation list/create are present; full invitation acceptance and richer role rollout remain open. [`src/app/api/companies/invitations/route.ts`](../src/app/api/companies/invitations/route.ts), [`src/lib/company-permissions.ts`](../src/lib/company-permissions.ts), [`supabase/migrations/202603250002_company_rbac_baseline.sql`](../supabase/migrations/202603250002_company_rbac_baseline.sql) |
+| 4) Ledger core | partial | Posting, reversal, period locks, and immutability guards are implemented baseline; deeper accounting completeness still planned. [`src/app/api/postings/route.ts`](../src/app/api/postings/route.ts), [`src/app/api/postings/[posting_id]/reverse/route.ts`](../src/app/api/postings/%5Bposting_id%5D/reverse/route.ts), [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
+| 5) Transaction ingestion | partial | Manual transaction API insert/list exists; import/matching engine absent. [`src/app/api/transactions/route.ts`](../src/app/api/transactions/route.ts) |
+| 6) Document capture | partial | Receipt upload/list API and storage constraints exist; OCR/linking UX depth is incomplete. [`src/app/api/receipts/route.ts`](../src/app/api/receipts/route.ts), [`supabase/migrations/202603200004_finance_assistant_mvp.sql`](../supabase/migrations/202603200004_finance_assistant_mvp.sql) |
+| 7) Invoicing and bills | planned | No invoice/bill runtime API or schema in evidence scope. |
+| 8) VAT and tax engine | planned | No VAT/tax rule engine implementation in evidence scope. |
+| 9) Reports and exports | partial | Persisted dashboard/report summary logic exists; formal report/export contracts remain limited. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
+| 10) Integrations | partial | Minimal CVR lookup adapter exists; broad connector/webhook/job platform is not implemented. [`src/app/api/companies/cvr/route.ts`](../src/app/api/companies/cvr/route.ts), [`src/lib/cvr/adapter.ts`](../src/lib/cvr/adapter.ts) |
+| 11) Security and operations | partial | Audit-event append-only table and immutability triggers exist; broader incident/restore ops runbooks are still limited. [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
+| 12) UX polish and launch readiness | partial | Many production loops are still scaffold-level; persisted data has replaced some prior placeholders. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
+
 ## 1) Repo and developer foundation
 - Objective: maintain reliable engineering baseline and documentation.
 - Current status: **partial**.
@@ -35,11 +53,12 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 
 ## 3) Auth, tenancy, and roles
 - Objective: secure multi-tenant behavior and role-aware collaboration.
-- Current status: **partial/implemented baseline**.
-- Implemented baseline:
-  - company tenancy API surface exists under `src/app/api/companies/*` (company profile CRUD, company switch, members, and invitations),
+- Current status: **partial**.
+- As of 2026-03-27, implemented baseline:
+  - company tenancy API surface exists under `src/app/api/companies/*` (company profile CRUD, company switch, members, and invitations list/create),
   - permission helpers and role checks exist in `src/lib/company-permissions.ts`,
   - foundational schema + RLS are in migrations `202603250001_companies_bootstrap.sql` and `202603250002_company_rbac_baseline.sql`.
+- Evidence: [`src/app/api/companies/route.ts`](../src/app/api/companies/route.ts), [`src/app/api/companies/switch/route.ts`](../src/app/api/companies/switch/route.ts), [`src/app/api/companies/members/route.ts`](../src/app/api/companies/members/route.ts), [`src/app/api/companies/invitations/route.ts`](../src/app/api/companies/invitations/route.ts), [`src/lib/company-permissions.ts`](../src/lib/company-permissions.ts), [`supabase/migrations/202603250001_companies_bootstrap.sql`](../supabase/migrations/202603250001_companies_bootstrap.sql), [`supabase/migrations/202603250002_company_rbac_baseline.sql`](../supabase/migrations/202603250002_company_rbac_baseline.sql).
 - Main gaps:
   - invitation lifecycle is not end-to-end (acceptance/onboarding flow still missing),
   - role model is still baseline-first and needs a richer, production-ready matrix across advanced roles.
@@ -55,16 +74,22 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 
 ## 4) Ledger core
 - Objective: implement immutable posting and correction model.
-- Current status: **planned**.
-- Main gaps: no journal lines, no reversal semantics, no period locks.
+- Current status: **partial**.
+- As of 2026-03-27:
+  - posting creation/list (`/api/postings`) exists,
+  - reversal flow (`/api/postings/{posting_id}/reverse`) exists,
+  - period lock flow (`/api/postings/period-locks`) exists,
+  - DB-level immutability and append-only audit guards are present.
+- Evidence: [`src/app/api/postings/route.ts`](../src/app/api/postings/route.ts), [`src/app/api/postings/[posting_id]/reverse/route.ts`](../src/app/api/postings/%5Bposting_id%5D/reverse/route.ts), [`src/app/api/postings/period-locks/route.ts`](../src/app/api/postings/period-locks/route.ts), [`src/lib/postings/service.ts`](../src/lib/postings/service.ts), [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql).
+- Main gaps: posting baseline exists, but deeper production-grade bookkeeping behavior (full chart strategy, advanced adjustments, expanded controls) is still incomplete.
 - Epics:
-  - posting engine,
-  - reversal/correction flow,
-  - close-period controls.
+  - posting engine hardening,
+  - reversal/correction flow expansion,
+  - close-period controls + operational controls.
 - Task ideas:
-  - introduce journal tables,
-  - add posted/unposted state machine.
-- Major risks: compliance and trust failures if edits remain mutable.
+  - refine journal account mapping strategy,
+  - add higher-coverage posting/reversal lock tests.
+- Major risks: compliance and trust failures if immutability controls regress.
 
 ## 5) Transaction ingestion
 - Objective: reduce manual entry via imports and matching.
@@ -133,8 +158,10 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 
 ## 10) Integrations
 - Objective: connect external systems safely.
-- Current status: **planned**.
-- Main gaps: no connectors/webhooks/jobs.
+- Current status: **partial**.
+- As of 2026-03-27: CVR lookup adapter endpoint exists, while broader connectors/webhooks/jobs are still planned.
+- Evidence: [`src/app/api/companies/cvr/route.ts`](../src/app/api/companies/cvr/route.ts), [`src/lib/cvr/adapter.ts`](../src/lib/cvr/adapter.ts).
+- Main gaps: no broad connectors/webhooks/jobs.
 - Epics:
   - bank provider integration,
   - document OCR provider,
@@ -146,13 +173,15 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 ## 11) Security and operations
 - Objective: harden data protection and operational readiness.
 - Current status: **partial**.
-- Main gaps: no explicit audit logs, no incident/restore docs, unknown backup runbook.
+- As of 2026-03-27: explicit append-only `audit_events` table and immutability triggers exist, but incident response/backup runbook maturity is still limited.
+- Evidence: [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql).
+- Main gaps: no incident/restore docs, unknown backup runbook.
 - Epics:
   - security review cadence,
-  - audit-event architecture,
+  - audit-event architecture hardening,
   - ops runbooks.
 - Task ideas:
-  - sensitive action logging table,
+  - sensitive action logging coverage review,
   - restore drill documentation.
 - Major risks: compliance/security incidents.
 
@@ -165,6 +194,6 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
   - onboarding completion,
   - launch quality checklist.
 - Task ideas:
-  - replace mock dashboards with real data,
+  - replace remaining mock dashboards with real data,
   - add empty/error states and guided review workflows.
 - Major risks: poor retention due to incomplete core loops.

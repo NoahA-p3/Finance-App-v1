@@ -13,23 +13,23 @@ Finance Assistant MVP for Danish freelancers and small businesses, including enk
 
 ## Current product state
 This repo is an MVP foundation, not a finished accounting system.
+
+**As of:** 2026-03-27.
+
 Implemented or partial today:
-- auth and protected routes
-- profiles
-- transactions
-- categories
-- receipts
-- dashboard and reports scaffolding
+- auth and protected routes (evidence: [`src/app/api/auth/*`](src/app/api/auth), [`src/lib/auth.ts`](src/lib/auth.ts))
+- profiles and active-company context (evidence: [`src/lib/company-permissions.ts`](src/lib/company-permissions.ts), [`supabase/migrations/202603250003_active_company_and_company_scoped_finance.sql`](supabase/migrations/202603250003_active_company_and_company_scoped_finance.sql))
+- transactions, categories, receipts (evidence: [`src/app/api/transactions/route.ts`](src/app/api/transactions/route.ts), [`src/app/api/categories/route.ts`](src/app/api/categories/route.ts), [`src/app/api/receipts/route.ts`](src/app/api/receipts/route.ts))
+- company tenancy and baseline RBAC (evidence: [`src/app/api/companies/*`](src/app/api/companies), [`supabase/migrations/202603250001_companies_bootstrap.sql`](supabase/migrations/202603250001_companies_bootstrap.sql), [`supabase/migrations/202603250002_company_rbac_baseline.sql`](supabase/migrations/202603250002_company_rbac_baseline.sql))
+- posting baseline with reversal, period locks, and append-only audit controls (evidence: [`src/app/api/postings/*`](src/app/api/postings), [`src/lib/postings/service.ts`](src/lib/postings/service.ts), [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](supabase/migrations/202603270002_posting_and_audit_immutability.sql))
+- dashboard/report persisted-data composition (evidence: [`src/lib/dashboard-data.ts`](src/lib/dashboard-data.ts))
 
 Planned or not yet fully implemented:
 - VAT engine
 - tax rule engine
 - legal-form-specific logic
-- compliance-grade reporting
-- immutable posting model
-- period locking
-- audit event system
-- multi-user role model
+- compliance-grade reporting depth
+- full invitation acceptance lifecycle and richer multi-user role workflows
 
 Do not describe planned capabilities as implemented.
 
