@@ -26,7 +26,7 @@ export default async function ReportsPage() {
         {data.kpis.map((kpi) => (
           <Card key={kpi.title}>
             <p className="text-sm text-indigo-200/70">{kpi.title}</p>
-            <p className="mt-2 text-2xl font-semibold text-white">{formatCurrencyFromCents(kpi.amountCents)}</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{formatCurrencyFromCents(kpi.amountCents, data.currencyCode)}</p>
           </Card>
         ))}
       </div>

@@ -220,6 +220,37 @@ Replace Recharts with a modern, maintainable charting approach across dashboard 
 - Styling is handled through Tailwind classes plus inline chart color/theme props.
 - Docs currently reference Recharts in `README.md` and `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`.
 
+## Dashboard currency formatting refactor (March 27, 2026)
+
+### Goal
+Use each company's configured base currency when formatting dashboard and reports monetary values instead of hardcoded USD.
+
+### Current behavior
+- `formatCurrencyFromCents` always formats as USD.
+- `getDashboardFinanceData` does not load currency metadata from `company_settings`.
+- KPI cards, reports KPI cards, and recent transaction displays all rely on the USD formatter.
+
+### Proposed approach
+1. Extend dashboard loader to fetch `company_settings.base_currency` for the active `company_id`.
+2. Add `currencyCode` to the dashboard data contract, with `DKK` fallback if missing.
+3. Update `formatCurrencyFromCents` to accept an optional currency code argument and default to `DKK`.
+4. Pass `currencyCode` through dashboard and reports UI consumers (KPI cards and transaction amount displays).
+
+### Affected files
+- `src/lib/dashboard-data.ts`
+- `src/components/finance/kpi-cards.tsx`
+- `src/components/finance/recent-transactions.tsx`
+- `src/app/(dashboard)/dashboard/page.tsx`
+- `src/app/(dashboard)/reports/page.tsx`
+
+### Risks
+- Invalid or unexpected currency codes from data can cause formatter runtime errors.
+- Missing wiring in one consumer could leave mixed currency displays.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+
 ### Proposed approach
 1. Remove `recharts` and implement reusable internal SVG chart primitives for React 19/Next.js compatibility and long-term maintainability.
 2. Add shared chart components under `src/components/charts/`.
