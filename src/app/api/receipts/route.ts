@@ -2,6 +2,41 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
 import { getCompanyMembershipContext } from "@/lib/company-permissions";
 
+const ALLOWED_RECEIPT_MIME_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+]);
+
+const MAX_RECEIPT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
+const INVALID_FILENAME_PATTERN = /[\\/\u0000-\u001f\u007f]|\.\./;
+const SAFE_FILENAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
+
+function buildValidationError(code: string, message: string) {
+  return NextResponse.json({ error: message, code }, { status: 400 });
+}
+
+function getFileExtension(fileName: string): string {
+  const [, extension = ""] = /(?:\.([^.]+))?$/.exec(fileName) ?? [];
+  return extension.toLowerCase();
+}
+
+function isUnsafeFilename(fileName: string): boolean {
+  const trimmed = fileName.trim();
+  if (!trimmed) return true;
+  if (trimmed.startsWith(".")) return true;
+  if (INVALID_FILENAME_PATTERN.test(trimmed)) return true;
+  return !SAFE_FILENAME_PATTERN.test(trimmed);
+}
+
+function buildReceiptStoragePath(params: { userId: string; companyId: string; originalName: string }) {
+  const extension = getFileExtension(params.originalName);
+  const objectName = extension ? `${crypto.randomUUID()}.${extension}` : crypto.randomUUID();
+  return `${params.userId}/${params.companyId}/${objectName}`;
+}
+
 export async function GET() {
   const authContext = await requireAuthenticatedApiUser();
   if (!authContext) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,9 +65,26 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
 
-  if (!file) return NextResponse.json({ error: "Missing file" }, { status: 400 });
+  if (!file) return buildValidationError("receipt_file_missing", "Missing file");
 
-  const filePath = `${authContext.user.id}/${membership.companyId}/${Date.now()}-${file.name}`;
+  if (!ALLOWED_RECEIPT_MIME_TYPES.has(file.type)) {
+    return buildValidationError("receipt_file_type_not_allowed", "Unsupported file type");
+  }
+
+  if (file.size > MAX_RECEIPT_FILE_SIZE_BYTES) {
+    return buildValidationError("receipt_file_too_large", "File exceeds max size limit");
+  }
+
+  if (isUnsafeFilename(file.name)) {
+    return buildValidationError("receipt_filename_invalid", "Unsafe filename");
+  }
+
+  const filePath = buildReceiptStoragePath({
+    userId: authContext.user.id,
+    companyId: membership.companyId,
+    originalName: file.name
+  });
+
   const { error: uploadError } = await authContext.supabase.storage.from("receipts").upload(filePath, file, { upsert: false });
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 400 });

@@ -45,6 +45,13 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Any future bank integration must use least-privilege access and explicit secret management.
 - VAT/tax computation changes require tests and review notes.
 
+## Receipt upload validation controls (current runtime)
+- `/api/receipts` accepts only `application/pdf`, `image/jpeg`, `image/png`, and `image/webp`.
+- Uploads above 10 MB are rejected before storage write attempts.
+- Filenames with path traversal/control characters or unsafe patterns are rejected.
+- Storage object keys are normalized server-side to `user_id/company_id/<uuid>.<ext>`; raw client filenames are not used in storage keys.
+- Validation failures return deterministic `400` responses with stable machine codes (`receipt_file_missing`, `receipt_file_type_not_allowed`, `receipt_file_too_large`, `receipt_filename_invalid`).
+
 ## Logging and redaction rules
 - Do not log secrets, raw auth tokens, full receipt URLs, or full personal identifiers.
 - Error responses should avoid leaking internals.
