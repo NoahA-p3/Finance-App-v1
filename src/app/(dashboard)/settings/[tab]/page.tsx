@@ -6,6 +6,7 @@ import { CompanyProfileForm } from "@/components/settings/company-profile-form";
 import { EntitlementsPanel } from "@/components/settings/entitlements-panel";
 import { SessionsPanel } from "@/components/settings/sessions-panel";
 import { SettingsNav } from "@/components/settings/settings-nav";
+import { TeamAccessPanel } from "@/components/settings/team-access-panel";
 import { Card } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { getCompanyMembershipContext } from "@/lib/company-permissions";
@@ -73,17 +74,7 @@ export default async function SettingsTabPage({ params }: { params: Promise<{ ta
           </>
         ) : null}
 
-        {activeTab.key === "team-access" ? (
-          <Placeholder
-            title="Team & Access setup"
-            description="This section is reserved for member invites, member list administration, role controls, and access visibility settings."
-            bullets={[
-              "Use company invitation and member APIs as the implementation path for future UI work.",
-              "Keep permission checks strict for role changes and invite actions.",
-              "Do not move operational workflows here; only access configuration belongs in this tab."
-            ]}
-          />
-        ) : null}
+        {activeTab.key === "team-access" ? <TeamAccessPanel /> : null}
 
         {activeTab.key === "sales-documents" ? (
           <>
