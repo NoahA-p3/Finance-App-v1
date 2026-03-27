@@ -8,16 +8,9 @@ export default async function TransactionsPage() {
   const { supabase, user } = await requireUser();
   const membership = await getCompanyMembershipContext(supabase, user.id);
 
-  if (!membership) {
-    return (
-      <DashboardShell title="Transactions">
-        <NoCompanyState />
-      </DashboardShell>
-    );
-  }
-
   return (
     <DashboardShell title="Transactions">
+      {!membership ? <NoCompanyState /> : null}
       <TransactionsWorkspace />
     </DashboardShell>
   );
