@@ -99,6 +99,12 @@ All other endpoint groupings in this document are target contracts for phased im
   - `GET /api/receipts` returns persisted receipt metadata (`id`, `path`, `created_at`, `transaction_id`) for the active company.
   - Receipt preview/download links are not returned directly; private-path access should use a controlled signed-URL flow.
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
+  - Finance mutation endpoints require explicit permission keys:
+    - `POST /api/transactions` requires `finance.transactions.write`.
+    - `POST /api/receipts` requires `finance.receipts.write`.
+    - `POST /api/postings` and `POST /api/postings/{posting_id}/reverse` require `finance.postings.write`.
+    - `POST /api/postings/period-locks` requires `finance.period_locks.manage`.
+  - Baseline role seeding grants the finance write/manage keys to `owner` and `staff`; `read_only` remains read-only for same-company finance writes.
   - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
   - `POST /api/transactions` enforces plan limits server-side for `monthly_vouchers` and `rolling_turnover_12m_dkk`; responses include `entitlement_warning` and soft-lock `upgrade_prompt` payloads when thresholds are reached.
   - Enforcement rollout is feature-flagged by plan tier via `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS`.

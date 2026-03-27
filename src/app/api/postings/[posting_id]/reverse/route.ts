@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
-import { getCompanyMembershipContext } from "@/lib/company-permissions";
+import { COMPANY_PERMISSIONS, getCompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 import { reversePosting } from "@/lib/postings/service";
 
 interface RouteContext {
@@ -30,6 +30,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
   const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
   if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+  if (!hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_POSTINGS_WRITE)) {
+    return NextResponse.json({ error: "Missing required permission: finance.postings.write" }, { status: 403 });
+  }
 
   const { posting_id: postingId } = await context.params;
 

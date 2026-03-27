@@ -1267,3 +1267,46 @@ Align module-status documentation with runtime evidence from `src/app/api/*`, `s
 ### Assumptions / open questions
 - Assumption: status evidence should prioritize canonical runtime path over legacy migration artifacts.
 - Assumption: onboarding/support UX remains outside this specific runtime evidence table when not represented in `src/app/api/*`.
+
+## Fine-grained finance write permissions + RLS alignment (March 27, 2026)
+
+### Goal
+Add explicit finance write/manage permission keys and enforce them consistently at API and database policy layers for same-company members.
+
+### Current behavior
+- Baseline RBAC seeds company/invitation permissions only.
+- Finance mutation APIs currently allow any active company member (`owner`, `staff`, `read_only`) to write if authenticated and in-company.
+- RLS for transactions/receipts/posting tables is membership-based (`for all`) without role-permission gating.
+
+### Proposed approach
+1. Add additive migration to seed new `public.permissions` keys and `public.role_permissions` mappings.
+2. Add helper permission constants/check wrappers in `src/lib/company-permissions.ts`.
+3. Enforce explicit permission checks in finance POST handlers (transactions, receipts, postings, reversals, period locks).
+4. Replace broad membership `for all` RLS with split read vs mutation policies that check role-permission membership.
+5. Extend regression tests to cover owner/staff allowed and read_only denied behavior for same-company write attempts.
+
+### Affected files
+- `supabase/migrations/*` (new additive migration for seeds + RLS policy alignment)
+- `src/lib/company-permissions.ts`
+- `src/app/api/transactions/route.ts`
+- `src/app/api/receipts/route.ts`
+- `src/app/api/postings/route.ts`
+- `src/app/api/postings/[posting_id]/reverse/route.ts`
+- `src/app/api/postings/period-locks/route.ts`
+- `tests/*` (permission regression coverage)
+- `README.md` and relevant docs for API/security behavior
+
+### Risks
+- Over-restrictive RLS may block expected internal writes if permission joins are incorrect.
+- Permission-key drift between migration seeds and TS constants can create false denials.
+- Existing data access flows may assume read_only can mutate.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `node --test tests/api-auth-and-permissions.test.js tests/posting-immutability-and-reversal.test.js tests/transactions-entitlements-boundary.test.js`
+
+### Assumptions / open questions
+- Assumption: `owner` and `staff` should keep finance write permissions; `read_only` should not.
+- TODO: advanced-role permission matrix remains partial and may need future explicit assignments.
