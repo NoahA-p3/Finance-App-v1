@@ -954,3 +954,41 @@ Replace the mock-backed receipts dashboard page with a real persisted receipt in
 - **Assumption:** `null` from `getCompanyMembershipContext(...)` should consistently mean "show onboarding gate" for these four pages.
 ### Assumptions
 - Current inbox requirement is metadata listing + upload; receipt preview/download will use a future controlled signed URL endpoint.
+
+## Category browsing + selection in transactions (March 27, 2026)
+
+### Goal
+Enable transaction workflows to browse persisted categories, select them from picker controls, and manage category create/delete directly in the active dashboard flow.
+
+### Current behavior
+- `/api/categories` supports `POST` and `DELETE` only.
+- Transactions form accepts raw `category_id` text input instead of persisted category selection.
+- Transactions page has no category-based filter control and no integrated category-management CTA when none exist.
+
+### Proposed approach
+1. Add `GET /api/categories` with authenticated active-company membership checks and user/company scoping.
+2. Introduce a reusable category picker component and wire it into transaction create form and transactions list filtering controls.
+3. Integrate category create/delete UI controls into transactions workspace using existing `CategoryManager` API patterns.
+4. Add an explicit empty-category state with CTA to create the first category from the transactions workflow.
+
+### Affected files
+- `src/app/api/categories/route.ts`
+- `src/components/transactions/category-picker.tsx` (new)
+- `src/components/transactions/category-manager.tsx`
+- `src/components/transactions/transaction-form.tsx`
+- `src/components/transactions/transactions-workspace.tsx`
+- `README.md`
+- `docs/architecture/API_CONTRACTS.md`
+- `PLANS.md`
+
+### Risks
+- Category list and transaction list can drift in UI if create/delete state is not synchronized.
+- Empty-state CTA can be confusing if category manager is not visibly available in same workflow.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions
+- Category selection remains user-owned (`user_id`) within active company context in this MVP.

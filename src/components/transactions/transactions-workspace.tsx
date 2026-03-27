@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { TransactionForm, TransactionFormValues } from "@/components/transactions/transaction-form";
+import { CategoryManager, type Category } from "@/components/transactions/category-manager";
+import { CategoryPicker } from "@/components/transactions/category-picker";
+import { Button } from "@/components/ui/button";
 
 interface TransactionRecord {
   id: string;
@@ -12,6 +15,10 @@ interface TransactionRecord {
   date: string;
   category_id: string | null;
   receipt_id: string | null;
+}
+
+interface CategoryApiBody {
+  error?: string;
 }
 
 interface UpgradePrompt {
@@ -46,9 +53,13 @@ function formatAmount(value: string | number) {
 
 export function TransactionsWorkspace() {
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
@@ -75,6 +86,32 @@ export function TransactionsWorkspace() {
   useEffect(() => {
     void loadTransactions();
   }, [loadTransactions]);
+
+  const loadCategories = useCallback(async () => {
+    setLoadingCategories(true);
+    setCategoryError(null);
+
+    try {
+      const response = await fetch("/api/categories", { cache: "no-store" });
+      const body = (await response.json().catch(() => null)) as Category[] | CategoryApiBody | null;
+
+      if (!response.ok || !Array.isArray(body)) {
+        const apiError = !Array.isArray(body) && body?.error ? body.error : "Unable to load categories.";
+        throw new Error(apiError);
+      }
+
+      setCategories(body);
+    } catch (loadError) {
+      const message = loadError instanceof Error ? loadError.message : "Unable to load categories.";
+      setCategoryError(message);
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCategories();
+  }, [loadCategories]);
 
   const handleCreate = useCallback(async (values: TransactionFormValues) => {
     setNotice(null);
@@ -115,6 +152,11 @@ export function TransactionsWorkspace() {
     }
   }, []);
 
+  const filteredTransactions = useMemo(() => {
+    if (!categoryFilter) return transactions;
+    return transactions.filter((transaction) => transaction.category_id === categoryFilter);
+  }, [categoryFilter, transactions]);
+
   const content = useMemo(() => {
     if (loading) {
       return <p className="py-8 text-center text-sm text-indigo-100/70">Loading persisted transactions...</p>;
@@ -124,7 +166,7 @@ export function TransactionsWorkspace() {
       return <p className="py-8 text-center text-sm text-rose-300">{error}</p>;
     }
 
-    if (transactions.length === 0) {
+    if (filteredTransactions.length === 0) {
       return <p className="py-8 text-center text-sm text-indigo-100/70">No persisted transactions found.</p>;
     }
 
@@ -142,7 +184,7 @@ export function TransactionsWorkspace() {
             </tr>
           </thead>
           <tbody>
-            {transactions.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <tr key={transaction.id} className="border-t border-white/10">
                 <td className="py-3">{transaction.date}</td>
                 <td>{transaction.description}</td>
@@ -156,11 +198,44 @@ export function TransactionsWorkspace() {
         </table>
       </div>
     );
-  }, [error, loading, transactions]);
+  }, [error, filteredTransactions, loading]);
 
   return (
     <div className="space-y-4">
-      <TransactionForm onSubmit={handleCreate} />
+      <TransactionForm onSubmit={handleCreate} categories={categories} />
+
+      <Card>
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold text-white">Filter transactions</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            <CategoryPicker
+              id="transactions-category-filter"
+              label="Category"
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              categories={categories}
+              placeholder="All categories"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {categoryError ? <p className="rounded-xl border border-rose-300/40 bg-rose-300/10 px-4 py-3 text-sm text-rose-100">{categoryError}</p> : null}
+
+      {loadingCategories ? <p className="text-sm text-indigo-100/70">Loading categories...</p> : null}
+
+      {categories.length === 0 && !loadingCategories ? (
+        <Card>
+          <div className="space-y-3">
+            <p className="text-sm text-indigo-100/80">No categories exist yet. Create your first category to tag transactions.</p>
+            <Button type="button" onClick={() => document.getElementById("category-name-input")?.focus()}>
+              Create first category
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      <CategoryManager categories={categories} onCategoriesChange={setCategories} />
 
       {notice ? <p className="rounded-xl border border-amber-300/40 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">{notice}</p> : null}
 

@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CategoryPicker } from "@/components/transactions/category-picker";
+import type { Category } from "@/components/transactions/category-manager";
 
 export type TransactionType = "expense" | "revenue";
 
@@ -26,9 +28,10 @@ const INITIAL_VALUES: TransactionFormValues = {
 
 interface TransactionFormProps {
   onSubmit: (values: TransactionFormValues) => Promise<void>;
+  categories: Category[];
 }
 
-export function TransactionForm({ onSubmit }: TransactionFormProps) {
+export function TransactionForm({ onSubmit, categories }: TransactionFormProps) {
   const [values, setValues] = useState<TransactionFormValues>(INITIAL_VALUES);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,15 +105,14 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
           <Input type="date" value={values.date} onChange={(event) => updateField("date", event.target.value)} className="mt-1" />
         </label>
 
-        <label className="text-sm text-indigo-100/85">
-          Category ID (optional)
-          <Input
-            value={values.category_id ?? ""}
-            onChange={(event) => updateField("category_id", event.target.value)}
-            placeholder="UUID"
-            className="mt-1"
-          />
-        </label>
+        <CategoryPicker
+          id="transaction-category"
+          label="Category (optional)"
+          value={values.category_id ?? ""}
+          onChange={(value) => updateField("category_id", value)}
+          categories={categories}
+          placeholder={categories.length > 0 ? "Select category" : "No categories available"}
+        />
 
         <label className="text-sm text-indigo-100/85">
           Receipt ID (optional)
