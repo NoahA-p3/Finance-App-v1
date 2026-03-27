@@ -122,7 +122,6 @@ export async function GET() {
   const { data, error } = await authContext.supabase
     .from("transactions")
     .select("*")
-    .eq("user_id", authContext.user.id)
     .eq("company_id", membership.companyId)
     .order("date", { ascending: false });
 
@@ -156,7 +155,6 @@ export async function POST(req: NextRequest) {
       .from("categories")
       .select("id")
       .eq("id", validation.value.category_id)
-      .eq("user_id", authContext.user.id)
       .eq("company_id", membership.companyId)
       .maybeSingle();
 
@@ -170,7 +168,6 @@ export async function POST(req: NextRequest) {
       .from("receipts")
       .select("id")
       .eq("id", validation.value.receipt_id)
-      .eq("user_id", authContext.user.id)
       .eq("company_id", membership.companyId)
       .maybeSingle();
 

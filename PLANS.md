@@ -1022,4 +1022,49 @@ Enable transaction workflows to browse persisted categories, select them from pi
 - `npm run build`
 
 ### Assumptions
-- Category selection remains user-owned (`user_id`) within active company context in this MVP.
+- Category selection follows company-shared ownership within active company context in this MVP (`user_id` retained for traceability metadata only).
+
+## Company-shared finance ownership policy alignment (March 27, 2026)
+
+### Goal
+Define and enforce a canonical ownership policy for `transactions`, `categories`, and `receipts` as company-shared resources (membership + `company_id`), then align API filters, RLS, docs, and regression coverage.
+
+### Current behavior
+- Runtime API requires active-company membership but still narrows several reads and deletes by `user_id = auth.uid()`.
+- Existing finance RLS policies combine membership checks with `user_id = auth.uid()`, which blocks same-company cross-user visibility.
+- Architecture/product/security docs describe company scoping but do not explicitly lock a canonical company-shared ownership policy for these tables.
+
+### Proposed approach
+1. Document canonical ownership in architecture docs (`DATA_MODEL`, `API_CONTRACTS`).
+2. Update finance API and dashboard data queries to scope by `company_id` (plus membership gate) instead of per-user narrowing for shared entities.
+3. Add a migration to replace finance RLS policies with membership-based company access and remove `user_id = auth.uid()` authorization gating.
+4. Add regression tests for expected shared visibility and cross-company denial constraints.
+5. Update `README`, security rules, and MVP scope docs to match implemented behavior.
+
+### Affected files
+- `docs/architecture/DATA_MODEL.md`
+- `docs/architecture/API_CONTRACTS.md`
+- `src/app/api/transactions/route.ts`
+- `src/app/api/categories/route.ts`
+- `src/app/api/receipts/route.ts`
+- `src/lib/dashboard-data.ts`
+- `supabase/migrations/*` (new migration)
+- `tests/*` (new regression tests)
+- `README.md`
+- `docs/security/SECURITY_RULES.md`
+- `docs/product/MVP_SCOPE.md`
+
+### Risks
+- Broadening company-level visibility can surface data users did not previously see within shared companies.
+- RLS policy mistakes could create cross-tenant leakage if membership predicates are incomplete.
+- Receipt metadata sharing must not be misrepresented as public object-path access; storage remains private and path-isolated.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions / open questions
+- **Assumption:** canonical policy for MVP is company-shared ownership for `transactions`, `categories`, and `receipts` rows, while preserving `user_id` as creator metadata.
+- **TODO:** add end-to-end DB policy tests against a live Supabase test database in a follow-up if CI gains DB test infra.

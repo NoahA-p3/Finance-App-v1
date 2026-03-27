@@ -74,16 +74,15 @@ export function formatCurrencyFromCents(cents: bigint, currencyCode?: string | n
   return new Intl.NumberFormat("en-US", { style: "currency", currency: normalizeCurrencyCode(currencyCode) }).format(centsToNumber(cents));
 }
 
-export async function getDashboardFinanceData(supabase: SupabaseClient, userId: string, companyId: string): Promise<DashboardFinanceData> {
+export async function getDashboardFinanceData(supabase: SupabaseClient, _userId: string, companyId: string): Promise<DashboardFinanceData> {
   const [{ data: transactions }, { data: categories }, { data: settings }] = await Promise.all([
     supabase
       .from("transactions")
       .select("id, amount, date, description, type, category_id, receipt_id")
-      .eq("user_id", userId)
       .eq("company_id", companyId)
       .order("date", { ascending: false })
       .limit(500),
-    supabase.from("categories").select("id, name").eq("user_id", userId).eq("company_id", companyId),
+    supabase.from("categories").select("id, name").eq("company_id", companyId),
     supabase.from("company_settings").select("base_currency").eq("company_id", companyId).maybeSingle()
   ]);
 
