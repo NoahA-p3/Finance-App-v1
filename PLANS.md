@@ -1115,3 +1115,42 @@ Introduce an append-only posting workflow foundation with immutable audit events
 ### Assumptions / TODO
 - **Assumption:** account-side double-entry detail remains MVP-level and does not yet encode full Danish chart-of-accounts rules.
 - **TODO:** add integration tests against a live Supabase test DB for trigger and RLS behavior when CI DB infra is available.
+
+
+## Receipt upload validation hardening (March 27, 2026)
+
+### Goal
+Harden `/api/receipts` upload boundary validation for file type, size, and filename safety; normalize object-key generation; and document/test enforced controls.
+
+### Current behavior
+- Receipts upload accepted any browser-provided MIME type and size.
+- Storage key used `Date.now()` + raw `file.name`.
+- Validation responses were limited to missing file checks and non-deterministic storage/database error text.
+
+### Proposed approach
+1. Add explicit MIME allowlist and max-size checks before upload.
+2. Reject unsafe filenames (path traversal/control characters/unsafe patterns).
+3. Normalize storage key generation to `user_id/company_id/<uuid>.<ext>` with server-side extension extraction only.
+4. Return deterministic `400` responses with stable validation codes.
+5. Add tests covering allowlist/blocked-type and oversize branches, plus filename/key normalization invariants.
+6. Update README + security rules with enforced limits.
+
+### Affected files
+- `src/app/api/receipts/route.ts`
+- `tests/receipts-upload-validation.test.js`
+- `README.md`
+- `docs/security/SECURITY_RULES.md`
+- `PLANS.md`
+
+### Risks
+- Existing clients uploading non-allowlisted formats will now receive explicit `400` validation errors.
+- Any consumer depending on storage key inclusion of original filename will break (not expected in canonical runtime).
+
+### Verification steps
+- `npm run test`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions
+- A 10 MB max upload size is acceptable for MVP receipt capture until product defines legal archival constraints.

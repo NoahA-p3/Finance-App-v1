@@ -16,6 +16,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Transaction CRUD surface (currently list + create via `/api/transactions`).
 - Category browse/create/delete via `/api/categories` (`GET`, `POST`, `DELETE`).
 - Receipt upload + persisted inbox metadata listing via `/api/receipts` (`POST` upload, `GET` active-company receipt rows).
+- Receipt upload validation enforces allowed MIME types (`application/pdf`, `image/jpeg`, `image/png`, `image/webp`), a 10 MB max file size limit, unsafe filename rejection, and normalized object keys under `user_id/company_id/<uuid>.<ext>`.
 - Company bootstrap/profile API (`/api/companies`) with persisted onboarding/settings fields (name, contact/address, VAT status, fiscal year start, base currency).
 - Company RBAC baseline with seeded roles (`owner`, `staff`, `read_only`), server-enforced permission checks on settings/member management, and invitation skeleton endpoints (`GET/POST /api/companies/invitations`, `GET/PATCH /api/companies/members`).
 - Company context switching via `POST /api/companies/switch`, persisted in `profiles.active_company_id`, and exposed in dashboard top navigation.
