@@ -64,6 +64,31 @@ interface CompanyFormState {
   vat_registered: boolean;
 }
 
+function FieldLabel({ htmlFor, text, required = false }: { htmlFor: string; text: string; required?: boolean }) {
+  return (
+    <label htmlFor={htmlFor} className="text-sm font-medium text-slate-100">
+      {text}
+      {required ? <span className="ml-1 text-rose-300">*</span> : null}
+    </label>
+  );
+}
+
+function toFriendlyErrorMessage(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("name is required")) return "Please enter your business name.";
+  if (normalized.includes("contact_email")) return "Please enter a valid contact email address (for example: name@company.com).";
+  if (normalized.includes("country_code")) return "Country code must use 2 letters (for example: DK).";
+  if (normalized.includes("base_currency")) return "Currency must use a 3-letter code (for example: DKK or EUR).";
+  if (normalized.includes("fiscal_year_start_month")) return "Fiscal year start month must be a whole number from 1 to 12.";
+  if (normalized.includes("invoice_due_days")) return "Invoice due days must be between 1 and 365.";
+  if (normalized.includes("cvr_number")) return "CVR number must contain exactly 8 digits.";
+  if (normalized.includes("unauthorized")) return "Your session has expired. Please sign in again.";
+  if (normalized.includes("company already exists")) return "A company profile already exists for this account.";
+
+  return message;
+}
+
 function toFormState(payload?: CompanyResponse | null): CompanyFormState {
   return {
     name: payload?.company?.name ?? "",
@@ -112,7 +137,7 @@ export function CompanyProfileForm({ isOnboarding = false }: { isOnboarding?: bo
 
       if (!response.ok) {
         setIsLoading(false);
-        setError(response.status === 401 ? "Please sign in again." : "Unable to load company profile.");
+        setError(response.status === 401 ? "Your session has expired. Please sign in again." : "We couldn’t load your company profile right now.");
         return;
       }
 
@@ -170,7 +195,7 @@ export function CompanyProfileForm({ isOnboarding = false }: { isOnboarding?: bo
 
     if (!response.ok) {
       setIsSaving(false);
-      setError(responseBody.error ?? "Unable to save company profile.");
+      setError(toFriendlyErrorMessage(responseBody.error ?? "We couldn’t save your company profile. Please try again."));
       return;
     }
 
@@ -199,7 +224,7 @@ export function CompanyProfileForm({ isOnboarding = false }: { isOnboarding?: bo
 
     if (!response.ok) {
       setIsCvrLookingUp(false);
-      setCvrMessage(body.error ?? "CVR lookup failed.");
+      setCvrMessage(toFriendlyErrorMessage(body.error ?? "CVR lookup failed. Please continue with manual entry."));
       return;
     }
 
@@ -221,6 +246,9 @@ export function CompanyProfileForm({ isOnboarding = false }: { isOnboarding?: bo
           ? "Create your company profile to start using persisted finance features."
           : "Update your saved company information and fiscal settings."}
       </p>
+      <p className="mt-2 text-xs text-slate-400">
+        <span className="text-rose-300">*</span> Required fields
+      </p>
 
       {isLoading ? <p className="mt-4 text-sm text-slate-300">Loading company profile...</p> : null}
       {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
@@ -228,60 +256,131 @@ export function CompanyProfileForm({ isOnboarding = false }: { isOnboarding?: bo
 
       {!isLoading ? (
         <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
-          <Input placeholder="Business name" value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
-          <Input placeholder="Contact email" value={form.contact_email} onChange={(event) => updateField("contact_email", event.target.value)} />
-          <Input placeholder="Contact phone" value={form.contact_phone} onChange={(event) => updateField("contact_phone", event.target.value)} />
-          <Input placeholder="Address line 1" value={form.address_line1} onChange={(event) => updateField("address_line1", event.target.value)} />
-          <Input placeholder="Address line 2" value={form.address_line2} onChange={(event) => updateField("address_line2", event.target.value)} />
+          <div className="space-y-1">
+            <FieldLabel htmlFor="company-name" text="Business name" required />
+            <Input id="company-name" placeholder="Acme ApS" value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel htmlFor="contact-email" text="Contact email" />
+            <Input
+              id="contact-email"
+              placeholder="name@company.com"
+              value={form.contact_email}
+              onChange={(event) => updateField("contact_email", event.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel htmlFor="contact-phone" text="Contact phone" />
+            <Input id="contact-phone" placeholder="+45 12 34 56 78" value={form.contact_phone} onChange={(event) => updateField("contact_phone", event.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel htmlFor="address-line-1" text="Address line 1" />
+            <Input id="address-line-1" placeholder="Street and number" value={form.address_line1} onChange={(event) => updateField("address_line1", event.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel htmlFor="address-line-2" text="Address line 2" />
+            <Input id="address-line-2" placeholder="Apartment, suite, etc. (optional)" value={form.address_line2} onChange={(event) => updateField("address_line2", event.target.value)} />
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Input placeholder="Postal code" value={form.postal_code} onChange={(event) => updateField("postal_code", event.target.value)} />
-            <Input placeholder="City" value={form.city} onChange={(event) => updateField("city", event.target.value)} />
+            <div className="space-y-1">
+              <FieldLabel htmlFor="postal-code" text="Postal code" />
+              <Input id="postal-code" placeholder="2100" value={form.postal_code} onChange={(event) => updateField("postal_code", event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="city" text="City" />
+              <Input id="city" placeholder="Copenhagen" value={form.city} onChange={(event) => updateField("city", event.target.value)} />
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Input
-              placeholder="Country code"
-              value={form.country_code}
-              onChange={(event) => updateField("country_code", event.target.value.toUpperCase())}
-              maxLength={2}
-            />
-            <Input
-              placeholder="Currency"
-              value={form.base_currency}
-              onChange={(event) => updateField("base_currency", event.target.value.toUpperCase())}
-              maxLength={3}
-            />
-            <Input
-              type="number"
-              min={1}
-              max={12}
-              placeholder="Fiscal month"
-              value={form.fiscal_year_start_month}
-              onChange={(event) => updateField("fiscal_year_start_month", event.target.value)}
-            />
+            <div className="space-y-1">
+              <FieldLabel htmlFor="country-code" text="Country code" />
+              <Input
+                id="country-code"
+                placeholder="DK"
+                value={form.country_code}
+                onChange={(event) => updateField("country_code", event.target.value.toUpperCase())}
+                maxLength={2}
+              />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="base-currency" text="Currency" required />
+              <Input
+                id="base-currency"
+                placeholder="DKK"
+                value={form.base_currency}
+                onChange={(event) => updateField("base_currency", event.target.value.toUpperCase())}
+                maxLength={3}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="fiscal-month" text="Fiscal start month" required />
+              <Input
+                id="fiscal-month"
+                type="number"
+                min={1}
+                max={12}
+                placeholder="1"
+                value={form.fiscal_year_start_month}
+                onChange={(event) => updateField("fiscal_year_start_month", event.target.value)}
+                required
+              />
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Input placeholder="Invoice prefix" value={form.invoice_prefix} onChange={(event) => updateField("invoice_prefix", event.target.value)} />
-            <Input placeholder="Invoice due days" type="number" min={1} max={365} value={form.invoice_due_days} onChange={(event) => updateField("invoice_due_days", event.target.value)} />
-            <Input placeholder="CVR number (8 digits)" value={form.cvr_number} maxLength={8} onChange={(event) => updateField("cvr_number", event.target.value.replace(/\D/g, ""))} />
+            <div className="space-y-1">
+              <FieldLabel htmlFor="invoice-prefix" text="Invoice prefix" />
+              <Input id="invoice-prefix" placeholder="INV" value={form.invoice_prefix} onChange={(event) => updateField("invoice_prefix", event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="invoice-due-days" text="Invoice due days" />
+              <Input id="invoice-due-days" placeholder="14" type="number" min={1} max={365} value={form.invoice_due_days} onChange={(event) => updateField("invoice_due_days", event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="cvr-number" text="CVR number" />
+              <Input id="cvr-number" placeholder="12345678" value={form.cvr_number} maxLength={8} onChange={(event) => updateField("cvr_number", event.target.value.replace(/\D/g, ""))} />
+            </div>
           </div>
-          <Input placeholder="Invoice terms" value={form.invoice_terms} onChange={(event) => updateField("invoice_terms", event.target.value)} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input placeholder="Branch label (placeholder)" value={form.branch_label} onChange={(event) => updateField("branch_label", event.target.value)} />
-            <Input placeholder="Department label (placeholder)" value={form.department_label} onChange={(event) => updateField("department_label", event.target.value)} />
+          <div className="space-y-1">
+            <FieldLabel htmlFor="invoice-terms" text="Invoice terms" />
+            <Input id="invoice-terms" placeholder="Payment due within 14 days." value={form.invoice_terms} onChange={(event) => updateField("invoice_terms", event.target.value)} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Input placeholder="Logo storage path metadata" value={form.logo_storage_path} onChange={(event) => updateField("logo_storage_path", event.target.value)} />
-            <Input placeholder="Logo file name metadata" value={form.logo_file_name} onChange={(event) => updateField("logo_file_name", event.target.value)} />
+            <div className="space-y-1">
+              <FieldLabel htmlFor="branch-label" text="Branch label" />
+              <Input id="branch-label" placeholder="Head office" value={form.branch_label} onChange={(event) => updateField("branch_label", event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="department-label" text="Department label" />
+              <Input id="department-label" placeholder="Sales" value={form.department_label} onChange={(event) => updateField("department_label", event.target.value)} />
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Input placeholder="Logo content type metadata" value={form.logo_content_type} onChange={(event) => updateField("logo_content_type", event.target.value)} />
-            <Input
-              placeholder="Logo file size bytes metadata"
-              type="number"
-              min={0}
-              value={form.logo_file_size_bytes}
-              onChange={(event) => updateField("logo_file_size_bytes", event.target.value)}
-            />
+            <div className="space-y-1">
+              <FieldLabel htmlFor="logo-storage-path" text="Logo storage path metadata" />
+              <Input id="logo-storage-path" placeholder="company-logos/acme/logo.png" value={form.logo_storage_path} onChange={(event) => updateField("logo_storage_path", event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="logo-file-name" text="Logo file name metadata" />
+              <Input id="logo-file-name" placeholder="logo.png" value={form.logo_file_name} onChange={(event) => updateField("logo_file_name", event.target.value)} />
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <FieldLabel htmlFor="logo-content-type" text="Logo content type metadata" />
+              <Input id="logo-content-type" placeholder="image/png" value={form.logo_content_type} onChange={(event) => updateField("logo_content_type", event.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <FieldLabel htmlFor="logo-size" text="Logo file size bytes metadata" />
+              <Input
+                id="logo-size"
+                placeholder="204800"
+                type="number"
+                min={0}
+                value={form.logo_file_size_bytes}
+                onChange={(event) => updateField("logo_file_size_bytes", event.target.value)}
+              />
+            </div>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-3">
             <p className="text-xs text-indigo-100/80">CVR lookup adapter</p>
