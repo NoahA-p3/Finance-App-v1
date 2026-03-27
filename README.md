@@ -76,7 +76,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 
 ## Repository structure
 - `src/app/(auth)` — login/signup/forgot-password/reset-password routes
-- `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, account, settings, onboarding)
+- `src/app/(dashboard)` — protected app sections (dashboard, transactions, receipts, reports, settings, onboarding, with `/account` redirect compatibility)
 - `src/app/api` — route handlers for auth, profile sessions, companies, transactions, categories, receipts
 - `src/components` — UI and feature components
 - `src/lib` — auth helper, Supabase clients, data-fetch helpers
@@ -88,7 +88,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Product index: `docs/product/README.md`
 - Product core docs: `docs/product/PRD.md`, `docs/product/PRODUCT_MODULE_MAP.md`, `docs/product/DELIVERY_PHASES.md`, `docs/product/MVP_SCOPE.md`
 - Domain: `docs/domain/DK_ACCOUNTING_RULES.md`, `docs/domain/DK_VAT_RULES.md`, `docs/domain/LEGAL_FORM_RULES.md`
-- Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`, `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`
+- Architecture: `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/architecture/DATA_MODEL.md`, `docs/architecture/API_CONTRACTS.md`, `docs/architecture/ENGINEER_ONBOARDING_GUIDE.md`, `docs/architecture/SETTINGS_INFORMATION_ARCHITECTURE.md`
 - Testing: `docs/testing/TEST_STRATEGY.md`, `docs/testing/GOLDEN_DATASETS.md`
 - Security: `docs/security/SECURITY_RULES.md`
 - UX: `docs/ux/USER_FLOWS.md`

@@ -10,7 +10,6 @@ const mainNav = [
   { href: "/transactions", label: "Transactions", icon: TransactionsIcon },
   { href: "/receipts", label: "Receipts", icon: ReceiptIcon },
   { href: "/reports", label: "Reports", icon: ReportIcon },
-  { href: "/account", label: "Account", icon: DashboardIcon },
   { href: "/settings", label: "Settings", icon: ReportIcon }
 ];
 
@@ -48,7 +47,7 @@ export function Sidebar({ user }: SidebarProps) {
 
       <nav className="space-y-1.5">
         {mainNav.map((item) => (
-          <NavLink key={item.href} {...item} isActive={pathname === item.href} />
+          <NavLink key={item.href} {...item} isActive={pathname === item.href || pathname.startsWith(`${item.href}/`)} />
         ))}
       </nav>
 
