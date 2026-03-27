@@ -860,6 +860,33 @@ Make all Settings tabs visible by default, including optional tabs, unless expli
 - `npm run typecheck`
 - `npm run build`
 
+## Transactions workspace create+list slice (March 27, 2026)
+
+### Goal
+Expand the dashboard transactions page into a persisted-data workspace that can create transactions through `/api/transactions` and render the persisted list with resilient UI states.
+
+### Current behavior
+- `src/app/(dashboard)/transactions/page.tsx` renders dashboard-derived transaction rows from `getDashboardFinanceData` and includes non-functional search/filter controls.
+- No in-page transaction create form is wired to `/api/transactions`.
+- Entitlement warning and soft-lock payloads from `/api/transactions` are not surfaced in this page workflow.
+
+### Proposed approach
+1. Replace the page body with a dedicated client workspace component for transactions.
+2. Add `transaction-form.tsx` with API-contract fields: `description`, `amount`, `type`, `date`, optional `category_id`, optional `receipt_id`.
+3. Fetch persisted transactions from `GET /api/transactions` with loading, empty, and error states.
+4. Submit form to `POST /api/transactions`; on success prepend created row and reset form.
+5. Surface user-visible entitlement states for:
+   - `429` soft lock responses (`upgrade_prompt` + lock message)
+   - successful write warnings (`entitlement_warning` + optional `upgrade_prompt`)
+
+### Affected files
+- `src/app/(dashboard)/transactions/page.tsx`
+- `src/components/transactions/transaction-form.tsx` (new)
+- `src/components/transactions/transactions-workspace.tsx` (new)
+
+### Risks
+- API may return numeric `amount` as string/number depending Supabase serialization; UI formatting must handle both safely.
+- Existing page-level mock/search controls are removed in favor of persisted-only behavior, which may change perceived UX.
 ## No-company onboarding gate for dashboard pages (March 27, 2026)
 
 ### Goal
@@ -923,6 +950,7 @@ Replace the mock-backed receipts dashboard page with a real persisted receipt in
 - `npm run build`
 
 ### Assumptions / open questions
+- **Assumption:** Optional `category_id` / `receipt_id` are entered manually as UUIDs because no receipt-list endpoint exists and category list endpoint currently supports create/delete only.
 - **Assumption:** `null` from `getCompanyMembershipContext(...)` should consistently mean "show onboarding gate" for these four pages.
 ### Assumptions
 - Current inbox requirement is metadata listing + upload; receipt preview/download will use a future controlled signed URL endpoint.
