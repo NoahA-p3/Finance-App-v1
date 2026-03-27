@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
 import { getCompanyMembershipContext } from "@/lib/company-permissions";
 
+export async function GET() {
+  const authContext = await requireAuthenticatedApiUser();
+  if (!authContext) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
+  if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+
+  const { data, error } = await authContext.supabase
+    .from("categories")
+    .select("id, name, created_at")
+    .eq("user_id", authContext.user.id)
+    .eq("company_id", membership.companyId)
+    .order("name", { ascending: true });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json(data ?? []);
+}
+
 export async function POST(req: NextRequest) {
   const authContext = await requireAuthenticatedApiUser();
   if (!authContext) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
