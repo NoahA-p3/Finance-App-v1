@@ -3,6 +3,7 @@ import { KpiCards } from "@/components/finance/kpi-cards";
 import { OverviewChart } from "@/components/finance/overview-chart";
 import { ExpenseBreakdown } from "@/components/finance/expense-breakdown";
 import { RecentTransactions } from "@/components/finance/recent-transactions";
+import { NoCompanyState } from "@/components/shell/no-company-state";
 import { requireUser } from "@/lib/auth";
 import { getCompanyMembershipContext } from "@/lib/company-permissions";
 import { getDashboardFinanceData } from "@/lib/dashboard-data";
@@ -11,9 +12,15 @@ export default async function DashboardPage() {
   const { supabase, user } = await requireUser();
   const membership = await getCompanyMembershipContext(supabase, user.id);
 
-  const data = membership
-    ? await getDashboardFinanceData(supabase, user.id, membership.companyId)
-    : { kpis: [], trendData: [], expenseBreakdown: [], recentTransactions: [] };
+  if (!membership) {
+    return (
+      <DashboardShell title="Dashboard">
+        <NoCompanyState />
+      </DashboardShell>
+    );
+  }
+
+  const data = await getDashboardFinanceData(supabase, user.id, membership.companyId);
 
   return (
     <DashboardShell title="Dashboard">
