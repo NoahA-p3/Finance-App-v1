@@ -67,7 +67,25 @@ Limitations to state explicitly:
 
 For docs-only changes, lint/typecheck are the baseline minimum.
 
+## Pull request CI workflow (current)
+- Workflow file: `.github/workflows/pr-checks.yml`
+- Trigger: `pull_request`
+- Job/check name for branch protection: `Quality Gate`
+- Execution order:
+  1. `npm ci`
+  2. `npm run lint`
+  3. `npm run typecheck`
+  4. `npm run build`
+  5. `npm test`
+- Caching: npm cache via `actions/setup-node` keyed from `package-lock.json`.
+
+### Required status check setup guidance
+In GitHub branch protection rules for the target branch:
+1. Enable **Require status checks to pass before merging**.
+2. Mark `Quality Gate` as a required check.
+3. (Recommended) Enable **Require branches to be up to date before merging**.
+
 ## Current gaps summary
 - No executable integration/e2e test harness yet.
 - No automated golden dataset execution yet.
-- No CI policy file documented in repo for mandatory gate enforcement.
+- CI exists for pull requests, but integration/e2e gates are still not wired.

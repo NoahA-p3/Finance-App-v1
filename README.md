@@ -76,6 +76,24 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - `npm run start` — run built app
 - `npm run test` — run Node test suite (`node --test tests/*.test.js`)
 
+## CI on pull requests
+- GitHub Actions workflow: `.github/workflows/pr-checks.yml`.
+- Trigger: every pull request.
+- Runtime: Node.js `22` with npm dependency caching (`actions/setup-node` cache + `package-lock.json` keying).
+- Checks executed in order:
+  1. `npm ci`
+  2. `npm run lint`
+  3. `npm run typecheck`
+  4. `npm run build`
+  5. `npm test`
+
+### Required status check guidance (GitHub branch protection)
+To enforce this CI gate before merge:
+1. Open **Settings → Branches → Branch protection rules** for your default branch.
+2. Enable **Require status checks to pass before merging**.
+3. Add the workflow job check name: **`Quality Gate`**.
+4. Optionally enable **Require branches to be up to date before merging** for stricter enforcement.
+
 
 ## Documentation verification policy
 - Major docs should include a **Last verified** date.
