@@ -34,6 +34,9 @@ This remains the active MVP runtime path today. The module-aligned model below d
 ### Current runtime tenancy details (implemented)
 - `public.profiles.active_company_id` stores persisted active company context per authenticated user.
 - `public.transactions`, `public.categories`, and `public.receipts` include `company_id` for active-company data isolation.
+- Canonical ownership policy for `public.transactions`, `public.categories`, and `public.receipts` is **company-shared within the active company**:
+  - membership + `company_id` controls read/write authorization,
+  - `user_id` is retained as creator/traceability metadata and is not the primary authorization boundary for these shared entities.
 - `public.company_settings` includes persisted invoice settings metadata, branding/logo metadata placeholders, branch/department labels, and `cvr_number`.
 - Billing baseline is internal-source-only (provider coupling intentionally deferred): `company_subscriptions.source` + seeded `plans` and `plan_entitlements` drive entitlement checks.
 - Initial enforced limits are `monthly_vouchers` and `rolling_turnover_12m_dkk`; usage is tracked in `usage_counters`.

@@ -28,7 +28,7 @@ Define the MVP baseline that is either implemented today or required to stabiliz
 
 ## Acceptance criteria (MVP baseline)
 1. Users can authenticate and reach protected dashboard routes.
-2. Users can create and review transactions and categories.
+2. Users can create and review company-shared transactions and categories within their active company membership context.
 3. Users can upload receipts into private storage paths.
 4. Users can view period-oriented summaries from persisted data (not only mock values).
 5. Tenant boundaries are enforced through auth and RLS.

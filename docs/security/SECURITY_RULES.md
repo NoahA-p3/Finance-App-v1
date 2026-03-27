@@ -17,13 +17,13 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 
 ## Supabase security and RLS
 - RLS enabled on key tables (`profiles`, `transactions`, `categories`, `receipts`, legacy tables).
-- Policies constrain CRUD to `auth.uid()` ownership and same-company membership checks for company-scoped finance rows (`company_id`).
+- Policies for `transactions`, `categories`, and `receipts` constrain CRUD by same-company membership + `company_id` (company-shared visibility), not per-row `user_id = auth.uid()` ownership.
 - Storage bucket policies restrict receipt object paths to per-user folder prefixes.
 
 ## Company isolation controls (current runtime)
 - Active company is persisted in `profiles.active_company_id` and switched only through `POST /api/companies/switch` after membership validation.
 - Company-scoped route handlers resolve active company server-side and do not trust client ownership or company context fields.
-- Finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) enforce active membership + `company_id` scoping.
+- Finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) enforce active membership + `company_id` scoping with same-company cross-user data visibility.
 - Entitlement enforcement is server-side in `/api/transactions` and gated by rollout flags (`ENABLE_ENTITLEMENT_ENFORCEMENT`, `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS`) to control plan-tier activation.
 - CVR lookup endpoint is adapter-based and returns explicit `manual_entry_required` fallback when provider integration is unavailable.
 

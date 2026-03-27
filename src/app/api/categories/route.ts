@@ -12,7 +12,6 @@ export async function GET() {
   const { data, error } = await authContext.supabase
     .from("categories")
     .select("id, name, created_at")
-    .eq("user_id", authContext.user.id)
     .eq("company_id", membership.companyId)
     .order("name", { ascending: true });
 
@@ -56,7 +55,6 @@ export async function DELETE(req: NextRequest) {
     .from("categories")
     .delete()
     .eq("id", id)
-    .eq("user_id", authContext.user.id)
     .eq("company_id", membership.companyId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

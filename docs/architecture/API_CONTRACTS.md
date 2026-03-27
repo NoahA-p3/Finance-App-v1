@@ -88,8 +88,9 @@ All other endpoint groupings in this document are target contracts for phased im
   - `GET /api/entitlements` returns active company plan, entitlement limits, and usage snapshots.
   - `POST /api/entitlements/admin/seed` allows owner-only internal subscription seeding/switching for rollout/testing (provider-agnostic source).
   - Active company context is resolved from `profiles.active_company_id` (with safe first-membership fallback).
+  - Canonical ownership policy for finance entities is company-shared within the active company: authorization is membership + `company_id`; `user_id` is creator metadata (not per-user visibility gating).
   - Company-scoped finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) resolve and enforce active-company membership plus `company_id` filtering.
-  - `GET /api/categories` returns persisted category rows (`id`, `name`, `created_at`) for the authenticated user within the active company.
+  - `GET /api/categories` returns persisted category rows (`id`, `name`, `created_at`) for the active company membership context.
   - `GET /api/receipts` returns persisted receipt metadata (`id`, `path`, `created_at`, `transaction_id`) for the active company.
   - Receipt preview/download links are not returned directly; private-path access should use a controlled signed-URL flow.
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
