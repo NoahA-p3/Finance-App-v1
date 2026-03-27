@@ -25,12 +25,12 @@ export default async function DashboardPage() {
   return (
     <DashboardShell title="Dashboard">
       <div className="space-y-4">
-        <KpiCards items={data.kpis} />
+        <KpiCards items={data.kpis} currencyCode={data.currencyCode} />
         <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           <OverviewChart data={data.trendData} />
           <ExpenseBreakdown items={data.expenseBreakdown} />
         </div>
-        <RecentTransactions items={data.recentTransactions} />
+        <RecentTransactions items={data.recentTransactions} currencyCode={data.currencyCode} />
       </div>
     </DashboardShell>
   );

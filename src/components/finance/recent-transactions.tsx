@@ -9,9 +9,10 @@ import { formatCurrencyFromCents } from "@/lib/dashboard-data";
 
 interface RecentTransactionsProps {
   items: RecentTransactionRow[];
+  currencyCode: string;
 }
 
-export function RecentTransactions({ items }: RecentTransactionsProps) {
+export function RecentTransactions({ items, currencyCode }: RecentTransactionsProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = items.find((item) => item.id === activeId);
   const categoryOptions = useMemo(() => Array.from(new Set(items.map((item) => item.category))), [items]);
@@ -39,7 +40,7 @@ export function RecentTransactions({ items }: RecentTransactionsProps) {
                   <tr key={row.id} onClick={() => setActiveId(row.id)} className="cursor-pointer border-t border-white/10 hover:bg-white/5">
                     <td className="py-3">{row.date}</td>
                     <td>{row.description}</td>
-                    <td className={row.type === "revenue" ? "text-emerald-300" : "text-rose-300"}>{formatCurrencyFromCents(row.amountCents)}</td>
+                    <td className={row.type === "revenue" ? "text-emerald-300" : "text-rose-300"}>{formatCurrencyFromCents(row.amountCents, currencyCode)}</td>
                     <td>{row.category}</td>
                     <td>{row.hasReceipt ? "Attached" : "Missing"}</td>
                   </tr>
@@ -61,7 +62,7 @@ export function RecentTransactions({ items }: RecentTransactionsProps) {
               <span className="text-indigo-200/70">Description:</span> {active.description}
             </p>
             <p>
-              <span className="text-indigo-200/70">Amount:</span> {formatCurrencyFromCents(active.amountCents)}
+              <span className="text-indigo-200/70">Amount:</span> {formatCurrencyFromCents(active.amountCents, currencyCode)}
             </p>
             <label className="block">
               <span className="mb-1 block text-indigo-200/70">Category</span>

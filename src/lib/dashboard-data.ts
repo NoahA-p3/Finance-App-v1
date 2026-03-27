@@ -31,6 +31,7 @@ export interface RecentTransactionRow {
 }
 
 export interface DashboardFinanceData {
+  currencyCode: string;
   kpis: DashboardKpi[];
   trendData: TrendPoint[];
   expenseBreakdown: ExpenseSlice[];
@@ -64,20 +65,27 @@ function monthLabel(date: Date) {
   return new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(date);
 }
 
-export function formatCurrencyFromCents(cents: bigint) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(centsToNumber(cents));
+function normalizeCurrencyCode(currencyCode?: string | null) {
+  const normalized = currencyCode?.trim().toUpperCase();
+  return normalized && /^[A-Z]{3}$/.test(normalized) ? normalized : "DKK";
+}
+
+export function formatCurrencyFromCents(cents: bigint, currencyCode?: string | null) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: normalizeCurrencyCode(currencyCode) }).format(centsToNumber(cents));
 }
 
 export async function getDashboardFinanceData(supabase: SupabaseClient, userId: string, companyId: string): Promise<DashboardFinanceData> {
-  const { data: transactions } = await supabase
-    .from("transactions")
-    .select("id, amount, date, description, type, category_id, receipt_id")
-    .eq("user_id", userId)
-    .eq("company_id", companyId)
-    .order("date", { ascending: false })
-    .limit(500);
-
-  const { data: categories } = await supabase.from("categories").select("id, name").eq("user_id", userId).eq("company_id", companyId);
+  const [{ data: transactions }, { data: categories }, { data: settings }] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("id, amount, date, description, type, category_id, receipt_id")
+      .eq("user_id", userId)
+      .eq("company_id", companyId)
+      .order("date", { ascending: false })
+      .limit(500),
+    supabase.from("categories").select("id, name").eq("user_id", userId).eq("company_id", companyId),
+    supabase.from("company_settings").select("base_currency").eq("company_id", companyId).maybeSingle()
+  ]);
 
   const transactionRows: TransactionForDashboard[] = transactions ?? [];
   const categoryNameById = new Map((categories ?? []).map((entry) => [entry.id, entry.name]));
@@ -155,6 +163,7 @@ export async function getDashboardFinanceData(supabase: SupabaseClient, userId: 
   }));
 
   return {
+    currencyCode: normalizeCurrencyCode(settings?.base_currency),
     kpis: [
       { title: "Revenue", amountCents: revenueCents, delta: "Based on persisted transactions" },
       { title: "Expenses", amountCents: expenseCents, delta: "Based on persisted transactions" },
