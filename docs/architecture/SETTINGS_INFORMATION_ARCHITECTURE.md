@@ -15,6 +15,11 @@ The Settings area now uses these top-level sections:
 7. **Integrations** — third-party app connections and integration diagnostics.
 
 Optional tabs (Automation, Payroll, Developer, Security & Audit) should only be exposed when backed by implemented, non-trivial features.
+In the current implementation they are feature-gated and hidden by default:
+- `NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION`
+- `NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL`
+- `NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER`
+- `NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT`
 
 ## Routing
 - Settings landing page: `/settings`

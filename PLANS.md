@@ -805,3 +805,35 @@ Refactor the Settings area into clear top-level tabs (Personal, Company, Team & 
 ### Assumptions / open questions
 - Assumption: showing structural placeholder pages for required top-level tabs satisfies “hide empty sections,” because tabs have explicit scope and implementation status text.
 - Assumption: current codebase does not yet include dedicated workspace-level Security & Audit, Payroll, Automation, or Developer settings pages, so optional tabs remain hidden.
+
+## Settings IA optional-tab expansion (March 27, 2026)
+
+### Goal
+Add the remaining optional Settings tabs (Automation, Payroll, Developer, Security & Audit) to the settings information architecture in a safe, feature-gated way.
+
+### Current behavior
+- Settings currently includes only the seven core tabs.
+- Optional tabs from the IA spec are not represented in routing or navigation.
+
+### Proposed approach
+1. Extend settings tab definitions with optional tabs and concise descriptions.
+2. Keep optional tabs hidden by default and expose them only via explicit feature flags and existing role/permission checks.
+3. Add placeholder index content for each optional tab to preserve IA structure without implying full implementation.
+4. Update docs note with optional tab gating behavior.
+
+### Affected files
+- `src/lib/settings/navigation.ts`
+- `src/app/(dashboard)/settings/[tab]/page.tsx`
+- `docs/architecture/SETTINGS_INFORMATION_ARCHITECTURE.md`
+- `PLANS.md`
+
+### Risks
+- Optional tabs could be accidentally visible by default if feature-flag defaults are not defensive.
+- Role checks for payroll/developer surfaces can drift unless tied to existing advanced-role toggles.
+
+### Verification steps
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions
+- New feature flags can be introduced with safe defaults (off) without changing runtime behavior for existing environments.

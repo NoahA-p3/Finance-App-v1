@@ -145,6 +145,54 @@ export default async function SettingsTabPage({ params }: { params: Promise<{ ta
             ]}
           />
         ) : null}
+
+        {activeTab.key === "automation" ? (
+          <Placeholder
+            title="Automation"
+            description="This tab is reserved for automation rules, assistant task preferences, and suggestion controls."
+            bullets={[
+              "Keep automations configurable and auditable.",
+              "Only expose automations backed by persisted rule models.",
+              "Avoid moving operational workflows here; this tab is for defaults and behavior settings only."
+            ]}
+          />
+        ) : null}
+
+        {activeTab.key === "payroll" ? (
+          <Placeholder
+            title="Payroll"
+            description="Payroll configuration surfaces are feature-gated and should only appear when enabled for eligible roles."
+            bullets={[
+              "Planned setup includes compensation, pension, benefits, and submission defaults.",
+              "Payroll posting mappings and payslip defaults should stay in this tab when implemented.",
+              "Treat payroll data as highly sensitive and permission-restricted."
+            ]}
+          />
+        ) : null}
+
+        {activeTab.key === "developer" ? (
+          <Placeholder
+            title="Developer"
+            description="Developer settings are feature-gated and reserved for API credentials, OAuth clients, and webhook configuration."
+            bullets={[
+              "Use this tab for app credentials, redirect URIs, scopes, and webhook URLs.",
+              "Do not expose raw secrets in UI responses or logs.",
+              "Only show this tab when developer settings are enabled for the workspace."
+            ]}
+          />
+        ) : null}
+
+        {activeTab.key === "security-audit" ? (
+          <Placeholder
+            title="Security & Audit"
+            description="Workspace-level security and audit controls are optional and remain feature-gated until robust controls are implemented."
+            bullets={[
+              "User security settings remain under Personal.",
+              "Team permission controls remain under Team & Access.",
+              "Use this tab for workspace-level audit/security controls when supported."
+            ]}
+          />
+        ) : null}
       </div>
     </DashboardShell>
   );

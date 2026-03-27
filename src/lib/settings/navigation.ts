@@ -1,5 +1,5 @@
-import { COMPANY_PERMISSIONS, CompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
-import { isEntitlementReadEnabled } from "@/lib/auth-flags";
+import { isAdvancedRolesEnabled, isEntitlementReadEnabled } from "@/lib/auth-flags";
+import { COMPANY_PERMISSIONS, CompanyMembershipContext, hasCompanyPermission, isAdvancedRole } from "@/lib/company-permissions";
 
 export type SettingsTabKey =
   | "personal"
@@ -8,7 +8,11 @@ export type SettingsTabKey =
   | "sales-documents"
   | "accounting-tax"
   | "banking-payments"
-  | "integrations";
+  | "integrations"
+  | "automation"
+  | "payroll"
+  | "developer"
+  | "security-audit";
 
 export interface SettingsTabDefinition {
   key: SettingsTabKey;
@@ -59,8 +63,52 @@ const TAB_DEFINITIONS: SettingsTabDefinition[] = [
     label: "Integrations",
     description: "Third-party app connections, sync diagnostics, mapping, and retry surfaces.",
     href: "/settings/integrations"
+  },
+  {
+    key: "automation",
+    label: "Automation",
+    description: "Automation rules, assistant preferences, and suggestion behavior controls.",
+    href: "/settings/automation"
+  },
+  {
+    key: "payroll",
+    label: "Payroll",
+    description: "Payroll setup defaults, mappings, and sensitive payroll control surfaces.",
+    href: "/settings/payroll"
+  },
+  {
+    key: "developer",
+    label: "Developer",
+    description: "OAuth clients, API keys, webhook URLs, scopes, and app credentials.",
+    href: "/settings/developer"
+  },
+  {
+    key: "security-audit",
+    label: "Security & Audit",
+    description: "Workspace security controls, audit visibility, and activity traceability settings.",
+    href: "/settings/security-audit"
   }
 ];
+
+function isOptionalTabEnabled(key: SettingsTabKey) {
+  if (key === "automation") {
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION === "true";
+  }
+
+  if (key === "payroll") {
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL === "true";
+  }
+
+  if (key === "developer") {
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER === "true";
+  }
+
+  if (key === "security-audit") {
+    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT === "true";
+  }
+
+  return true;
+}
 
 export function getSettingsTabs(membership: CompanyMembershipContext | null) {
   const canManageCompanySettings = hasCompanyPermission(membership, COMPANY_PERMISSIONS.SETTINGS_MANAGE);
@@ -69,6 +117,18 @@ export function getSettingsTabs(membership: CompanyMembershipContext | null) {
     hasCompanyPermission(membership, COMPANY_PERMISSIONS.MEMBERS_MANAGE) ||
     hasCompanyPermission(membership, COMPANY_PERMISSIONS.INVITATIONS_READ) ||
     hasCompanyPermission(membership, COMPANY_PERMISSIONS.INVITATIONS_MANAGE);
+
+  const isAdvancedRoleEnabled = isAdvancedRolesEnabled();
+  const memberRole = membership?.role ?? null;
+  const canAccessPayroll =
+    canManageCompanySettings &&
+    isOptionalTabEnabled("payroll") &&
+    isAdvancedRoleEnabled &&
+    Boolean(memberRole && (memberRole === "owner" || memberRole === "payroll_only" || memberRole === "accountant" || isAdvancedRole(memberRole)));
+
+  const canAccessDeveloper = canManageCompanySettings && isOptionalTabEnabled("developer") && isAdvancedRoleEnabled;
+  const canAccessAutomation = canManageCompanySettings && isOptionalTabEnabled("automation");
+  const canAccessSecurityAudit = canManageCompanySettings && isOptionalTabEnabled("security-audit");
 
   return TAB_DEFINITIONS.filter((tab) => {
     if (tab.key === "personal") {
@@ -85,6 +145,22 @@ export function getSettingsTabs(membership: CompanyMembershipContext | null) {
 
     if (tab.key === "company") {
       return true;
+    }
+
+    if (tab.key === "automation") {
+      return canAccessAutomation;
+    }
+
+    if (tab.key === "payroll") {
+      return canAccessPayroll;
+    }
+
+    if (tab.key === "developer") {
+      return canAccessDeveloper;
+    }
+
+    if (tab.key === "security-audit") {
+      return canAccessSecurityAudit;
     }
 
     return canManageCompanySettings;
