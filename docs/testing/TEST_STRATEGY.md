@@ -20,7 +20,10 @@ Implemented test files currently validate codebase contracts such as:
 - auth/account route presence and expected operations,
 - company-scoped finance ownership filters,
 - posting immutability/reversal contract markers,
-- receipt upload validation constraints.
+- receipt upload validation constraints,
+- API auth/membership/permission enforcement markers for key `/api` routes,
+- transaction + entitlement boundary validation markers,
+- deterministic golden dataset fixture structure for datasets 1, 4, and 5.
 
 Limitations to state explicitly:
 - Tests are source/migration contract assertions (string/pattern checks), not full runtime integration tests.
