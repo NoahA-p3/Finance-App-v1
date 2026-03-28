@@ -1,5 +1,40 @@
 # PLANS.md
 
+## Onboarding company bootstrap RLS fix (March 28, 2026)
+
+### Goal
+Fix onboarding company creation failure where minimal required input can hit an RLS violation on `public.companies`.
+
+### Current behavior
+- `POST /api/companies` inserts into `public.companies`, then `public.company_memberships`, then `public.company_settings`.
+- Existing `company_memberships` insert policy validates the target company via an `exists` subquery on `public.companies`.
+- `public.companies` select policy currently requires existing membership, which is not yet present during bootstrap.
+- Result: first-time onboarding can fail with an RLS error while creating the initial company.
+
+### Proposed approach
+- Add an additive migration that broadens the companies select policy to also allow `created_by = auth.uid()` for authenticated users.
+- Keep ownership checks intact for updates and for membership insertion (`role='owner'`, `user_id=auth.uid()`, company must be created by auth user).
+- No API contract changes; route handler behavior remains the same.
+
+### Affected files
+- `supabase/migrations/<new>_companies_bootstrap_rls_fix.sql`
+- `README.md` (brief behavior note for bootstrap policy)
+- `PLANS.md`
+
+### Risks
+- Policy broadening could unintentionally expand read scope if implemented incorrectly.
+- Environments with drifted policy names could miss replacement unless migration explicitly drops/recreates expected policy.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: canonical runtime path remains `auth.users -> profiles -> companies/company_memberships/company_settings`.
+- Open question: should we add automated Supabase integration tests for onboarding bootstrap RLS to prevent regression?
+
+
 ## Backend gap-closure plan (March 23, 2026)
 
 ### Goal
