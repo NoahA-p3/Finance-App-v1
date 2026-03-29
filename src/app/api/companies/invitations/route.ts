@@ -1,3 +1,4 @@
+import { randomBytes, createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
 import {
@@ -10,6 +11,8 @@ import {
   isBaselineRole
 } from "@/lib/company-permissions";
 import { isAdvancedRolesEnabled } from "@/lib/auth-flags";
+
+const INVITATION_TTL_HOURS = 24 * 7;
 
 function normalizeEmail(value: unknown) {
   if (typeof value !== "string") {
@@ -26,6 +29,14 @@ function isAllowedRole(role: string) {
   }
 
   return isAdvancedRolesEnabled() && isAdvancedRole(role);
+}
+
+function createInvitationToken() {
+  const token = randomBytes(24).toString("hex");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + INVITATION_TTL_HOURS * 60 * 60 * 1000).toISOString();
+
+  return { token, tokenHash, expiresAt };
 }
 
 export async function GET() {
@@ -47,7 +58,7 @@ export async function GET() {
 
   const { data: invitations, error } = await authContext.supabase
     .from("company_invitations")
-    .select("id, company_id, invited_email, role, status, invited_by, created_at, updated_at")
+    .select("id, company_id, invited_email, role, status, invited_by, created_at, updated_at, acceptance_token_expires_at")
     .eq("company_id", membership.companyId)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
@@ -103,6 +114,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Unsupported role. Allowed roles: ${allowedRoles.join(", ")}.` }, { status: 400 });
   }
 
+  const { token, tokenHash, expiresAt } = createInvitationToken();
+
   const { data: invitation, error } = await authContext.supabase
     .from("company_invitations")
     .insert({
@@ -110,14 +123,31 @@ export async function POST(req: NextRequest) {
       invited_email: email,
       role: roleValue,
       invited_by: authContext.user.id,
-      status: "pending"
+      status: "pending",
+      acceptance_token_hash: tokenHash,
+      acceptance_token_expires_at: expiresAt,
+      status_updated_at: new Date().toISOString(),
+      status_updated_by: authContext.user.id
     })
-    .select("id, company_id, invited_email, role, status, invited_by, created_at, updated_at")
+    .select("id, company_id, invited_email, role, status, invited_by, created_at, updated_at, acceptance_token_expires_at")
     .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ invitation }, { status: 201 });
+  const origin = req.nextUrl.origin;
+  const acceptancePath = `/onboarding?invite=${encodeURIComponent(token)}`;
+
+  return NextResponse.json(
+    {
+      invitation,
+      acceptance: {
+        token,
+        expires_at: expiresAt,
+        onboarding_url: `${origin}${acceptancePath}`
+      }
+    },
+    { status: 201 }
+  );
 }

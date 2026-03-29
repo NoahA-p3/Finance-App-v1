@@ -8,7 +8,7 @@ Status labels:
 - **Planned**: target capability only.
 
 ## Runtime evidence status table
-**As of:** 2026-03-27.
+**As of:** 2026-03-29.
 
 | Module | Status | Runtime evidence |
 |---|---|---|
@@ -29,7 +29,7 @@ Status labels:
 Includes account lifecycle, profile settings, business profile setup, and plan/entitlement control.
 
 - Current repo status: **Partial**.
-- As of 2026-03-27: auth, company bootstrap/switch, membership listing, and invitation creation/listing are implemented, but invitation acceptance and full enterprise role depth are not.
+- As of 2026-03-29: auth, company bootstrap/switch, membership listing, invitation creation/listing, and tokenized invitation acceptance are implemented; full enterprise role depth remains incomplete.
 - Evidence: [`src/app/api/auth/*`](../../src/app/api/auth), [`src/app/api/companies/*`](../../src/app/api/companies), [`src/lib/company-permissions.ts`](../../src/lib/company-permissions.ts), [`202603250002_company_rbac_baseline.sql`](../../supabase/migrations/202603250002_company_rbac_baseline.sql).
 
 ## 2. Contacts and Master Data

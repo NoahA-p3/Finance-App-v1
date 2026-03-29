@@ -2,7 +2,7 @@
 
 Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md), [Security Rules](../security/SECURITY_RULES.md).
 
-**Last verified:** 2026-03-27.
+**Last verified:** 2026-03-29.
 
 ## Last-verified policy
 - Keep this date as the evidence timestamp for architecture claims in this file.
@@ -80,7 +80,7 @@ Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model
 
 ## Explicit placeholders and planned gaps
 - **Settings placeholder tabs:** several settings tabs intentionally render placeholder content until backed by persisted feature models (`banking-payments`, `integrations`, `automation`, `payroll`, `developer`, `security-audit`, plus partially placeholder guidance in `sales-documents` and `accounting-tax`).
-- **Invitation acceptance:** invitation creation/listing is implemented, but invite acceptance flow is explicitly not implemented yet in current UI/runtime.
+- **Invitation acceptance:** creation/listing plus tokenized acceptance are implemented; invite delivery is still app-mediated/manual (no outbound email sender in this repo).
 - **VAT engine:** VAT/tax rule automation is still planned; current settings copy explicitly marks this as TODO.
 
 ## Schema convergence notes

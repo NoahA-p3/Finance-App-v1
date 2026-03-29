@@ -4,7 +4,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 
 > Current product state: early MVP foundation. Auth, profile, transaction/category/receipt data paths, and dashboard/report persisted-data views exist. Danish accounting and VAT domain depth is mostly planned.
 
-**Last verified:** 2026-03-27.
+**Last verified:** 2026-03-29.
 
 ## What the app does (current)
 - User signup/login/logout with Supabase Auth.
@@ -21,7 +21,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Receipt upload validation enforces allowed MIME types (`application/pdf`, `image/jpeg`, `image/png`, `image/webp`), a 10 MB max file size limit, unsafe filename rejection, and normalized object keys under `user_id/company_id/<uuid>.<ext>`.
 - Company bootstrap/profile API (`/api/companies`) with persisted onboarding/settings fields (name, contact/address, VAT status, fiscal year start, base currency).
 - Company bootstrap RLS policy supports creator read access during first-company creation so owner membership + settings inserts can complete in one onboarding flow.
-- Company RBAC baseline with seeded roles (`owner`, `staff`, `read_only`), server-enforced permission checks on settings/member management, and invitation skeleton endpoints (`GET/POST /api/companies/invitations`, `GET/PATCH /api/companies/members`).
+- Company RBAC baseline with seeded roles (`owner`, `staff`, `read_only`), server-enforced permission checks on settings/member management, and invitation lifecycle endpoints (`GET/POST /api/companies/invitations`, `POST /api/companies/invitations/accept`, `GET/PATCH /api/companies/members`).
 - Company context switching via `POST /api/companies/switch`, persisted in `profiles.active_company_id`, and exposed in dashboard top navigation.
 - Company settings persistence now includes invoice settings, branding/logo metadata placeholders, branch/department placeholders, and CVR number storage.
 - CVR lookup adapter endpoint (`GET /api/companies/cvr?cvr=<8-digit>`) with explicit manual fallback when provider integration is not configured.
@@ -110,7 +110,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 
 ## Explicit placeholders still remaining
 - **Settings tabs:** multiple settings tabs intentionally render placeholder guidance until backed by persisted feature models.
-- **Invitation acceptance:** pending invitation listing/creation exists, but acceptance flow is not implemented yet.
+- **Invitation acceptance:** tokenized invite acceptance is implemented via onboarding handoff (`/onboarding?invite=<token>`) and `POST /api/companies/invitations/accept`.
 - **VAT engine:** VAT/tax automation engine remains planned and is not fully implemented in this repository.
 
 ## Supabase and database

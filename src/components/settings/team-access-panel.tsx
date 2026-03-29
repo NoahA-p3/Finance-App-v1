@@ -22,6 +22,13 @@ interface InvitationRecord {
   invited_by: string;
   created_at: string;
   updated_at: string;
+  acceptance_token_expires_at?: string | null;
+}
+
+interface InvitationAcceptance {
+  token: string;
+  expires_at: string;
+  onboarding_url: string;
 }
 
 interface FieldErrors {
@@ -29,16 +36,7 @@ interface FieldErrors {
   role?: string;
 }
 
-const ROLE_OPTIONS = [
-  "owner",
-  "staff",
-  "read_only",
-  "accountant",
-  "auditor",
-  "payroll_only",
-  "sales_only",
-  "integration_admin"
-] as const;
+const ROLE_OPTIONS = ["owner", "staff", "read_only", "accountant", "auditor", "payroll_only", "sales_only", "integration_admin"] as const;
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "Unknown";
@@ -70,11 +68,9 @@ export function TeamAccessPanel() {
   const [inviteActionError, setInviteActionError] = useState<string | null>(null);
   const [inviteActionMessage, setInviteActionMessage] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+  const [latestAcceptance, setLatestAcceptance] = useState<InvitationAcceptance | null>(null);
 
-  const sortedMembers = useMemo(
-    () => [...members].sort((left, right) => left.created_at.localeCompare(right.created_at)),
-    [members]
-  );
+  const sortedMembers = useMemo(() => [...members].sort((left, right) => left.created_at.localeCompare(right.created_at)), [members]);
 
   async function loadMembers() {
     setMembersLoading(true);
@@ -114,12 +110,8 @@ export function TeamAccessPanel() {
     setInvitationsLoading(false);
   }
 
-  async function loadAll() {
-    await Promise.all([loadMembers(), loadInvitations()]);
-  }
-
   useEffect(() => {
-    void loadAll();
+    void Promise.all([loadMembers(), loadInvitations()]);
   }, []);
 
   function validateInviteForm() {
@@ -191,7 +183,11 @@ export function TeamAccessPanel() {
       body: JSON.stringify({ invited_email: inviteEmail.trim().toLowerCase(), role: inviteRole.trim() })
     });
 
-    const payload = (await response.json().catch(() => ({}))) as { error?: string; invitation?: InvitationRecord };
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      invitation?: InvitationRecord;
+      acceptance?: InvitationAcceptance;
+    };
 
     if (!response.ok || !payload.invitation) {
       setIsInviting(false);
@@ -199,7 +195,9 @@ export function TeamAccessPanel() {
       return;
     }
 
-    setInvitations((current) => [payload.invitation as InvitationRecord, ...current]);
+    const nextInvitation = payload.invitation;
+    setInvitations((current) => [nextInvitation, ...current]);
+    setLatestAcceptance(payload.acceptance ?? null);
     setInviteEmail("");
     setInviteRole("staff");
     setInviteFieldErrors({});
@@ -218,9 +216,7 @@ export function TeamAccessPanel() {
         {roleActionError ? <p className="mt-3 text-sm text-rose-200">{roleActionError}</p> : null}
         {roleActionMessage ? <p className="mt-3 text-sm text-emerald-200">{roleActionMessage}</p> : null}
 
-        {!membersLoading && !membersError && sortedMembers.length === 0 ? (
-          <p className="mt-4 text-sm text-indigo-100/80">No members found for this company yet.</p>
-        ) : null}
+        {!membersLoading && !membersError && sortedMembers.length === 0 ? <p className="mt-4 text-sm text-indigo-100/80">No members found for this company yet.</p> : null}
 
         {!membersLoading && !membersError && sortedMembers.length > 0 ? (
           <ul className="mt-4 space-y-3">
@@ -256,12 +252,7 @@ export function TeamAccessPanel() {
                       </select>
                     </label>
 
-                    <Button
-                      className="w-full"
-                      variant="secondary"
-                      disabled={!hasChanges || updatingMemberId === member.id}
-                      onClick={() => void handleMemberRoleSave(member)}
-                    >
+                    <Button className="w-full" variant="secondary" disabled={!hasChanges || updatingMemberId === member.id} onClick={() => void handleMemberRoleSave(member)}>
                       {updatingMemberId === member.id ? "Saving..." : "Save role"}
                     </Button>
                   </div>
@@ -276,7 +267,7 @@ export function TeamAccessPanel() {
         <h3 className="font-semibold text-white">Invitations</h3>
         <p className="mt-2 text-sm text-indigo-100/75">Invite teammates to this company and assign an initial role.</p>
         <p className="mt-2 rounded-lg border border-cyan-300/30 bg-cyan-300/10 p-2 text-xs text-cyan-100">
-          Note: Invitation acceptance flow is not yet implemented in this repository. Sent invites are tracked as pending only.
+          Invite links are one-time acceptance tokens with expiration. Share the onboarding link with the invited email owner.
         </p>
 
         <form className="mt-4 space-y-3" onSubmit={handleSendInvite}>
@@ -296,7 +287,9 @@ export function TeamAccessPanel() {
           </div>
 
           <div>
-            <label className="text-xs text-indigo-100/70" htmlFor="invite-role">Role</label>
+            <label className="text-xs text-indigo-100/70" htmlFor="invite-role">
+              Role
+            </label>
             <select
               id="invite-role"
               className="mt-1 w-full rounded-xl border border-white/15 bg-[#171a36] px-3 py-2 text-sm text-indigo-50"
@@ -324,15 +317,21 @@ export function TeamAccessPanel() {
           {inviteActionMessage ? <p className="text-sm text-emerald-200">{inviteActionMessage}</p> : null}
         </form>
 
+        {latestAcceptance ? (
+          <div className="mt-4 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-3 text-xs text-emerald-100">
+            <p className="font-medium">Latest invite link</p>
+            <p className="mt-1 break-all">{latestAcceptance.onboarding_url}</p>
+            <p className="mt-1">Expires: {formatDate(latestAcceptance.expires_at)}</p>
+          </div>
+        ) : null}
+
         <div className="mt-4 border-t border-white/10 pt-4">
           <h4 className="font-medium text-white">Pending invitations</h4>
 
           {invitationsLoading ? <p className="mt-3 text-sm text-indigo-100/80">Loading invitations...</p> : null}
           {invitationsError ? <p className="mt-3 text-sm text-rose-200">{invitationsError}</p> : null}
 
-          {!invitationsLoading && !invitationsError && invitations.length === 0 ? (
-            <p className="mt-3 text-sm text-indigo-100/80">No pending invitations.</p>
-          ) : null}
+          {!invitationsLoading && !invitationsError && invitations.length === 0 ? <p className="mt-3 text-sm text-indigo-100/80">No pending invitations.</p> : null}
 
           {!invitationsLoading && !invitationsError && invitations.length > 0 ? (
             <ul className="mt-3 space-y-2">
@@ -341,6 +340,7 @@ export function TeamAccessPanel() {
                   <p className="text-sm text-white">{invitation.invited_email}</p>
                   <p className="mt-1 text-xs text-indigo-100/70">Role: {invitation.role}</p>
                   <p className="mt-1 text-xs text-indigo-100/60">Invited: {formatDate(invitation.created_at)}</p>
+                  <p className="mt-1 text-xs text-indigo-100/60">Expires: {formatDate(invitation.acceptance_token_expires_at)}</p>
                 </li>
               ))}
             </ul>
