@@ -1552,3 +1552,44 @@ Implement invitation acceptance with token validation, expiry handling, idempote
 - Assumption: invite delivery remains app-mediated/manual (no outbound email integration in this task).
 - Assumption: status transitions are append-preserving at business level (no deletion), with timestamps and actor metadata.
 - Open question: should future iteration add invite revoke endpoint and one-time display rules for acceptance links?
+
+## Ops runbooks + recovery cross-linking (March 29, 2026)
+
+### Goal
+Add operational recovery runbooks under `docs/ops/` and wire them into existing security/migration guidance.
+
+### Current behavior
+- `docs/security/SECURITY_RULES.md` has backup/restore as TODO.
+- `supabase/migrations/MIGRATION_ORDER.md` includes a short rollback section but no detailed sequence or post-restore verification checks.
+- There is no dedicated release-readiness checklist requiring runbook review for sensitive migration changes.
+
+### Proposed approach
+1. Add `docs/ops/` runbooks for backup assumptions, restore procedure, migration rollback sequencing, and post-restore verification.
+2. Include explicit verification checks for:
+   - key RLS policies,
+   - posting/audit append-only trigger enforcement,
+   - receipt storage access boundaries.
+3. Cross-link new runbooks from security and migration-order docs.
+4. Add a release-readiness checklist requiring runbook review whenever migrations touch security or finance tables.
+
+### Affected files
+- `docs/ops/BACKUP_ASSUMPTIONS.md` (new)
+- `docs/ops/RESTORE_RUNBOOK.md` (new)
+- `docs/ops/MIGRATION_ROLLBACK_SEQUENCE.md` (new)
+- `docs/ops/POST_RESTORE_VERIFICATION.md` (new)
+- `docs/ops/RELEASE_READINESS_CHECKLIST.md` (new)
+- `docs/security/SECURITY_RULES.md`
+- `supabase/migrations/MIGRATION_ORDER.md`
+- `PLANS.md`
+
+### Risks
+- Runbooks can become stale as migrations evolve unless linked and maintained with migration changes.
+- Verification SQL can drift if policy/trigger names change.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: recovery execution uses Supabase CLI (`supabase db push`) and standard Postgres SQL verification queries.
+- TODO: add automated post-restore smoke tests once infra supports environment-level restore rehearsals.

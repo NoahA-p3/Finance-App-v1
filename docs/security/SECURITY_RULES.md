@@ -87,8 +87,11 @@ Evidence (file-level):
 - Service role key should be server-only if used; avoid client exposure.
 
 ## Backup and recovery notes
-- **Assumption:** Supabase managed backups apply at platform level.
-- **TODO:** document restore runbook and migration rollback/recovery process in ops docs.
+- Backup and restore assumptions are documented in [`docs/ops/BACKUP_ASSUMPTIONS.md`](../ops/BACKUP_ASSUMPTIONS.md).
+- Restore execution steps are documented in [`docs/ops/RESTORE_RUNBOOK.md`](../ops/RESTORE_RUNBOOK.md).
+- Migration rollback sequence guidance is documented in [`docs/ops/MIGRATION_ROLLBACK_SEQUENCE.md`](../ops/MIGRATION_ROLLBACK_SEQUENCE.md).
+- Post-restore verification (RLS, immutability, receipt storage access) is documented in [`docs/ops/POST_RESTORE_VERIFICATION.md`](../ops/POST_RESTORE_VERIFICATION.md).
+- Release gating for migration risk review is documented in [`docs/ops/RELEASE_READINESS_CHECKLIST.md`](../ops/RELEASE_READINESS_CHECKLIST.md).
 
 ## Security gaps / TODOs
 1. Expand and finalize advanced-role permission matrix before enabling advanced roles in production.
