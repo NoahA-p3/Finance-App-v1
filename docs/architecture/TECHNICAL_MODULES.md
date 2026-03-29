@@ -25,7 +25,12 @@ Status labels:
 ## 4. Accounting Core — **Partial**
 - Schema domains: fiscal periods, accounts, journal entries/lines, cashbook/posting templates/import jobs, VAT returns, reports, fixed assets.
 - API groups: `/companies/{company_id}/accounts*`, `/journal-entries*`, `/fiscal-periods*`, `/vat-*`, `/reports*`, `/fixed-assets*`.
-- Current repo evidence: transaction/category primitives exist, but journal, VAT, and fixed-assets modules are planned.
+- **As of:** 2026-03-29.
+- Current repo evidence: posting/journal baseline is implemented (create/list postings, reverse postings, period locks, and audit-event writes) while VAT and fixed-assets modules are still planned.
+- Evidence (file-level):
+  - Posting API routes: `src/app/api/postings/route.ts`, `src/app/api/postings/[posting_id]/reverse/route.ts`, `src/app/api/postings/period-locks/route.ts`.
+  - Posting + audit service logic: `src/lib/postings/service.ts`.
+  - Journal/audit schema and immutability guards: `supabase/migrations/202603270002_posting_and_audit_immutability.sql`.
 
 ## 5. Receipts, Expenses, and Bookkeeping Automation — **Partial**
 - Schema domains: files, receipt extraction, file links, expenses/allocations, bank sync/reconciliation, rules/suggestions/tasks.
