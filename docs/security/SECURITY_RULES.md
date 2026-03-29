@@ -13,7 +13,8 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Company-scoped RBAC baseline is implemented with `roles`, `permissions`, `role_permissions`, and `company_memberships.role`.
 - Seeded baseline roles: `owner`, `staff`, `read_only`.
 - Permission checks are enforced server-side in API handlers (not UI-only) for company settings/member/invitation actions.
-- Finance mutations are server-gated by explicit permission keys (`finance.transactions.write`, `finance.receipts.write`, `finance.postings.write`, `finance.period_locks.manage`); baseline seeding grants these to `owner` and `staff` but not `read_only`.
+- Finance mutations are server-gated by explicit permission keys (`finance.transactions.write`, `finance.categories.write`, `finance.receipts.write`, `finance.postings.write`, `finance.period_locks.manage`); baseline seeding grants these to `owner` and `staff` but not `read_only`, including explicit `read_only` exclusion from category mutation.
+- Evidence: `supabase/migrations/202603290002_categories_write_permissions_alignment.sql` seeds `finance.categories.write` to `owner` + `staff` and updates category mutation RLS; `src/app/api/categories/route.ts` enforces `COMPANY_PERMISSIONS.FINANCE_CATEGORIES_WRITE` with `403 Missing required permission: finance.categories.write`.
 - Advanced roles (`accountant`, `auditor`, `payroll_only`, `sales_only`, `integration_admin`) are present as feature-flagged placeholders until permission matrix finalization.
 
 ## Supabase security and RLS
