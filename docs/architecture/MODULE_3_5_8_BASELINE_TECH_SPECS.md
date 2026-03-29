@@ -15,11 +15,19 @@ Related source-of-truth docs:
 ## 0) Scope and dependency order
 
 This specification defines explicit schema/API/test scope for:
-1. **Module 3 (Invoicing baseline + bills data model subset)**
-2. **Module 8 (VAT/tax engine baseline)**
-3. **Module 5 reconciliation subset + Module 9 reporting/export outputs dependent on #1 and #2**
+1. **Invoicing baseline + bills data model subset**
+2. **VAT/tax engine baseline**
+3. **Reconciliation subset + reporting/export outputs dependent on #1 and #2**
 
-> Note on module numbering: this document follows the sequencing used in `tasks/EPICS.md` where Module 8 is VAT/tax. `docs/product/PRODUCT_MODULE_MAP.md` currently uses a different numbering system. This is a known cross-doc numbering mismatch to resolve in a follow-up docs-alignment ticket.
+### Canonical module-number mapping (aligned)
+This document uses the canonical numbering from `docs/product/PRODUCT_MODULE_MAP.md` and maps older references explicitly.
+
+| Capability in this spec | Canonical product module | Legacy label in this file |
+|---|---|---|
+| Invoicing baseline (AR/AP) | **Module 3** — Sales, Quotes, Orders, and Invoicing | Module 3 (same) |
+| VAT/tax engine baseline | **Module 4** — Accounting Core (with year-end filing dependencies in Module 9) | Module 8 (legacy label) |
+| Reconciliation subset | **Module 5** — Receipts, Expenses, and Bookkeeping Automation (with Accounting Core dependencies in Module 4) | Module 5 (same) |
+| Reporting/export dependency output in this scope | **Module 12** — Home Dashboard and Navigation (with Accounting Core dependencies in Module 4) | Module 9 (legacy label) |
 
 ### Delivery order (required)
 1. **Invoicing/bills data model and APIs first**
@@ -127,7 +135,7 @@ RLS expectations:
 
 ---
 
-## 2) Module 8 — VAT/tax engine baseline
+## 2) Canonical Module 4 — VAT/tax engine baseline
 
 ### 2.1 Goal
 Provide deterministic VAT calculation and explainable rule application for invoices, bills, and expense/reconciliation outputs.
@@ -192,7 +200,7 @@ API guarantees:
 
 ---
 
-## 3) Module 5 reconciliation subset + reporting/export dependency output
+## 3) Canonical Module 5 reconciliation subset + Canonical Module 12 reporting/export dependency output
 
 ### 3.1 Goal
 Implement reconciliation subset that matches invoice/bill/open amounts to recorded transaction flows, then exposes reliable export/report output contracts.
