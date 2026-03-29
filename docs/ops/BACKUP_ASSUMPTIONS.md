@@ -26,8 +26,29 @@ Maintain the following artifacts for each environment (prod/staging/dev):
 - Link to release notes describing the last migration batch.
 - Contact/owner for restore authorization.
 
+## Backup policy baseline (MVP)
+
+> This is the minimum policy baseline for current operations. Update these values if platform settings or contractual requirements change.
+
+- **Backup cadence:**
+  - **Database (Supabase managed):** daily automated snapshot.
+  - **Storage (`receipts` bucket):** daily backup/export aligned to database snapshot window.
+  - **Change-window guidance:** for migration releases, verify the most recent successful backup timestamp before applying migrations.
+- **Retention period:**
+  - **Database snapshots:** 30 days minimum retention.
+  - **Storage backups/exports:** 30 days minimum retention.
+  - Keep at least one known-good backup from the prior release cycle.
+- **Target RPO/RTO:**
+  - **Target RPO:** <= 24 hours.
+  - **Target RTO:** <= 8 hours from restore authorization to verified recovery completion.
+  - If either target is not met during an incident or rehearsal, document gap and mitigation in release notes.
+- **Ownership / escalation:**
+  - **Primary owner:** Engineering on-call for the affected environment.
+  - **Secondary owner:** Release manager for the active release window.
+  - **Escalation path:** Engineering on-call -> Release manager -> Security reviewer (if security/finance data integrity is impacted).
+  - Record owner handoff timestamps in incident/rehearsal logs.
+
 ## Known gaps / TODO
-- **TODO:** Record explicit backup cadence/RPO/RTO targets once defined in ops policy.
 - **TODO:** Add automated alerting for backup failures and stale backup age thresholds.
 
 ## Related runbooks
