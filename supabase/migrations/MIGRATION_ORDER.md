@@ -27,6 +27,7 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 15. `202603290001_company_invitation_acceptance_flow.sql`
 16. `202603290001_security_session_events.sql`
 17. `202603290002_categories_write_permissions_alignment.sql`
+18. `202603290003_security_event_retry_queue.sql`
 
 ## Sequence-sensitive dependency checkpoints
 
@@ -52,7 +53,10 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 - `202603290001_security_session_events.sql` depends on `auth.users` and should run after core auth/profile migrations.
 - It is independent from company-scoped posting `audit_events`; no company foreign key is required.
 
-### F) Same-prefix migration pair ordering (`202603290001_*`)
+### F) Session retry queue after base security session events
+- `202603290003_security_event_retry_queue.sql` depends on `202603290001_security_session_events.sql` because it adds `idempotency_key` constraints and replay tables referencing `public.security_session_events`.
+
+### G) Same-prefix migration pair ordering (`202603290001_*`)
 - `202603290001_company_invitation_acceptance_flow.sql` and `202603290001_security_session_events.sql` intentionally share the same timestamp prefix.
 - Apply in full-filename lexicographic order:
   1. `202603290001_company_invitation_acceptance_flow.sql`

@@ -1,3 +1,48 @@
+## Session audit durable retry queue + replay worker (March 29, 2026)
+
+### Goal
+Replace TODO-only fallback for session-revocation audit persistence failures with a durable retry queue plus replay worker, including integration coverage and security runbook updates.
+
+### Current behavior
+- `DELETE /api/me/sessions/{session_id}` catches audit insert failures and only logs a non-sensitive error with TODO placeholder.
+- No durable queue table exists for failed `security_session_events` writes.
+- No worker/job replays failed events with idempotency guarantees.
+
+### Proposed approach
+1. Add additive migration for `public.security_event_retry_queue` with append-only semantics, minimal PII payload, status transitions, and idempotency key uniqueness.
+2. Update session revoke route to enqueue failed audit events into the retry queue instead of TODO-only fallback.
+3. Add replay worker script that reads queued rows, inserts into `security_session_events` idempotently, and marks queue rows delivered/failed with attempt tracking.
+4. Add integration tests for failure enqueue + replay success and idempotent re-run behavior.
+5. Update `docs/security/SECURITY_RULES.md` with final durability and operational handling notes.
+
+### Affected files
+- `src/app/api/me/sessions/[session_id]/route.ts`
+- `src/lib/session-events.ts`
+- `supabase/migrations/<new>_security_event_retry_queue.sql`
+- `scripts/replay-security-event-retry-queue.mjs`
+- `tests/integration/helpers/supabase-integration-helpers.js`
+- `tests/integration/supabase-rls-and-posting.integration.test.js`
+- `tests/session-security-audit-contract.test.js`
+- `docs/security/SECURITY_RULES.md`
+- `src/types/database.ts`
+- `PLANS.md`
+
+### Risks
+- Queue replay worker could accidentally duplicate audit rows if idempotency constraints are mis-specified.
+- Overly broad queue payload could store unnecessary sensitive data.
+- Replay job privileges could bypass intended user-scoped policy boundaries if misused.
+
+### Verification steps
+- `npm run test`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run test:integration:local` (environment permitting)
+
+### Assumptions / open questions
+- Assumption: queue replay is an internal service-role operation and can safely bypass user-scoped insert policy while preserving audit constraints.
+- Assumption: minimal retry payload should not include raw tokens, IPs, or user-agent values.
+
 ## PR CI integration-gate enhancement plan (March 29, 2026)
 
 ### Goal

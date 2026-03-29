@@ -66,21 +66,25 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - `DELETE /api/me/sessions/{session_id}` enforces authenticated ownership checks before revocation.
 - Revocation of the current active session is blocked to avoid unexpected lockout.
 - Unauthorized or forbidden requests return minimal `401/403` responses without exposing whether another user session exists.
-- Session revocation uses **best-effort audit durability**: if `security_session_events` persistence fails after successful revocation, the API still returns `200 { success: true }`, logs a non-sensitive internal error, and marks the event for future retry-queue integration.
+- Session revocation uses **durable at-least-once audit delivery**: if `security_session_events` persistence fails after successful revocation, the API still returns `200 { success: true }`, logs a non-sensitive internal error, and appends a minimal payload event into `security_event_retry_queue` for replay.
 - Login-alert delivery in current MVP is in-app (`/api/me/login-alerts`) based on authenticated session history; no outbound notifier (email/SMS/push worker) is present in the repository yet.
 
 ## Audit log expectations (current runtime)
 **As of:** 2026-03-29.
 
 - Immutable audit event storage is implemented via `public.audit_events` (company posting/period-lock flows) and `public.security_session_events` (user session-security flows).
+- Failed session-security audit writes are durably queued in append-only `public.security_event_retry_queue`; replay attempts and outcomes are append-only in `public.security_event_retry_attempts`.
 - Posting and period-lock flows emit audit events through shared posting service writes.
 - Audit rows are append-only at the database layer (update/delete blocked by triggers).
 - Current coverage includes posting/period-lock and session-revocation events; broader sensitive-action coverage (for example profile/permission events) remains planned.
+- Replay operations run through `npm run security-events:replay-retry-queue` (service-role context) and rely on `security_session_events.idempotency_key` uniqueness to keep replays idempotent.
 
 Evidence (file-level):
 - `src/lib/postings/service.ts` inserts `posting.posted`, `posting.reversed`, and `period.locked` audit events.
 - `supabase/migrations/202603270002_posting_and_audit_immutability.sql` creates `public.audit_events` and append-only enforcement triggers (`prevent_audit_event_update` / `prevent_audit_event_delete`).
 - `supabase/migrations/202603290001_security_session_events.sql` creates `public.security_session_events` with append-only triggers and user-scoped RLS policies.
+- `supabase/migrations/202603290003_security_event_retry_queue.sql` adds `idempotency_key` uniqueness on `public.security_session_events` plus append-only durable retry/replay tables (`public.security_event_retry_queue`, `public.security_event_retry_attempts`).
+- `scripts/replay-security-event-retry-queue.mjs` replays queued rows into `public.security_session_events` and records delivery attempts/outcomes.
 - Posting and period-lock API handlers route through the posting service for runtime execution paths (`/api/postings`, `/api/postings/{posting_id}/reverse`, `/api/postings/period-locks`).
 
 ## Secret handling expectations
