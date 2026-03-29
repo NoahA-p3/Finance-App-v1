@@ -60,9 +60,21 @@ supabase db push
 
 For drift debugging or manual replay, keep ordering identical to this file.
 
+Operational runbooks:
+- [`docs/ops/BACKUP_ASSUMPTIONS.md`](../../docs/ops/BACKUP_ASSUMPTIONS.md)
+- [`docs/ops/RESTORE_RUNBOOK.md`](../../docs/ops/RESTORE_RUNBOOK.md)
+- [`docs/ops/MIGRATION_ROLLBACK_SEQUENCE.md`](../../docs/ops/MIGRATION_ROLLBACK_SEQUENCE.md)
+- [`docs/ops/POST_RESTORE_VERIFICATION.md`](../../docs/ops/POST_RESTORE_VERIFICATION.md)
+- [`docs/ops/RELEASE_READINESS_CHECKLIST.md`](../../docs/ops/RELEASE_READINESS_CHECKLIST.md)
+
 ## Recovery / rollback operations
 
 Each migration SQL file should be treated as the source for rollback notes/recovery guidance. When rolling back sequence-sensitive migrations:
 1. Snapshot affected tables first.
 2. Roll back in reverse order of application.
 3. Re-verify RLS behavior and policy coverage for company isolation and finance write permissions.
+4. Execute the concrete post-restore checks in [`docs/ops/POST_RESTORE_VERIFICATION.md`](../../docs/ops/POST_RESTORE_VERIFICATION.md).
+
+## Release-readiness requirement
+
+When a release includes migrations that touch security or finance tables/policies, reviewers must complete and record the runbook review checklist in [`docs/ops/RELEASE_READINESS_CHECKLIST.md`](../../docs/ops/RELEASE_READINESS_CHECKLIST.md) before promotion.
