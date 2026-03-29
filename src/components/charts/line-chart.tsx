@@ -18,7 +18,8 @@ interface LineChartProps<T extends object> {
   gridColor?: string;
   axisColor?: string;
   tickColor?: string;
-  formatValue?: (value: number) => string;
+  getValue: (datum: T, key: keyof T) => bigint;
+  formatValue?: (value: bigint) => string;
 }
 
 const VIEWBOX_WIDTH = 1000;
@@ -35,7 +36,8 @@ export function LineChart<T extends object>({
   gridColor = "rgba(255,255,255,0.12)",
   axisColor = "rgba(183,188,225,0.6)",
   tickColor = "#b7bce1",
-  formatValue = (value) => value.toLocaleString(),
+  getValue,
+  formatValue = (value) => value.toString(),
 }: LineChartProps<T>) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -47,20 +49,24 @@ export function LineChart<T extends object>({
     const innerWidth = VIEWBOX_WIDTH - PADDING.left - PADDING.right;
     const innerHeight = VIEWBOX_HEIGHT - PADDING.top - PADDING.bottom;
 
-    const values = data.flatMap((datum) => series.map((item) => Number((datum as Record<string, unknown>)[item.key as string])));
-    const maxValue = Math.max(...values, 0);
-    const minValue = Math.min(...values, 0);
-    const yMin = Math.min(0, minValue);
-    const yMax = maxValue === yMin ? yMin + 1 : maxValue;
+    const values = data.flatMap((datum) => series.map((item) => getValue(datum, item.key)));
+    const maxValue = values.reduce((max, value) => (value > max ? value : max), 0n);
+    const minValue = values.reduce((min, value) => (value < min ? value : min), 0n);
+    const yMin = minValue < 0n ? minValue : 0n;
+    const yMax = maxValue === yMin ? yMin + 1n : maxValue;
+    const yRange = yMax - yMin;
 
     const xFor = (index: number) => PADDING.left + (innerWidth * index) / Math.max(1, data.length - 1);
-    const yFor = (value: number) => PADDING.top + ((yMax - value) / (yMax - yMin)) * innerHeight;
+    const yFor = (value: bigint) => {
+      const scaled = Number(((yMax - value) * 1_000_000n) / yRange) / 1_000_000;
+      return PADDING.top + scaled * innerHeight;
+    };
 
     const lines = series.map((item) => {
       const points = data.map((datum, index) => ({
         x: xFor(index),
-        y: yFor(Number(datum[item.key])),
-        value: Number((datum as Record<string, unknown>)[item.key as string]),
+        y: yFor(getValue(datum, item.key)),
+        value: getValue(datum, item.key),
       }));
 
       const path = points
@@ -74,9 +80,9 @@ export function LineChart<T extends object>({
       };
     });
 
-    const yStep = (yMax - yMin) / yTicks;
+    const yStep = yTicks === 0 ? 1n : yRange / BigInt(yTicks);
     const yAxis = Array.from({ length: yTicks + 1 }).map((_, index) => {
-      const value = yMin + yStep * index;
+      const value = index === yTicks ? yMax : yMin + yStep * BigInt(index);
       return {
         value,
         y: yFor(value),
@@ -91,7 +97,7 @@ export function LineChart<T extends object>({
       yMin,
       yMax,
     };
-  }, [data, series, yTicks]);
+  }, [data, series, yTicks, getValue]);
 
   if (!chart) {
     return <div className={className} />;
@@ -104,7 +110,7 @@ export function LineChart<T extends object>({
           <g key={tick.value}>
             <line x1={PADDING.left} y1={tick.y} x2={VIEWBOX_WIDTH - PADDING.right} y2={tick.y} stroke={gridColor} strokeDasharray="4 4" />
             <text x={PADDING.left - 8} y={tick.y + 4} textAnchor="end" fill={tickColor} fontSize="12">
-              {formatValue(Math.round(tick.value))}
+              {formatValue(tick.value)}
             </text>
           </g>
         ))}
@@ -169,7 +175,7 @@ export function LineChart<T extends object>({
           <p className="font-medium text-white">{String((data[activeIndex] as Record<string, unknown> | undefined)?.[xKey as string] ?? "")}</p>
           {series.map((item) => (
             <p key={String(item.key)} style={{ color: item.color }}>
-              {item.label}: {formatValue(Number((data[activeIndex] as Record<string, unknown> | undefined)?.[item.key as string] ?? 0))}
+              {item.label}: {formatValue(getValue(data[activeIndex], item.key))}
             </p>
           ))}
         </div>
