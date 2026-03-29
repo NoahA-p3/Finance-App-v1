@@ -1,6 +1,9 @@
 import type { Database } from "@/types/database";
 import type { createClient } from "@/lib/supabase/server";
 import { decimalStringToCentsBigInt } from "@/lib/finance-decimals";
+import { formatCurrencyFromCents, normalizeCurrencyCode } from "@/lib/money-format";
+
+export { formatCurrencyFromCents };
 
 export type CentsString = `${bigint}`;
 
@@ -54,68 +57,12 @@ function centsToString(cents: bigint): CentsString {
   return cents.toString() as CentsString;
 }
 
-interface CentsParts {
-  sign: "" | "-";
-  whole: string;
-  fraction: string;
-}
-
-function splitCentsParts(cents: bigint): CentsParts {
-  const sign: "" | "-" = cents < 0n ? "-" : "";
-  const absolute = cents < 0n ? -cents : cents;
-  const whole = (absolute / 100n).toString();
-  const fraction = (absolute % 100n).toString().padStart(2, "0");
-
-  return {
-    sign,
-    whole,
-    fraction
-  };
-}
-
-function addGroupingSeparators(value: string) {
-  return value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
 function monthKey(date: Date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 function monthLabel(date: Date) {
   return new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(date);
-}
-
-function normalizeCurrencyCode(currencyCode?: string | null) {
-  const normalized = currencyCode?.trim().toUpperCase();
-  return normalized && /^[A-Z]{3}$/.test(normalized) ? normalized : "DKK";
-}
-
-export function formatCurrencyFromCents(cents: bigint | CentsString, currencyCode?: string | null) {
-  const centsBigInt = typeof cents === "bigint" ? cents : BigInt(cents);
-  const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency: normalizeCurrencyCode(currencyCode) });
-  const parts = splitCentsParts(centsBigInt);
-  const template = formatter.formatToParts(0);
-  const firstNumericPart = template.findIndex((part) => part.type === "integer");
-  let lastNumericPart = -1;
-  for (let index = template.length - 1; index >= 0; index -= 1) {
-    if (template[index].type === "fraction") {
-      lastNumericPart = index;
-      break;
-    }
-  }
-
-  if (firstNumericPart === -1 || lastNumericPart === -1) {
-    return formatter.format(0);
-  }
-
-  const decimalSeparator = template.find((part) => part.type === "decimal")?.value ?? ".";
-  const prefix = template.slice(0, firstNumericPart).map((part) => part.value).join("");
-  const suffix = template
-    .slice(lastNumericPart + 1)
-    .map((part) => part.value)
-    .join("");
-
-  return `${parts.sign}${prefix}${addGroupingSeparators(parts.whole)}${decimalSeparator}${parts.fraction}${suffix}`;
 }
 
 export async function getDashboardFinanceData(supabase: SupabaseClient, _userId: string, companyId: string): Promise<DashboardFinanceData> {

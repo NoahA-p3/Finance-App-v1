@@ -86,9 +86,19 @@ test('finance decimal utilities provide deterministic bigint-safe conversions', 
 
 test('dashboard trend and expense outputs preserve very large monetary values as cents strings', async () => {
   const decimals = loadTsModule('src/lib/finance-decimals.ts');
+  const moneyFormat = loadTsModuleWithResolver('src/lib/money-format.ts', (specifier) => {
+    if (specifier === '@/lib/finance-decimals') {
+      return decimals;
+    }
+    return undefined;
+  });
+
   const dashboard = loadTsModuleWithResolver('src/lib/dashboard-data.ts', (specifier) => {
     if (specifier === '@/lib/finance-decimals') {
       return decimals;
+    }
+    if (specifier === '@/lib/money-format') {
+      return moneyFormat;
     }
     return undefined;
   });
@@ -194,13 +204,53 @@ test('dashboard formatter regression: avoids Number(cents) conversion path', () 
 
 test('dashboard currency formatter preserves precision above JS safe integer cents', () => {
   const decimals = loadTsModule('src/lib/finance-decimals.ts');
-  const dashboard = loadTsModuleWithResolver('src/lib/dashboard-data.ts', (specifier) => {
+  const moneyFormat = loadTsModuleWithResolver('src/lib/money-format.ts', (specifier) => {
     if (specifier === '@/lib/finance-decimals') {
       return decimals;
     }
     return undefined;
   });
 
+  const dashboard = loadTsModuleWithResolver('src/lib/dashboard-data.ts', (specifier) => {
+    if (specifier === '@/lib/finance-decimals') {
+      return decimals;
+    }
+    if (specifier === '@/lib/money-format') {
+      return moneyFormat;
+    }
+    return undefined;
+  });
+
   assert.equal(dashboard.formatCurrencyFromCents('900719925474099312', 'DKK'), 'DKK\u00A09,007,199,254,740,993.12');
   assert.equal(dashboard.formatCurrencyFromCents('-900719925474099312', 'DKK'), '-DKK\u00A09,007,199,254,740,993.12');
+});
+
+
+test('money formatter normalizes company currency codes with DKK fallback and formats decimal amounts', () => {
+  const decimals = loadTsModule('src/lib/finance-decimals.ts');
+  const moneyFormat = loadTsModuleWithResolver('src/lib/money-format.ts', (specifier) => {
+    if (specifier === '@/lib/finance-decimals') {
+      return decimals;
+    }
+    return undefined;
+  });
+
+  assert.equal(moneyFormat.normalizeCurrencyCode(' eur '), 'EUR');
+  assert.equal(moneyFormat.normalizeCurrencyCode(null), 'DKK');
+  assert.equal(moneyFormat.normalizeCurrencyCode('invalid'), 'DKK');
+
+  assert.equal(
+    moneyFormat.formatCurrencyFromDecimalAmount('1234.56', 'EUR'),
+    moneyFormat.formatCurrencyFromCents('123456', 'EUR')
+  );
+  assert.equal(moneyFormat.formatCurrencyFromDecimalAmount('abc', 'EUR'), 'abc');
+});
+
+test('transactions workspace uses shared company-derived currency formatter contract', () => {
+  const source = read('src/components/transactions/transactions-workspace.tsx');
+
+  assert.match(source, /formatCurrencyFromDecimalAmount\(transaction.amount, currencyCode\)/);
+  assert.match(source, /fetch\("\/api\/companies"/);
+  assert.match(source, /normalizeCurrencyCode\(body\?\.settings\?\.base_currency\)/);
+  assert.doesNotMatch(source, /currency:\s*"USD"/);
 });
