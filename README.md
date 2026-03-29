@@ -70,6 +70,18 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
    ```
 5. Open `http://localhost:3000`.
 
+
+## Onboarding hygiene expectations
+- Local dependency/build artifacts are expected to remain untracked (`node_modules/`, `.next/`, `out/`, `dist/`, `coverage/`, caches, and editor artifacts).
+- Local environment files must stay local (`.env`, `.env.local`, `.env.*`), except `.env.example`, which is intentionally tracked.
+- Run this quick hygiene check after local install/build activity:
+  ```bash
+  npm install
+  npm run build
+  git status --short
+  ```
+- Expected outcome: only intentional tracked-file edits appear in `git status --short`; dependency/build outputs should not appear.
+
 ## Scripts
 - `npm run dev` — start local dev server
 - `npm run lint` — Next.js lint
