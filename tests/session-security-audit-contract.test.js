@@ -29,3 +29,16 @@ test('session events emitter writes to Supabase-backed security session events s
   assert.match(sessionEventsLib, /event_type: "session\.revoked"/);
   assert.match(sessionEventsLib, /throw new Error\(error\.message\)/);
 });
+
+test('session revoke route applies best-effort audit failure policy with internal logging + retry placeholder', () => {
+  const sessionRevokeRoute = read('src/app/api/me/sessions/[session_id]/route.ts');
+
+  assert.match(sessionRevokeRoute, /try \{\s*await emitSessionRevokedEvent/s);
+  assert.match(sessionRevokeRoute, /catch \(error\)/);
+  assert.match(sessionRevokeRoute, /console\.error\("session_revocation_audit_write_failed"/);
+  assert.match(
+    sessionRevokeRoute,
+    /TODO: enqueue failed session audit event for async retry once a durable queue worker is available\./
+  );
+  assert.match(sessionRevokeRoute, /return NextResponse\.json\(\{ success: true \}, \{ status: 200 \}\);/);
+});

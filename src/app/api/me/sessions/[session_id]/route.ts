@@ -57,11 +57,20 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unable to revoke session." }, { status: 502 });
   }
 
-  await emitSessionRevokedEvent(authContext.supabase, {
-    actorUserId: authContext.user.id,
-    revokedSessionId: sessionId,
-    revokedAt: new Date().toISOString()
-  });
+  try {
+    await emitSessionRevokedEvent(authContext.supabase, {
+      actorUserId: authContext.user.id,
+      revokedSessionId: sessionId,
+      revokedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("session_revocation_audit_write_failed", {
+      actorUserId: authContext.user.id,
+      revokedSessionId: sessionId,
+      error: error instanceof Error ? error.message : "unknown_error"
+    });
+    // TODO: enqueue failed session audit event for async retry once a durable queue worker is available.
+  }
 
   return NextResponse.json({ success: true }, { status: 200 });
 }

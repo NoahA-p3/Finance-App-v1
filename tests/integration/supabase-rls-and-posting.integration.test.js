@@ -212,4 +212,10 @@ if (!hasIntegrationEnv()) {
     assert.equal(ownerBPostedViewError, null, ownerBPostedViewError?.message);
     assert.equal(ownerBPostedView.length, 0, 'Cross-tenant user should not read company A posting rows');
   });
+
+  test(
+    'session revocation audit failure is tracked for async replay (future integration placeholder)',
+    { skip: 'TODO: enable once retry queue + session revocation endpoint integration harness is implemented.' },
+    () => {}
+  );
 }
