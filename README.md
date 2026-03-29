@@ -30,6 +30,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Posting APIs (`/api/postings`, `/api/postings/{posting_id}/reverse`, `/api/postings/period-locks`) provide append-only journal posting, reversal traceability, and period lock enforcement.
 - Posted transaction records are protected against destructive update/delete by database-level immutability guards; corrections are made through reversal flows.
 - Internal billing baseline includes plans/subscriptions/entitlements (`/api/entitlements`) and server-side soft-limit enforcement on transaction writes for monthly vouchers + rolling 12-month turnover cap.
+- Entitlement enforcement now uses strict decimal parsing for configured limits and revenue amounts; malformed enforced limit values fail closed with a deterministic soft-lock response instead of silently coercing to zero.
 - Dashboard/reporting pages currently read persisted company-scoped data via `src/lib/dashboard-data.ts` (`transactions`, `categories`, `company_settings.base_currency`) and compute KPI/trend/breakdown outputs server-side.
 
 ## Tech stack (observed in repo)
@@ -133,6 +134,18 @@ These checks run automatically via `.github/workflows/pr-ci.yml` on every pull r
 - Integration coverage currently prioritizes cross-tenant isolation, `read_only` write denial, and posting/period-lock/immutability invariants backing finance APIs.
 - No e2e browser test suite is currently wired in package scripts.
 - Use `npm run lint` + `npm run typecheck` as baseline quality checks for all changes.
+
+## Operator note: malformed entitlement limit data
+- If transaction writes are blocked with `soft_lock.code = "invalid_entitlement_limit_value"`, inspect `public.plan_entitlements.limit_value` for the active plan.
+- `limit_value` must be a non-negative decimal string (up to 2 decimal places for turnover caps, whole-number string for monthly voucher count).
+- Quick inspection query:
+  ```sql
+  select p.key as plan_key, pe.entitlement_key, pe.limit_value
+  from public.plan_entitlements pe
+  join public.plans p on p.id = pe.plan_id
+  order by p.key, pe.entitlement_key;
+  ```
+- After fixing invalid rows, retry the write path (for example `POST /api/transactions`) to confirm entitlement enforcement resumes normally.
 
 ## Explicit placeholders still remaining
 - **Settings tabs:** multiple settings tabs intentionally render placeholder guidance until backed by persisted feature models.

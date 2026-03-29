@@ -7,18 +7,50 @@ const ENFORCED_ENTITLEMENTS = {
   ROLLING_TURNOVER_12M_DKK: "rolling_turnover_12m_dkk"
 } as const;
 
+type DecimalParseErrorCode = "missing_value" | "invalid_decimal_format";
 
-function decimalToCents(value: string | number | null | undefined) {
-  if (value === null || value === undefined) return 0n;
+interface DecimalParseError {
+  code: DecimalParseErrorCode;
+  value: string | number | null | undefined;
+}
+
+function tryParseNonNegativeInteger(
+  value: string | null
+): { ok: true; value: number } | { ok: false; value: string | null } {
+  if (value === null) return { ok: false, value };
+  if (!/^\d+$/.test(value)) return { ok: false, value };
+
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) return { ok: false, value };
+  return { ok: true, value: parsed };
+}
+
+function decimalToCents(value: string | number | null | undefined): bigint {
+  const parsed = tryDecimalToCents(value);
+  if (!parsed.ok) {
+    throw new Error(`decimal_parse_error:${parsed.error.code}`);
+  }
+
+  return parsed.cents;
+}
+
+function tryDecimalToCents(
+  value: string | number | null | undefined
+): { ok: true; cents: bigint } | { ok: false; error: DecimalParseError } {
+  if (value === null || value === undefined) {
+    return { ok: false, error: { code: "missing_value", value } };
+  }
 
   const normalized = typeof value === "number" ? value.toFixed(2) : String(value).trim();
   const match = normalized.match(/^(\d+)(?:\.(\d{1,2}))?$/);
 
-  if (!match) return 0n;
+  if (!match) {
+    return { ok: false, error: { code: "invalid_decimal_format", value } };
+  }
 
   const whole = BigInt(match[1]);
   const fraction = BigInt((match[2] ?? "").padEnd(2, "0"));
-  return whole * 100n + fraction;
+  return { ok: true, cents: whole * 100n + fraction };
 }
 
 function centsToDecimalString(cents: bigint) {
@@ -124,7 +156,12 @@ export async function computeUsageSnapshot(supabase: Awaited<ReturnType<typeof c
 
   let turnoverCents = 0n;
   for (const row of turnoverRows ?? []) {
-    turnoverCents += decimalToCents(row.amount as string | number);
+    const parsedAmount = tryDecimalToCents(row.amount as string | number | null | undefined);
+    if (!parsedAmount.ok) {
+      continue;
+    }
+
+    turnoverCents += parsedAmount.cents;
   }
 
   return {
@@ -157,9 +194,25 @@ export async function evaluateTransactionWriteLimit(
 
   const voucherEntitlement = entitlementByKey.get(ENFORCED_ENTITLEMENTS.MONTHLY_VOUCHERS);
   if (voucherEntitlement?.is_enforced && voucherEntitlement.limit_value !== null) {
-    const limit = Number(voucherEntitlement.limit_value);
+    const parsedVoucherLimit = tryParseNonNegativeInteger(voucherEntitlement.limit_value);
+    if (!parsedVoucherLimit.ok) {
+      return {
+        allow: false as const,
+        warning: null,
+        state,
+        softLock: {
+          code: "invalid_entitlement_limit_value",
+          message: "Plan entitlement limit is invalid. Contact support to resolve plan configuration data.",
+          metric: ENFORCED_ENTITLEMENTS.MONTHLY_VOUCHERS,
+          limit: voucherEntitlement.limit_value,
+          current: String(state.usage.monthlyVoucherCount)
+        }
+      };
+    }
+
+    const limit = parsedVoucherLimit.value;
     const nextCount = state.usage.monthlyVoucherCount + 1;
-    if (Number.isFinite(limit) && nextCount > limit) {
+    if (nextCount > limit) {
       return {
         allow: false as const,
         warning: null,
@@ -175,7 +228,7 @@ export async function evaluateTransactionWriteLimit(
     }
 
     const threshold = Math.ceil((limit * voucherEntitlement.warning_threshold_percent) / 100);
-    if (Number.isFinite(limit) && nextCount >= threshold) {
+    if (nextCount >= threshold) {
       return {
         allow: true as const,
         state,
@@ -194,9 +247,42 @@ export async function evaluateTransactionWriteLimit(
   const turnoverEntitlement = entitlementByKey.get(ENFORCED_ENTITLEMENTS.ROLLING_TURNOVER_12M_DKK);
   if (transaction.type === "revenue" && turnoverEntitlement?.is_enforced && turnoverEntitlement.limit_value !== null) {
     const currentCents = decimalToCents(state.usage.rollingTurnover12mDkk);
-    const addCents = decimalToCents(transaction.amount);
+
+    const parsedTransactionAmount = tryDecimalToCents(transaction.amount);
+    if (!parsedTransactionAmount.ok) {
+      return {
+        allow: false as const,
+        warning: null,
+        state,
+        softLock: {
+          code: "invalid_transaction_amount",
+          message: "Transaction amount could not be parsed for entitlement validation.",
+          metric: ENFORCED_ENTITLEMENTS.ROLLING_TURNOVER_12M_DKK,
+          limit: turnoverEntitlement.limit_value,
+          current: centsToDecimalString(currentCents)
+        }
+      };
+    }
+
+    const parsedLimit = tryDecimalToCents(turnoverEntitlement.limit_value);
+    if (!parsedLimit.ok) {
+      return {
+        allow: false as const,
+        warning: null,
+        state,
+        softLock: {
+          code: "invalid_entitlement_limit_value",
+          message: "Plan entitlement limit is invalid. Contact support to resolve plan configuration data.",
+          metric: ENFORCED_ENTITLEMENTS.ROLLING_TURNOVER_12M_DKK,
+          limit: turnoverEntitlement.limit_value,
+          current: centsToDecimalString(currentCents)
+        }
+      };
+    }
+
+    const addCents = parsedTransactionAmount.cents;
     const nextCents = currentCents + addCents;
-    const limitCents = decimalToCents(turnoverEntitlement.limit_value);
+    const limitCents = parsedLimit.cents;
 
     if (nextCents > limitCents) {
       return {

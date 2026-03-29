@@ -1,3 +1,40 @@
+## Entitlements decimal parsing hardening (March 29, 2026)
+
+### Goal
+Replace permissive decimal parsing in entitlement calculations with strict typed parsing, add deterministic error handling at API-facing call sites, add malformed-data contract tests, and document operator remediation guidance.
+
+### Current behavior
+- `decimalToCents` in `src/lib/entitlements.ts` silently returns `0n` for malformed values (including bad `plan_entitlements.limit_value` and transaction amount strings).
+- `computeUsageSnapshot` and `evaluateTransactionWriteLimit` therefore treat malformed values as zero without surfacing configuration/data issues.
+- Existing boundary tests do not assert malformed-entitlement/amount contracts.
+
+### Proposed approach
+1. Introduce strict decimal parsing with typed error objects in `src/lib/entitlements.ts`.
+2. Handle parse errors deterministically:
+   - usage snapshot: skip malformed revenue rows and keep deterministic aggregate output.
+   - write-limit evaluation: fail closed with API-safe soft-lock payloads for malformed entitlement limits or malformed incoming revenue amount.
+3. Extend contract tests to assert these malformed-data handling contracts in entitlement calculations.
+4. Add short operator guidance in docs for inspecting/fixing `plan_entitlements.limit_value` issues.
+
+### Affected files
+- `src/lib/entitlements.ts`
+- `tests/transactions-entitlements-boundary.test.js`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- Fail-closed behavior for malformed entitlement config can block writes until data is corrected.
+- Contract tests are source-shape tests (not runtime integration) and may miss behavioral drift if message/code paths change without marker updates.
+
+### Verification steps
+- `npm run test -- tests/transactions-entitlements-boundary.test.js`
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: failing closed for malformed enforced entitlement limits is safer than silently allowing writes with implicit zero/default conversions.
+- Assumption: malformed historical revenue amounts should be excluded from turnover sums (with deterministic behavior) rather than throwing API errors.
+
 ## Dashboard currency formatter bigint-safety regression fix (March 29, 2026)
 
 ### Goal

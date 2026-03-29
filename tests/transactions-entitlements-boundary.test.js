@@ -44,12 +44,37 @@ test('entitlements library uses decimal-safe bigint math and company-scoped usag
   const entitlements = read('src/lib/entitlements.ts');
 
   assert.match(entitlements, /function decimalToCents/);
-  assert.match(entitlements, /return whole \* 100n \+ fraction;/);
+  assert.match(entitlements, /function tryDecimalToCents/);
+  assert.match(entitlements, /throw new Error\(`decimal_parse_error:\$\{parsed\.error\.code\}`\)/);
+  assert.match(entitlements, /return \{ ok: true, cents: whole \* 100n \+ fraction \};/);
   assert.match(entitlements, /function centsToDecimalString/);
   assert.match(entitlements, /rollingTurnover12mDkk: centsToDecimalString\(turnoverCents\)/);
+  assert.match(entitlements, /if \(!parsedAmount\.ok\) {\s*continue;\s*}/);
 
   assert.match(entitlements, /\.eq\("company_id", companyId\)/);
   assert.match(entitlements, /rolling_turnover_cap_reached/);
   assert.match(entitlements, /monthly_voucher_limit_reached/);
+  assert.match(entitlements, /invalid_entitlement_limit_value/);
+  assert.match(entitlements, /invalid_transaction_amount/);
   assert.match(entitlements, /isEntitlementEnforcementEnabledForPlan/);
+});
+
+test('entitlements fail closed on malformed enforced plan_entitlements.limit_value', () => {
+  const entitlements = read('src/lib/entitlements.ts');
+
+  assert.match(entitlements, /function tryParseNonNegativeInteger/);
+  assert.match(entitlements, /if \(!parsedVoucherLimit\.ok\)/);
+  assert.match(entitlements, /if \(!parsedLimit\.ok\)/);
+  assert.match(entitlements, /code: "invalid_entitlement_limit_value"/);
+  assert.match(entitlements, /Contact support to resolve plan configuration data\./);
+});
+
+test('entitlements handle malformed transaction amounts deterministically during usage and write checks', () => {
+  const entitlements = read('src/lib/entitlements.ts');
+
+  assert.match(entitlements, /const parsedAmount = tryDecimalToCents\(row\.amount as string \| number \| null \| undefined\)/);
+  assert.match(entitlements, /if \(!parsedAmount\.ok\) {\s*continue;\s*}/);
+  assert.match(entitlements, /const parsedTransactionAmount = tryDecimalToCents\(transaction\.amount\)/);
+  assert.match(entitlements, /if \(!parsedTransactionAmount\.ok\)/);
+  assert.match(entitlements, /code: "invalid_transaction_amount"/);
 });
