@@ -1956,3 +1956,36 @@ Define deterministic runtime behavior when session revocation succeeds but secur
 ### Assumptions / open questions
 - Assumption: preserving user-facing revocation completion is preferred to avoid ambiguity for security actions.
 - TODO: implement durable background retry worker and dead-letter tracking for failed session audit writes.
+
+## Next.js API route integration test layer expansion (March 29, 2026)
+
+### Goal
+Add Supabase-backed integration tests that execute Next.js finance route handlers over HTTP for key validation, permission, entitlement, and lock branches, then document the updated layer boundaries in testing strategy docs.
+
+### Current behavior
+- Existing fast `tests/*.test.js` files are static contract/marker checks and do not execute Next.js route handlers at runtime.
+- Existing integration coverage in `tests/integration/supabase-rls-and-posting.integration.test.js` verifies DB/RLS invariants directly through Supabase clients, not HTTP route behavior.
+
+### Proposed approach
+1. Add a dedicated integration suite under `tests/integration` that boots a local Next.js server and calls `/api/transactions`, `/api/categories`, `/api/receipts`, and `/api/postings/*` with authenticated session cookies derived from seeded Supabase fixtures.
+2. Reuse users/company fixture setup from `tests/integration/helpers/supabase-integration-helpers.js` and seed additional rows only where a branch requires it.
+3. Keep existing contract tests intact but explicitly document them as static guardrails (not runtime behavior proof).
+4. Update `docs/testing/TEST_STRATEGY.md` to define integration layer boundaries between static contract tests, DB-level integration tests, and HTTP route integration tests.
+
+### Affected files
+- `tests/integration/next-route-handlers.integration.test.js` (new)
+- `docs/testing/TEST_STRATEGY.md`
+- `PLANS.md`
+
+### Risks
+- Next.js server boot in integration tests can be slower/flakier than direct DB tests.
+- Session-cookie harness depends on Supabase SSR cookie encoding assumptions.
+
+### Verification steps
+- `npm run test:integration:local`
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: local integration environment runs against Next.js development server for route-level assertions.
+- Assumption: current seeded fixture + plan entitlement updates are sufficient to deterministically trigger entitlement lock branches.

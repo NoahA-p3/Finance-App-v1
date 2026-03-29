@@ -18,7 +18,7 @@ Current executable commands in `package.json`:
 - `npm run test:integration:local` (boots local Supabase, applies migrations via reset, runs `tests/integration/*.test.js`)
 
 ## Current automated test scope (and limitations)
-Implemented test files currently validate codebase contracts such as:
+Implemented fast contract tests (`tests/*.test.js`) currently validate static codebase guardrails such as:
 - auth/account route presence and expected operations,
 - company-scoped finance ownership filters,
 - posting immutability/reversal contract markers,
@@ -28,8 +28,8 @@ Implemented test files currently validate codebase contracts such as:
 - deterministic golden dataset fixture structure for datasets 1, 4, and 5.
 
 Limitations to state explicitly:
-- Tests are source/migration contract assertions (string/pattern checks), not full runtime integration tests.
-- Database-seeded integration tests now live under `tests/integration/*.test.js` and are run via `npm run test:integration:local` (separate from fast contract tests in `npm run test`).
+- Contract tests in `tests/*.test.js` are static guardrails only (source/migration assertions) and are not treated as runtime behavior proof.
+- Runtime integration tests live under `tests/integration/*.test.js` and are run via `npm run test:integration:local` (separate from fast contract tests in `npm run test`).
 - No e2e browser flow tests are currently wired into scripts.
 - VAT/tax engine behavior is not covered because the engine is still planned.
 
@@ -42,15 +42,23 @@ Limitations to state explicitly:
   - report aggregation math (decimal-safe).
 
 ### Integration tests (current + target)
-Current executable integration suite (`tests/integration/supabase-rls-and-posting.integration.test.js`) covers core DB-backed API invariants using local Supabase auth + RLS:
-- cross-tenant denial and same-company allow for `transactions`, `categories`, `receipts` (backing `/api/transactions`, `/api/categories`, `/api/receipts`),
-- role-based write denial for `read_only`,
-- posting/reversal immutability enforcement (`journal_entries` append-only behavior) and period-lock precondition query behavior.
+Current executable integration suites (`tests/integration/*.integration.test.js`) run against local Supabase and split into two runtime boundaries:
+
+1. **DB + RLS integration boundary** (`tests/integration/supabase-rls-and-posting.integration.test.js`)
+   - cross-tenant denial and same-company allow for `transactions`, `categories`, `receipts` backing tables,
+   - role-based write denial for `read_only`,
+   - posting/reversal immutability enforcement (`journal_entries` append-only behavior) and period-lock precondition query behavior.
+
+2. **HTTP route-handler integration boundary** (`tests/integration/next-route-handlers.integration.test.js`)
+   - `/api/transactions`: request validation + entitlement soft-lock branch assertions,
+   - `/api/categories`: permission-denied (`read_only`) and allowed (`owner`) assertions,
+   - `/api/receipts`: file-validation branches (missing file + unsupported MIME),
+   - `/api/postings/*`: permission-denied and period-lock failure-path assertions via route handlers.
 
 Planned expansion:
-- HTTP-level route integration assertions with authenticated cookie/session wiring against the Next.js API layer.
 - migration rollback/recovery rehearsal automation.
 - storage bucket upload/read policy assertions at object level.
+- end-to-end browser workflows layered above these route-level checks.
 
 ### End-to-end tests (target)
 - Auth lifecycle (signup, login, logout, protected redirects).
@@ -107,6 +115,7 @@ For docs-only changes, lint/typecheck are the baseline minimum.
   - update README/docs paths in the same PR.
 
 ## Current gaps summary
-- Integration harness exists for local Supabase, but HTTP-level Next.js route integration coverage is still pending.
+- Integration harness now covers both DB/RLS invariants and HTTP-level Next.js API route behavior for key finance routes.
+- Contract tests remain static guardrails and do not replace runtime integration coverage.
 - No e2e browser flow coverage yet.
 - CI policy now documents conditional integration gating; branch-protection enforcement mode is still a governance decision.
