@@ -1,3 +1,38 @@
+## Dashboard currency formatter bigint-safety regression fix (March 29, 2026)
+
+### Goal
+Refactor `formatCurrencyFromCents` to avoid `Number(cents)` precision loss and lock regression coverage for cents values above JS safe integer range.
+
+### Current behavior
+- `formatCurrencyFromCents` converted bigint cents with `Number(cents) / 100` before `Intl.NumberFormat`.
+- This introduces precision loss for sufficiently large cents inputs (greater than `Number.MAX_SAFE_INTEGER`).
+- Existing regression tests covered bigint-safe aggregation output strings, but not direct formatter behavior for unsafe-size cents.
+
+### Proposed approach
+1. Replace the formatter conversion with a string-based path that splits bigint cents into sign/whole/fraction strings.
+2. Apply grouping/affixes through `Intl.NumberFormat(...).formatToParts(0)` while keeping the monetary value itself in string/bigint form.
+3. Add tests that verify formatter output for positive/negative values above safe-integer cents and assert no `Number(cents)` usage.
+4. Document the exact formatter contract in `docs/testing/TEST_STRATEGY.md`.
+
+### Affected files
+- `src/lib/dashboard-data.ts`
+- `tests/transactions-decimal-regression.test.js`
+- `docs/testing/TEST_STRATEGY.md`
+- `PLANS.md`
+
+### Risks
+- Manual numeric-string assembly could drift from locale/currency affix behavior if the contract changes beyond the current en-US dashboard use.
+- Fallback behavior for unexpected `Intl` part shapes must remain deterministic.
+
+### Verification steps
+- `npm run test -- tests/transactions-decimal-regression.test.js`
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: dashboard/reporting formatter contract remains en-US locale with cents-based two-decimal display.
+- Assumption: fallback to `formatter.format(0)` on unexpected `formatToParts` shape is acceptable as a defensive path.
+
 ## Migration rollback-notes backfill + CI enforcement (March 29, 2026)
 
 ### Goal
