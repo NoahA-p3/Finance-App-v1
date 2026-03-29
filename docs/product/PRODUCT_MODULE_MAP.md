@@ -8,22 +8,22 @@ Status labels:
 - **Planned**: target capability only.
 
 ## Runtime evidence status table
-**As of:** 2026-03-29.
+**As of:** 2026-03-29 (cross-doc synchronized).
 
-| Module | Status | Runtime evidence |
+| Module | Status | Scope note | Runtime evidence |
 |---|---|---|
-| 1. User and Company Management | Partial | [`src/app/api/auth/*`](../../src/app/api/auth), [`src/app/api/companies/*`](../../src/app/api/companies), [`src/lib/company-permissions.ts`](../../src/lib/company-permissions.ts), [`202603250001_companies_bootstrap.sql`](../../supabase/migrations/202603250001_companies_bootstrap.sql), [`202603250002_company_rbac_baseline.sql`](../../supabase/migrations/202603250002_company_rbac_baseline.sql) |
-| 2. Contacts and Master Data | Planned | No contact/product API or table in `src/app/api/*`, `src/lib/*`, or `supabase/migrations/*`. |
-| 3. Sales, Quotes, Orders, and Invoicing | Planned | No invoice/quote/order API or table in `src/app/api/*`, `src/lib/*`, or `supabase/migrations/*`. |
-| 4. Accounting Core | Partial | [`src/app/api/transactions/route.ts`](../../src/app/api/transactions/route.ts), [`src/app/api/postings/route.ts`](../../src/app/api/postings/route.ts), [`src/app/api/postings/[posting_id]/reverse/route.ts`](../../src/app/api/postings/[posting_id]/reverse/route.ts), [`src/app/api/postings/period-locks/route.ts`](../../src/app/api/postings/period-locks/route.ts), [`src/lib/postings/service.ts`](../../src/lib/postings/service.ts), [`202603270002_posting_and_audit_immutability.sql`](../../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
-| 5. Receipts, Expenses, and Bookkeeping Automation | Partial | [`src/app/api/receipts/route.ts`](../../src/app/api/receipts/route.ts), [`src/app/api/transactions/route.ts`](../../src/app/api/transactions/route.ts), [`202603270001_company_shared_finance_rls.sql`](../../supabase/migrations/202603270001_company_shared_finance_rls.sql) |
-| 6. Payments and Checkout | Planned | No payment checkout orchestration module in runtime evidence scope. |
-| 7. Payroll | Planned | No payroll API/table in runtime evidence scope. |
-| 8. Integrations and Developer Platform | Partial | Minimal CVR adapter endpoint exists in [`src/app/api/companies/cvr/route.ts`](../../src/app/api/companies/cvr/route.ts) and [`src/lib/cvr/adapter.ts`](../../src/lib/cvr/adapter.ts); no marketplace/developer portal surfaces. |
-| 9. Year-End, Tax Return, and Filing Help | Planned | No dedicated year-end/filing API or schema in runtime evidence scope. |
-| 10. Support, Onboarding, Learning, and Migration | Planned | No support/learning/migration runtime module in evidence scope (`src/app/api/*`, `src/lib/*`, `supabase/migrations/*`). |
-| 11. Financing and Partner Services | Planned | No partner-services runtime module in evidence scope. |
-| 12. Home Dashboard and Navigation | Partial | Persisted dashboard data composition exists in [`src/lib/dashboard-data.ts`](../../src/lib/dashboard-data.ts); broad cross-module task orchestration remains unimplemented. |
+| 1. User and Company Management | Partial | **API/runtime evidence only** (auth + company tenancy/RBAC endpoints and schema). | [`src/app/api/auth/*`](../../src/app/api/auth), [`src/app/api/companies/*`](../../src/app/api/companies), [`src/lib/company-permissions.ts`](../../src/lib/company-permissions.ts), [`202603250001_companies_bootstrap.sql`](../../supabase/migrations/202603250001_companies_bootstrap.sql), [`202603250002_company_rbac_baseline.sql`](../../supabase/migrations/202603250002_company_rbac_baseline.sql) |
+| 2. Contacts and Master Data | Planned | **API/runtime evidence only** (no persisted contacts/products runtime module). | No contact/product API or table in `src/app/api/*`, `src/lib/*`, or `supabase/migrations/*`. |
+| 3. Sales, Quotes, Orders, and Invoicing | Planned | **API/runtime evidence only** (invoice/quote/order runtime not present). | No invoice/quote/order API or table in `src/app/api/*`, `src/lib/*`, or `supabase/migrations/*`. |
+| 4. Accounting Core | Partial | **API/runtime evidence only** (posting + reversal + period lock baseline; not full accounting depth). | [`src/app/api/transactions/route.ts`](../../src/app/api/transactions/route.ts), [`src/app/api/postings/route.ts`](../../src/app/api/postings/route.ts), [`src/app/api/postings/[posting_id]/reverse/route.ts`](../../src/app/api/postings/[posting_id]/reverse/route.ts), [`src/app/api/postings/period-locks/route.ts`](../../src/app/api/postings/period-locks/route.ts), [`src/lib/postings/service.ts`](../../src/lib/postings/service.ts), [`202603270002_posting_and_audit_immutability.sql`](../../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
+| 5. Receipts, Expenses, and Bookkeeping Automation | Partial | **API/runtime evidence only** (receipt upload + company-shared finance baseline). | [`src/app/api/receipts/route.ts`](../../src/app/api/receipts/route.ts), [`src/app/api/transactions/route.ts`](../../src/app/api/transactions/route.ts), [`202603270001_company_shared_finance_rls.sql`](../../supabase/migrations/202603270001_company_shared_finance_rls.sql) |
+| 6. Payments and Checkout | Planned | **API/runtime evidence only** (no checkout/payment orchestration module). | No payment checkout orchestration module in runtime evidence scope. |
+| 7. Payroll | Planned | **API/runtime evidence only** (no payroll runtime API/schema). | No payroll API/table in runtime evidence scope. |
+| 8. Integrations and Developer Platform | Partial | **Canonical interpretation: API/runtime evidence only** (CVR adapter counts as baseline integration; no marketplace/developer portal). | Minimal CVR adapter endpoint exists in [`src/app/api/companies/cvr/route.ts`](../../src/app/api/companies/cvr/route.ts) and [`src/lib/cvr/adapter.ts`](../../src/lib/cvr/adapter.ts); no marketplace/developer portal surfaces. |
+| 9. Year-End, Tax Return, and Filing Help | Planned | **API/runtime evidence only** (no dedicated year-end filing runtime module). | No dedicated year-end/filing API or schema in runtime evidence scope. |
+| 10. Support, Onboarding, Learning, and Migration | Planned | **Canonical interpretation: support/learning/migration API runtime only** (onboarding UI alone does not move this module above planned). | No support/learning/migration runtime module in evidence scope (`src/app/api/*`, `src/lib/*`, `supabase/migrations/*`). |
+| 11. Financing and Partner Services | Planned | **API/runtime evidence only** (no partner-services runtime module). | No partner-services runtime module in evidence scope. |
+| 12. Home Dashboard and Navigation | Partial | **UI + API/data composition** (persisted dashboard data exists; full cross-module orchestration remains incomplete). | Persisted dashboard data composition exists in [`src/lib/dashboard-data.ts`](../../src/lib/dashboard-data.ts); broad cross-module task orchestration remains unimplemented. |
 
 ## 1. User and Company Management
 Includes account lifecycle, profile settings, business profile setup, and plan/entitlement control.

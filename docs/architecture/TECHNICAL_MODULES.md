@@ -9,6 +9,24 @@ Status labels:
 - **Partial**: some pieces exist; major pieces are still planned.
 - **Planned**: documented target design.
 
+## Technical status table (aligned to product modules)
+**As of:** 2026-03-29 (cross-doc synchronized).
+
+| Product module | Technical status | Scope note | Technical evidence summary |
+|---|---|---|---|
+| 1. User and Company Management | Partial | **API/runtime evidence only** (auth + tenancy/RBAC backend baseline). | Auth/company routes and RBAC migrations exist; deeper billing/role depth remains planned. |
+| 2. Contacts and Master Data | Planned | **API/runtime evidence only** (target boundaries only). | No active contacts/products runtime schema or API families implemented. |
+| 3. Sales, Quotes, Orders, and Invoicing | Planned | **API/runtime evidence only** (target boundaries only). | No active sales-document runtime schema or API families implemented. |
+| 4. Accounting Core | Partial | **API/runtime evidence only** (posting/reversal/period-lock/audit baseline). | Posting routes + service + immutability migration are implemented; VAT/fixed-assets/reporting depth is still planned. |
+| 5. Receipts, Expenses, and Bookkeeping Automation | Partial | **API/runtime evidence only** (receipt upload baseline, broader automation planned). | Receipt upload/list runtime path exists; reconciliation/rules/suggestions families remain planned. |
+| 6. Payments and Checkout | Planned | **API/runtime evidence only** (target boundaries only). | No payment-provider/payment-link runtime implementation yet. |
+| 7. Payroll | Planned | **API/runtime evidence only** (target boundaries only). | No payroll runtime schema or API implementation yet. |
+| 8. Integrations and Developer Platform | Partial | **Canonical interpretation: API/runtime evidence only** (CVR adapter counts as minimal implemented integration baseline). | Minimal CVR integration endpoint/adapter exists; broader connection/job/developer platform remains planned. |
+| 9. Year-End, Tax Return, and Filing Help | Planned | **API/runtime evidence only** (target boundaries only). | No year-end/tax-return runtime implementation yet. |
+| 10. Support, Onboarding, Learning, and Migration | Planned | **Canonical interpretation: support/learning/migration API runtime only** (onboarding UI flow by itself does not satisfy this technical module). | Support/migration/learning API families and schema domains remain target design. |
+| 11. Financing and Partner Services | Planned | **API/runtime evidence only** (target boundaries only). | No financing/partner-services runtime implementation yet. |
+| 12. Home Dashboard and Navigation | Partial | **UI + API/data composition** (dashboard data composition exists; richer dashboard domain model/API families remain planned). | Dashboard pages and persisted data composition exist; full dashboard snapshots/activity resource model is still target-state. |
+
 ## 1. User and Company Management — **Partial**
 - Schema domains: identity/session, memberships/roles, companies/settings, plans/subscriptions.
 - API groups: `/auth/*`, `/me*`, `/companies/*`, `/billing/*`, `/permissions`.
@@ -45,17 +63,19 @@ Status labels:
 - Schema domains: employees and compensation profiles, payroll runs, payslips/lines, liabilities, submission logs.
 - API groups: `/companies/{company_id}/employees*`, `/payroll-runs*`, `/payslips*`, `/payroll-liabilities`.
 
-## 8. Integrations and Developer Platform — **Planned**
+## 8. Integrations and Developer Platform — **Partial**
 - Schema domains: integration apps/connections, developer apps, OAuth clients, API keys, sync jobs/items/mappings/webhooks.
 - API groups: `/integration-apps*`, `/companies/{company_id}/integration-connections*`, `/developer/*`.
+- Current repo evidence: minimal CVR integration endpoint/adapter exists; broader integration platform surface remains planned.
 
 ## 9. Year-End, Tax Return, and Filing Help — **Planned**
 - Schema domains: tax return packages/fields/instructions, annual accounts cases/tasks/outputs, advisor notes.
 - API groups: `/companies/{company_id}/tax-return-packages*`, `/annual-accounts-cases*`.
 
-## 10. Support, Onboarding, Learning, and Migration — **Partial**
+## 10. Support, Onboarding, Learning, and Migration — **Planned**
 - Schema domains: support tickets/messages/articles, migration cases/files/issues, onboarding checklists/tasks, learning courses/lessons.
 - API groups: `/support/articles*`, `/companies/{company_id}/support-tickets*`, `/migration-cases*`, `/onboarding*`, `/learning/*`.
+- Canonical scope note: status is based on support/learning/migration API and schema runtime evidence, not onboarding UI presence alone.
 
 ## 11. Financing and Partner Services — **Planned**
 - Schema domains: financing partners/leads, consent records.
