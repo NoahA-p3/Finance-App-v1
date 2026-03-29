@@ -1421,3 +1421,39 @@ Audit existing SQL migrations for reliability issues and document explicit execu
 ### Assumptions / open questions
 - **Assumption:** Environments consuming this repository may need replay-safe behavior during drift reconciliation.
 - **Open question:** whether future work should freeze historical migrations and move all fixes into forward-only corrective migrations.
+
+## Decimal parsing + bigint cent utility hardening (March 29, 2026)
+
+### Goal
+Eliminate float-based amount parsing/aggregation paths by moving to regex-validated decimal strings and bigint minor-unit arithmetic.
+
+### Current behavior
+- `parseAmount` in `src/app/api/transactions/route.ts` uses `Number(...)` after regex checks.
+- `src/lib/data.ts` summary aggregation uses JS number reductions on amount values.
+- No shared finance decimal utility module exists for canonical string<->minor-unit conversions.
+
+### Proposed approach
+1. Add a shared utility module in `src/lib` for decimal-string-to-cents (`bigint`) and cents-to-decimal-string conversions.
+2. Refactor `parseAmount` to accept validated decimal strings and normalize via bigint cent conversion only (no `Number(...)`).
+3. Remove `src/lib/data.ts` if unreachable dead code (or migrate to bigint-safe cent aggregation if still active).
+4. Add regression tests to assert no float parsing patterns and verify deterministic conversions for edge decimals and large values.
+
+### Affected files
+- `src/lib/finance-decimals.ts` (new)
+- `src/app/api/transactions/route.ts`
+- `src/lib/data.ts` (delete if dead)
+- `tests/transactions-decimal-regression.test.js` (new)
+- `PLANS.md`
+
+### Risks
+- Validation strictness change could reject non-string payloads that were previously tolerated.
+- Conversion helper misuse could alter normalization for edge decimal inputs.
+
+### Verification steps
+- `npm run test`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: transaction API should enforce string amount input for deterministic decimal parsing.

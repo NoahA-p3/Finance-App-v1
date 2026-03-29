@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
 import { COMPANY_PERMISSIONS, getCompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 import { evaluateTransactionWriteLimit, getCompanyEntitlementsState, upsertUsageCounters } from "@/lib/entitlements";
+import { centsBigIntToDecimalString, decimalStringToCentsBigInt } from "@/lib/finance-decimals";
 
 const TRANSACTION_TYPES = new Set(["expense", "revenue"] as const);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -31,20 +32,18 @@ function isValidIsoDate(value: string) {
 }
 
 function parseAmount(value: unknown) {
-  const normalized = typeof value === "number" ? value.toString() : typeof value === "string" ? value.trim() : null;
+  const normalized = typeof value === "string" ? value.trim() : null;
 
   if (!normalized || !DECIMAL_2DP_PATTERN.test(normalized)) {
-    return { error: "Amount must be a non-negative number with up to 2 decimal places." } as const;
+    return { error: "Amount must be a non-negative decimal string with up to 2 decimal places." } as const;
   }
 
-  const parsed = Number(normalized);
-
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return { error: "Amount must be a non-negative number." } as const;
+  try {
+    const cents = decimalStringToCentsBigInt(normalized);
+    return { value: centsBigIntToDecimalString(cents) } as const;
+  } catch {
+    return { error: "Amount must be a non-negative decimal string with up to 2 decimal places." } as const;
   }
-
-  const [whole, decimal = ""] = normalized.split(".");
-  return { value: `${whole}.${decimal.padEnd(2, "0")}` } as const;
 }
 
 function parseOptionalUuid(fieldName: "category_id" | "receipt_id", value: unknown) {
