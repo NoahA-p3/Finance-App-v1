@@ -1,6 +1,6 @@
 # Supabase Migration Order (Canonical)
 
-**As of:** 2026-03-27.
+**As of:** 2026-03-29.
 
 This runbook documents the intended execution sequence for SQL files in `supabase/migrations/` and the dependency edges where order materially affects success.
 
@@ -21,6 +21,8 @@ Run files in lexicographic order (timestamp prefix):
 11. `202603270001_company_shared_finance_rls.sql`
 12. `202603270002_posting_and_audit_immutability.sql`
 13. `202603270003_finance_write_permissions_and_rls_alignment.sql`
+14. `202603280001_companies_bootstrap_rls_fix.sql`
+15. `202603290001_security_session_events.sql`
 
 ## Sequence-sensitive dependency checkpoints
 
@@ -40,6 +42,11 @@ Run files in lexicographic order (timestamp prefix):
 
 ### D) Posting/audit tables before posting permission policy split
 - `202603270002_posting_and_audit_immutability.sql` must run before `202603270003_finance_write_permissions_and_rls_alignment.sql`, because `202603270003` replaces policies on `period_locks`, `journal_entries`, `journal_lines`, and `audit_events` created in `202603270002`.
+
+
+### E) User-scoped session security audit after auth foundation
+- `202603290001_security_session_events.sql` depends on `auth.users` and should run after core auth/profile migrations.
+- It is independent from company-scoped posting `audit_events`; no company foreign key is required.
 
 ## Legacy branch handling note
 

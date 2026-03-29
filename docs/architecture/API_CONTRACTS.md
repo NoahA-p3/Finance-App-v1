@@ -67,7 +67,7 @@ All other endpoint groupings in this document are target contracts for phased im
   - `POST /api/auth/resend-verification` returns minimal, non-sensitive errors and generic success messaging.
 - Session management flow:
   - `GET /api/me/sessions` returns only the authenticated user's active sessions.
-  - `DELETE /api/me/sessions/{session_id}` validates session id format, enforces authenticated ownership, and blocks revoking the current session.
+  - `DELETE /api/me/sessions/{session_id}` validates session id format, enforces authenticated ownership, blocks revoking the current session, and writes immutable `security_session_events` records for successful revocations.
   - Session revoke responses avoid leaking cross-user session existence details.
 - Account security summary flow:
   - `GET /api/me/account` returns authenticated profile + security status snapshot (email verification, last login, active session count, MFA enabled).

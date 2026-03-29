@@ -35,6 +35,32 @@ export type Database = {
           occurred_at?: string;
         };
       };
+      security_session_events: {
+        Row: {
+          actor_user_id: string;
+          event_type: string;
+          id: string;
+          metadata: Json;
+          occurred_at: string;
+          target_session_id: string;
+        };
+        Insert: {
+          actor_user_id: string;
+          event_type: string;
+          id?: string;
+          metadata?: Json;
+          occurred_at?: string;
+          target_session_id: string;
+        };
+        Update: {
+          actor_user_id?: string;
+          event_type?: string;
+          id?: string;
+          metadata?: Json;
+          occurred_at?: string;
+          target_session_id?: string;
+        };
+      };
       categories: {
         Row: {
           company_id: string | null;
