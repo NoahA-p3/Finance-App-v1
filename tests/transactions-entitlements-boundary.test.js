@@ -10,8 +10,8 @@ test('transactions route validates boundary inputs and normalizes decimal-safe a
   const route = read('src/app/api/transactions/route.ts');
 
   assert.match(route, /DECIMAL_2DP_PATTERN/);
-  assert.match(route, /Amount must be a non-negative number with up to 2 decimal places\./);
-  assert.match(route, /return \{ value: `\$\{whole\}\.\$\{decimal\.padEnd\(2, "0"\)\}` \}/);
+  assert.match(route, /Amount must be a non-negative decimal string with up to 2 decimal places\./);
+  assert.match(route, /centsBigIntToDecimalString\(cents\)/);
 
   assert.match(route, /type must be either 'expense' or 'revenue'\./);
   assert.match(route, /date must be a valid ISO date in YYYY-MM-DD format\./);
