@@ -60,6 +60,20 @@ Planned expansion:
 - storage bucket upload/read policy assertions at object level.
 - end-to-end browser workflows layered above these route-level checks.
 
+#### Short expansion plan (first targets)
+1. `/api/transactions` validation + entitlement edge handling  
+   - **Coverage type:** route-handler integration  
+   - **Suite target:** `tests/integration/next-route-handlers.integration.test.js`
+2. `/api/receipts` upload validation and permission branches  
+   - **Coverage type:** route-handler integration  
+   - **Suite target:** `tests/integration/next-route-handlers.integration.test.js`
+3. Invitation accept lifecycle edge cases  
+   - **Coverage type:** route-handler integration  
+   - **Suite target:** `tests/integration/next-route-handlers.integration.test.js`
+4. Posting reversal/lock edge cases  
+   - **Coverage type:** DB/RLS integration  
+   - **Suite target:** `tests/integration/supabase-rls-and-posting.integration.test.js`
+
 ### End-to-end tests (target)
 - Auth lifecycle (signup, login, logout, protected redirects).
 - Transaction + category + receipt flows.
