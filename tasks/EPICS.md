@@ -4,6 +4,24 @@ Status labels: **implemented**, **partial**, **planned**, **unknown**.
 
 Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architecture/SYSTEM_OVERVIEW.md), [Test Strategy](../docs/testing/TEST_STRATEGY.md).
 
+## Canonical module numbering mapping
+The product-module source of truth is `docs/product/PRODUCT_MODULE_MAP.md` (Modules 1–12). This roadmap keeps **Epic numbers** for delivery sequencing and maps each epic to canonical product modules.
+
+| Epic # (this file) | Canonical product module mapping |
+|---|---|
+| 1 Repo and developer foundation | Cross-cutting enabler (supports Modules 1–12) |
+| 2 Accounting domain model | Module 4 |
+| 3 Auth, tenancy, and roles | Module 1 |
+| 4 Ledger core | Module 4 |
+| 5 Transaction ingestion | Modules 4 and 5 |
+| 6 Document capture | Module 5 |
+| 7 Invoicing and bills | Module 3 |
+| 8 VAT and tax engine | Module 4 (with Module 9 filing dependencies) |
+| 9 Reports and exports | Module 12 (with Module 4 accounting dependencies) |
+| 10 Integrations | Module 8 |
+| 11 Security and operations | Cross-cutting enabler (supports Modules 1–12) |
+| 12 UX polish and launch readiness | Modules 10 and 12 |
+
 ## Runtime status table (module → status)
 **As of:** 2026-03-29 (cross-doc synchronized).
 
@@ -18,9 +36,9 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 | 7) Invoicing and bills | planned | Product Module 3; scope is **API/runtime evidence only**. | No invoice/bill runtime API or schema in evidence scope. |
 | 8) VAT and tax engine | planned | Product Modules 4 + 9; scope is **VAT/tax runtime engine evidence only**. | No VAT/tax rule engine implementation in evidence scope. |
 | 9) Reports and exports | partial | Product Module 12 (with Accounting Core dependencies); scope is **UI + API/data composition**. | Persisted dashboard/report summary logic exists; formal report/export contracts remain limited. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
-| 10) Integrations | partial | Product Module 8; **canonical discrepancy resolution = partial via API/runtime evidence only** (CVR adapter is sufficient for baseline integration status). | Minimal CVR lookup adapter exists; broad connector/webhook/job platform is not implemented. [`src/app/api/companies/cvr/route.ts`](../src/app/api/companies/cvr/route.ts), [`src/lib/cvr/adapter.ts`](../src/lib/cvr/adapter.ts) |
+| 10) Integrations | partial | Product Module 8; canonical mapping is Module 8; status is partial based on API/runtime evidence only (CVR adapter provides the current baseline). | Minimal CVR lookup adapter exists; broad connector/webhook/job platform is not implemented. [`src/app/api/companies/cvr/route.ts`](../src/app/api/companies/cvr/route.ts), [`src/lib/cvr/adapter.ts`](../src/lib/cvr/adapter.ts) |
 | 11) Security and operations | partial | Cross-cutting enabler epic (supports all modules); scope is **controls/runbook maturity**, not end-user module UX. | Audit-event append-only controls and operations runbooks are present; ongoing maturity is around validation cadence/drills and deeper hardening. [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql), [`docs/ops/RESTORE_RUNBOOK.md`](../docs/ops/RESTORE_RUNBOOK.md), [`docs/ops/POST_RESTORE_VERIFICATION.md`](../docs/ops/POST_RESTORE_VERIFICATION.md) |
-| 12) UX polish and launch readiness | partial | Product Modules 10 + 12; **canonical discrepancy resolution = keep support/learning/migration planned at API runtime while this epic tracks UI/readiness uplift**. | Many production loops are still scaffold-level; persisted data has replaced some prior placeholders. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
+| 12) UX polish and launch readiness | partial | Product Modules 10 + 12; canonical mapping is Modules 10 and 12; support/learning/migration remains planned at API runtime while this epic tracks UI/readiness uplift. | Many production loops are still scaffold-level; persisted data has replaced some prior placeholders. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
 
 ## 1) Repo and developer foundation
 - Objective: maintain reliable engineering baseline and documentation.

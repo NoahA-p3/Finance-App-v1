@@ -7,6 +7,25 @@ Status labels:
 - **Partial**: some surfaces exist, but key behavior is incomplete.
 - **Planned**: target capability only.
 
+## Canonical module numbering (source of truth)
+Use this numbering as the canonical product-module scheme across docs.
+
+| Canonical module | Name |
+|---|---|
+| 1 | User and Company Management |
+| 2 | Contacts and Master Data |
+| 3 | Sales, Quotes, Orders, and Invoicing |
+| 4 | Accounting Core |
+| 5 | Receipts, Expenses, and Bookkeeping Automation |
+| 6 | Payments and Checkout |
+| 7 | Payroll |
+| 8 | Integrations and Developer Platform |
+| 9 | Year-End, Tax Return, and Filing Help |
+| 10 | Support, Onboarding, Learning, and Migration |
+| 11 | Financing and Partner Services |
+| 12 | Home Dashboard and Navigation |
+
+
 ## Runtime evidence status table
 **As of:** 2026-03-29 (cross-doc synchronized).
 
