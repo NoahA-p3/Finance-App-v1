@@ -1,3 +1,43 @@
+## Migration rollback-notes backfill + CI enforcement (March 29, 2026)
+
+### Goal
+Add explicit rollback/recovery notes to specified historical migrations and enforce presence of rollback notes in SQL migrations via CI.
+
+### Current behavior
+- Several existing migration files do not include a `-- Rollback / recovery notes:` section.
+- `scripts/check-migration-order.mjs` validates MIGRATION_ORDER coverage only, not rollback-note presence.
+- PR CI runs migration-order checks but does not fail when rollback notes are missing.
+
+### Proposed approach
+1. Add a standardized `-- Rollback / recovery notes:` block to each requested migration, including concrete table/policy snapshot commands and re-verification SQL checks.
+2. Extend `scripts/check-migration-order.mjs` to also parse each SQL migration and fail if the rollback-notes marker is missing.
+3. Keep this as a single `npm run check:migration-order` gate so CI enforces both order and rollback-note coverage.
+4. Wire/update `.github/workflows/pr-ci.yml` step wording so CI explicitly validates migration order and rollback notes.
+
+### Affected files
+- `supabase/migrations/202603200001_init.sql`
+- `supabase/migrations/202603200002_auth_profiles.sql`
+- `supabase/migrations/202603200003_auth_profile_signup_fields.sql`
+- `supabase/migrations/202603200004_finance_assistant_mvp.sql`
+- `supabase/migrations/202603210001_profiles_schema_hardening.sql`
+- `supabase/migrations/202603290002_categories_write_permissions_alignment.sql`
+- `scripts/check-migration-order.mjs`
+- `.github/workflows/pr-ci.yml`
+- `PLANS.md`
+
+### Risks
+- The rollout-note marker check could fail legacy migrations until they are all backfilled.
+- Overly strict marker matching could cause false negatives if formatting drifts.
+
+### Verification steps
+- `node scripts/check-migration-order.mjs`
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: all SQL migrations in `supabase/migrations` should contain the exact marker `-- Rollback / recovery notes:` going forward.
+- Assumption: table/policy snapshot + re-verification SQL in comments satisfies the recovery guidance requirement for this task.
+
 ## Dashboard money-value contract refactor (March 29, 2026)
 
 ### Goal
