@@ -97,6 +97,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 
 ### Documentation consistency checklist (include in same PR as feature changes)
 - [ ] Updated status docs when runtime behavior changed: `tasks/EPICS.md`, `docs/product/PRODUCT_MODULE_MAP.md`, and `AGENTS.md`.
+- [ ] If posting, reversal, period-lock, journal, or audit-event behavior changed, updated all three alignment docs together: `docs/security/SECURITY_RULES.md`, `docs/architecture/TECHNICAL_MODULES.md`, and `tasks/EPICS.md`.
 - [ ] Added an explicit **As of: YYYY-MM-DD** date in every updated status section.
 - [ ] Added direct evidence links to changed claims (prefer `src/app/api/*`, `src/lib/*`, `supabase/migrations/*`).
 - [ ] If docs and runtime evidence still disagree, documented the gap explicitly in the PR summary.

@@ -5,7 +5,7 @@ Status labels: **implemented**, **partial**, **planned**, **unknown**.
 Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architecture/SYSTEM_OVERVIEW.md), [Test Strategy](../docs/testing/TEST_STRATEGY.md).
 
 ## Runtime status table (module → status)
-**As of:** 2026-03-27.
+**As of:** 2026-03-29.
 
 | Module | Status | Evidence |
 |---|---|---|
@@ -36,12 +36,22 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 - Task ideas:
   - add test runner and minimal smoke tests,
   - add migration README with rollback plan template.
+  - **Docs-alignment ticket (2026-03-29):** synchronize posting/audit capability claims across `docs/security/SECURITY_RULES.md`, `docs/architecture/TECHNICAL_MODULES.md`, and `tasks/EPICS.md` whenever posting/audit runtime behavior changes.
+    - Scope: remove stale "missing audit table" / "journal planned" statements where repo evidence shows implemented posting/audit baseline.
+    - Evidence requirements: include file-level bullets tied to `src/app/api/postings/*`, `src/lib/postings/service.ts`, and `supabase/migrations/202603270002_posting_and_audit_immutability.sql`.
+    - Exit criteria: each changed claim includes an explicit `As of: YYYY-MM-DD` marker and direct evidence links.
 - Major risks: drift between docs, schema, and runtime behavior.
 
 ## 2) Accounting domain model
 - Objective: establish canonical accounting model for Denmark use cases.
-- Current status: **planned/partial** (single transaction table exists).
-- Main gaps: no ledger posting model, no legal-form-aware data model.
+- Current status: **partial**.
+- **As of:** 2026-03-29.
+- Implemented baseline: transaction/category primitives plus posting/journal baseline with reversal, period locks, and append-only audit event storage.
+- Evidence (file-level):
+  - Posting API runtime paths: `src/app/api/postings/route.ts`, `src/app/api/postings/[posting_id]/reverse/route.ts`, `src/app/api/postings/period-locks/route.ts`.
+  - Posting/audit service behavior: `src/lib/postings/service.ts`.
+  - Journal, period lock, audit schema + immutability triggers: `supabase/migrations/202603270002_posting_and_audit_immutability.sql`.
+- Main gaps: legal-form-aware canonical model depth, VAT/tax engines, and broader accounting/reporting coverage remain incomplete.
 - Epics:
   - canonical entity design,
   - chart/category strategy,

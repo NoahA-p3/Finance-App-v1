@@ -67,13 +67,18 @@ Related docs: [System Overview](../architecture/SYSTEM_OVERVIEW.md), [API Contra
 - Unauthorized or forbidden requests return minimal `401/403` responses without exposing whether another user session exists.
 - Login-alert delivery in current MVP is in-app (`/api/me/login-alerts`) based on authenticated session history; no outbound notifier (email/SMS/push worker) is present in the repository yet.
 
-## Audit log expectations (target)
-- Add immutable audit events for sensitive actions:
-  - auth profile changes,
-  - transaction post/reversal,
-  - period close/open,
-  - permission changes.
-- Current codebase lacks dedicated audit log table.
+## Audit log expectations (current runtime)
+**As of:** 2026-03-29.
+
+- Immutable audit event storage is implemented via `public.audit_events`.
+- Posting and period-lock flows emit audit events through shared posting service writes.
+- Audit rows are append-only at the database layer (update/delete blocked by triggers).
+- Current coverage is focused on posting and period-lock events; broader sensitive-action coverage (for example profile/permission events) remains planned.
+
+Evidence (file-level):
+- `src/lib/postings/service.ts` inserts `posting.posted`, `posting.reversed`, and `period.locked` audit events.
+- `supabase/migrations/202603270002_posting_and_audit_immutability.sql` creates `public.audit_events` and append-only enforcement triggers (`prevent_audit_event_update` / `prevent_audit_event_delete`).
+- Posting and period-lock API handlers route through the posting service for runtime execution paths (`/api/postings`, `/api/postings/{posting_id}/reverse`, `/api/postings/period-locks`).
 
 ## Secret handling expectations
 - Use environment variables only; never commit secrets.
