@@ -26,6 +26,7 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 14. `202603280001_companies_bootstrap_rls_fix.sql`
 15. `202603290001_company_invitation_acceptance_flow.sql`
 16. `202603290001_security_session_events.sql`
+17. `202603290002_categories_write_permissions_alignment.sql`
 
 ## Sequence-sensitive dependency checkpoints
 
