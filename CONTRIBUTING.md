@@ -20,3 +20,17 @@ git status --short
 ```
 
 Expected result: `git status --short` should only show intentionally changed tracked files.
+
+## Required CI checks
+
+Pull requests are required to pass the repository CI workflow (`.github/workflows/pr-ci.yml`), which runs:
+
+- `npm ci`
+- `npm run check:migration-order`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+The migration-order check ensures `supabase/migrations/MIGRATION_ORDER.md` includes every SQL file under `supabase/migrations/`.
+

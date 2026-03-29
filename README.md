@@ -92,6 +92,15 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - `npm run test:integration:local` — boot local Supabase, reset/apply migrations, and run integration tests (`node --test tests/integration/*.test.js`)
 - `npm run deadcode:audit-dashboard-components` — import-graph audit from `src/app/**` into legacy dashboard component scopes
 
+## Required CI checks for pull requests
+- `npm run check:migration-order`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+These checks run automatically via `.github/workflows/pr-ci.yml` on every pull request and should also pass locally before requesting review.
+
 ## Dead-code import audit process
 - Run `npm run deadcode:audit-dashboard-components` before major dashboard refactors and at least once per sprint to catch stale component paths early.
 - The audit traverses imports from `src/app/**` and verifies reachability into:

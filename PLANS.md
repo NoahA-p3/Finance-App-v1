@@ -1,3 +1,41 @@
+## CI workflow + migration-order coverage check (March 29, 2026)
+
+### Goal
+Add pull-request CI that enforces baseline quality gates and a lightweight guard that `supabase/migrations/MIGRATION_ORDER.md` lists every SQL migration file.
+
+### Current behavior
+- No repository GitHub Actions workflow currently enforces lint/typecheck/test/build on PRs.
+- Migration run-order documentation exists, but no automated check ensures new SQL files are reflected in `MIGRATION_ORDER.md`.
+
+### Proposed approach
+- Add `.github/workflows/pr-ci.yml` for PR-triggered checks: `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
+- Add a small Node script to compare migration SQL filenames against documented entries in `supabase/migrations/MIGRATION_ORDER.md`.
+- Expose the script via `npm run check:migration-order` and run it in CI.
+- Document required CI checks in `README.md` and `CONTRIBUTING.md`.
+
+### Affected files
+- `.github/workflows/pr-ci.yml`
+- `scripts/check-migration-order.mjs`
+- `package.json`
+- `supabase/migrations/MIGRATION_ORDER.md`
+- `README.md`
+- `CONTRIBUTING.md`
+- `PLANS.md`
+
+### Risks
+- Filename parsing could produce false positives if documentation format changes significantly.
+- CI runtime may increase due to full build step on every PR.
+
+### Verification steps
+- `npm run check:migration-order`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: canonical migration ordering remains lexicographic by full filename and is represented by backticked SQL filenames in `MIGRATION_ORDER.md`.
+
 # PLANS.md
 
 ## Onboarding company bootstrap RLS fix (March 28, 2026)
