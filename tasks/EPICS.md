@@ -40,6 +40,24 @@ The product-module source of truth is `docs/product/PRODUCT_MODULE_MAP.md` (Modu
 | 11) Security and operations | partial | Cross-cutting enabler epic (supports all modules); scope is **controls/runbook maturity**, not end-user module UX. | Audit-event append-only controls and operations runbooks are present; ongoing maturity is around validation cadence/drills and deeper hardening. [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql), [`docs/ops/RESTORE_RUNBOOK.md`](../docs/ops/RESTORE_RUNBOOK.md), [`docs/ops/POST_RESTORE_VERIFICATION.md`](../docs/ops/POST_RESTORE_VERIFICATION.md) |
 | 12) UX polish and launch readiness | partial | Product Modules 10 + 12; canonical mapping is Modules 10 and 12; support/learning/migration remains planned at API runtime while this epic tracks UI/readiness uplift. | Many production loops are still scaffold-level; persisted data has replaced some prior placeholders. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
 
+## Integration test expansion tickets (initial, dependency-ordered)
+1. **TEST-INT-001 — `/api/transactions` validation + entitlement edges**
+   - Coverage boundary: route-handler integration (`tests/integration/next-route-handlers.integration.test.js`).
+   - Scope: invalid payload shape, missing/invalid company context, membership/role-denied branches, entitlement soft-lock denial path.
+   - Dependencies: none.
+2. **TEST-INT-002 — `/api/receipts` upload validation + permission branches**
+   - Coverage boundary: route-handler integration (`tests/integration/next-route-handlers.integration.test.js`).
+   - Scope: missing file, unsupported MIME/oversize validation, denied role/member, allowed upload for authorized role.
+   - Dependencies: `TEST-INT-001` (shared route-handler fixtures/harness setup).
+3. **TEST-INT-003 — invitation accept lifecycle edge cases**
+   - Coverage boundary: route-handler integration (`tests/integration/next-route-handlers.integration.test.js`).
+   - Scope: replayed token, expired invitation, revoked invitation, already-member acceptance path.
+   - Dependencies: `TEST-INT-001`.
+4. **TEST-INT-004 — posting reversal/period-lock edge cases**
+   - Coverage boundary: DB/RLS integration (`tests/integration/supabase-rls-and-posting.integration.test.js`).
+   - Scope: reversal blocked by lock window, double-reversal rejection, cross-tenant posting access denial, read-only mutation denial.
+   - Dependencies: `TEST-INT-001` (baseline fixtures), `TEST-INT-003` (auth/tenant edge fixtures reused where possible).
+
 ## 1) Repo and developer foundation
 - Objective: maintain reliable engineering baseline and documentation.
 - Current status: **partial**.
