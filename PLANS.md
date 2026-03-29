@@ -2026,3 +2026,38 @@ Replace `supabase: any` usage in posting service with typed client contracts der
 
 ### Assumptions / open questions
 - Assumption: posting should fail closed when transaction type cannot be confidently mapped to ledger accounts.
+
+## Runtime legacy-reference CI guardrail (March 29, 2026)
+
+### Goal
+Add a repository check that fails CI when runtime app code (`src/app/**`, `src/lib/**`) references banned legacy entities/columns, while allowing explicit legacy references in allowlisted legacy docs/migration paths.
+
+### Current behavior
+- CI does not currently block newly introduced runtime references to legacy entities like `public.users`/`public.accounts` or legacy-only columns.
+- Existing checks cover migration order/rollback notes, lint/typecheck/tests/build, and integration gates.
+
+### Proposed approach
+1. Add `scripts/check-legacy-runtime-references.mjs` that scans runtime app code for banned legacy patterns and exits non-zero on matches.
+2. Add explicit path allowlist support in the script so legacy docs/migrations can continue to reference old entities without failing.
+3. Wire the check into `package.json` and PR CI workflow.
+4. Document an explicit bypass mechanism for intentional legacy-support work.
+
+### Affected files
+- `scripts/check-legacy-runtime-references.mjs`
+- `package.json`
+- `.github/workflows/pr-ci.yml`
+- `CONTRIBUTING.md`
+- `PLANS.md`
+
+### Risks
+- False positives if runtime code needs to mention legacy names in comments/examples.
+- Overly broad bypass instructions could weaken guardrails if used casually.
+
+### Verification steps
+- `node scripts/check-legacy-runtime-references.mjs`
+- `npm run check:legacy-runtime-references`
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: intentional legacy-support work can use an explicit env-var bypass in CI with rationale captured in PR context.

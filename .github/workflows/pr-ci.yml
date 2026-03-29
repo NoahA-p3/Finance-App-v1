@@ -23,6 +23,11 @@ jobs:
       - name: Verify migration order and rollback-note coverage
         run: npm run check:migration-order
 
+      - name: Guard runtime legacy references
+        env:
+          ALLOW_LEGACY_RUNTIME_REFERENCES: ${{ contains(github.event.pull_request.labels.*.name, 'ci:allow-legacy-runtime') && '1' || '' }}
+        run: npm run check:legacy-runtime-references
+
       - name: Lint
         run: npm run lint
 
