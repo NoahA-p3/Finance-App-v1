@@ -1,5 +1,49 @@
 # PLANS.md
 
+## CI + runtime integration harness expansion (March 29, 2026)
+
+### Goal
+Add PR CI gates and introduce an initial seeded-database runtime integration harness that validates API auth boundaries plus one finance write path, while preserving fast contract checks.
+
+### Current behavior
+- The repository has contract-style tests (`tests/*.test.js`) that validate source/migration invariants quickly.
+- There is no GitHub Actions CI workflow enforcing lint/typecheck/test on pull requests.
+- There is no runtime integration harness wired for seeded Supabase database assertions.
+
+### Proposed approach
+1. Add a GitHub Actions workflow for pull requests that runs `npm run lint`, `npm run typecheck`, and `npm run test`.
+2. Add runtime integration test utilities under `tests/runtime/` that:
+   - seed deterministic users/company/membership records in a dedicated test database using service-role credentials,
+   - exercise selected API route behavior via HTTP calls (auth boundary + transaction write path),
+   - include runtime checks for auth, tenancy isolation, and posting immutability trigger behavior.
+3. Keep existing contract tests unchanged and include runtime tests as conditional/skip-aware checks so they remain fast guards when runtime env vars are not supplied.
+4. Update `docs/testing/TEST_STRATEGY.md` with an explicit contract-vs-runtime matrix and CI required gates.
+
+### Affected files
+- `.github/workflows/ci.yml`
+- `tests/runtime/runtime-env.js` (new)
+- `tests/runtime/api-runtime.integration.test.js` (new)
+- `package.json`
+- `docs/testing/TEST_STRATEGY.md`
+- `PLANS.md`
+
+### Risks
+- Runtime integration tests depend on external test infrastructure (`APP_BASE_URL`, Supabase test project credentials).
+- Misconfigured runtime env could create flaky CI; defaults must skip runtime suite unless explicitly enabled.
+- Seed cleanup must be deterministic to avoid cross-run contamination.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: runtime integration tests are opt-in via env flags/secrets and skipped in baseline local/CI runs when unavailable.
+- Open question: whether to add a dedicated nightly/runtime CI workflow once stable test Supabase infrastructure is provisioned.
+
+
+
 ## Onboarding company bootstrap RLS fix (March 28, 2026)
 
 ### Goal
