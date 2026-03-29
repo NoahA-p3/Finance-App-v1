@@ -31,6 +31,7 @@ Current code and active API routes primarily use:
 - `public.journal_lines`
 - `public.period_locks`
 - `public.audit_events`
+- `public.security_session_events`
 - Supabase Storage `receipts` bucket
 
 This remains the active MVP runtime path today. The module-aligned model below defines planned schema expansion.
@@ -110,7 +111,8 @@ This remains the active MVP runtime path today. The module-aligned model below d
   - `journal_entries.source_transaction_id` links postings to source transactions for immutable traceability
   - reversal lineage uses `journal_entries.reversal_of_journal_entry_id`
   - period close controls use `period_locks` (date-range lock enforcement for posting/reversal)
-  - immutable event logging uses `audit_events`
+  - immutable company posting event logging uses `audit_events`
+  - immutable user session-security event logging uses `security_session_events`
   - operational sources reference ledger via `source_type/source_id` or direct `journal_entry_id`.
 - Sales and payments linkage:
   - `sales_documents` -> `sales_document_lines`
@@ -119,7 +121,7 @@ This remains the active MVP runtime path today. The module-aligned model below d
   - `files` with `file_links` and direct nullable FKs in selected tables.
 
 ## Implementation-status alignment
-- Implemented today: auth/profile + transaction/category/receipt baseline tables, posting/audit immutability baseline (`journal_entries`, `journal_lines`, `period_locks`, `audit_events`), initial company bootstrap tables (`companies`, `company_memberships`, `company_settings`), and baseline company RBAC primitives (`roles`, `permissions`, `role_permissions`) with invitation skeleton table (`company_invitations`).
+- Implemented today: auth/profile + transaction/category/receipt baseline tables, posting/audit immutability baseline (`journal_entries`, `journal_lines`, `period_locks`, `audit_events`) plus user session-security audit baseline (`security_session_events`), initial company bootstrap tables (`companies`, `company_memberships`, `company_settings`), and baseline company RBAC primitives (`roles`, `permissions`, `role_permissions`) with invitation skeleton table (`company_invitations`).
 - Planned: most company-scoped, ledger-grade, and workflow-specific tables listed above.
 - Important: do not describe planned tables as already migrated unless present in `supabase/migrations` and reflected in `src/types/database.ts`.
 

@@ -1457,3 +1457,43 @@ Eliminate float-based amount parsing/aggregation paths by moving to regex-valida
 
 ### Assumptions / open questions
 - Assumption: transaction API should enforce string amount input for deterministic decimal parsing.
+
+## Session security audit persistence (March 29, 2026)
+
+### Goal
+Replace noop session-revocation audit emission with persisted append-only Supabase records and add contract coverage.
+
+### Current behavior
+- `src/lib/session-events.ts` emits through `noopSessionAuditSink` and does not persist data.
+- There is no dedicated table for security session audit events tied to per-user session actions.
+- Existing `public.audit_events` is company-scoped posting/audit infrastructure and requires `company_id`.
+
+### Proposed approach
+1. Add an additive migration for a dedicated `public.security_session_events` table with append-only triggers and user-scoped RLS.
+2. Implement Supabase-backed session audit sink writing structured fields: actor ID, target session ID, event type, occurred timestamp.
+3. Update the `/api/me/sessions/[session_id]` route to pass the authenticated Supabase client into the audit emitter.
+4. Update generated schema contract (`src/types/database.ts`) for the new table.
+5. Add contract tests validating migration append-only constraints and non-noop insert behavior in `session-events`.
+
+### Affected files
+- `supabase/migrations/<new>_security_session_events.sql`
+- `src/lib/session-events.ts`
+- `src/app/api/me/sessions/[session_id]/route.ts`
+- `src/types/database.ts`
+- `tests/*` (new session audit contract tests)
+- `docs/security/SECURITY_RULES.md` and/or architecture docs if runtime behavior changes are documented
+
+### Risks
+- Misconfigured RLS could block valid inserts or allow cross-user reads.
+- Route-level audit insert failures could impact session-revocation success if not handled intentionally.
+- Type drift risk if generated contract is not kept aligned.
+
+### Verification steps
+- `npm run test`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: session security audit events are personal security telemetry and should not be forced into company-scoped `audit_events`.
+- Open question: whether future security analytics need additional event metadata (IP, user agent) beyond current requirements.

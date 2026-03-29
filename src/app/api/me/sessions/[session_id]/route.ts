@@ -57,7 +57,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unable to revoke session." }, { status: 502 });
   }
 
-  await emitSessionRevokedEvent({
+  await emitSessionRevokedEvent(authContext.supabase, {
     actorUserId: authContext.user.id,
     revokedSessionId: sessionId,
     revokedAt: new Date().toISOString()
