@@ -128,6 +128,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 ## Supabase and database
 - SQL migrations: `supabase/migrations/`
 - Migration execution order runbook: `supabase/migrations/MIGRATION_ORDER.md`
+  - Includes tie-break rule: when timestamp prefixes are equal (for example, `202603290001_*`), apply migrations in lexicographic **full-filename** order.
 - Generated DB type file: `src/types/database.ts`
 - Apply migrations (Supabase CLI):
   ```bash

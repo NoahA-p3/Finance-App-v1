@@ -28,6 +28,7 @@ Use this runbook after a restore-worthy incident (data corruption, failed destru
 
 5. **Reconcile migration head.**
    - Compare restored schema state with repository migration head from `supabase/migrations/MIGRATION_ORDER.md`.
+   - If two migrations share the same timestamp prefix (for example, `202603290001_*`), apply/replay in lexicographic **full-filename** order from the runbook.
    - If drift exists, apply only required forward migrations in canonical order:
 
    ```bash
