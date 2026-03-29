@@ -6,6 +6,7 @@ import { TransactionForm, TransactionFormValues } from "@/components/transaction
 import { CategoryManager, type Category } from "@/components/transactions/category-manager";
 import { CategoryPicker } from "@/components/transactions/category-picker";
 import { Button } from "@/components/ui/button";
+import { formatCurrencyFromDecimalAmount, normalizeCurrencyCode } from "@/lib/money-format";
 
 interface TransactionRecord {
   id: string;
@@ -38,17 +39,11 @@ interface TransactionApiBody {
   entitlement_warning?: EntitlementWarning | null;
 }
 
-function formatAmount(value: string | number) {
-  const parsed = typeof value === "number" ? value : Number(value);
 
-  if (!Number.isFinite(parsed)) {
-    return String(value);
-  }
-
-  return Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD"
-  }).format(parsed);
+interface CompanyApiResponse {
+  settings?: {
+    base_currency?: string | null;
+  } | null;
 }
 
 export function TransactionsWorkspace() {
@@ -60,6 +55,7 @@ export function TransactionsWorkspace() {
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [currencyCode, setCurrencyCode] = useState("DKK");
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
@@ -112,6 +108,26 @@ export function TransactionsWorkspace() {
   useEffect(() => {
     void loadCategories();
   }, [loadCategories]);
+
+  const loadCurrencyCode = useCallback(async () => {
+    try {
+      const response = await fetch("/api/companies", { cache: "no-store" });
+      const body = (await response.json().catch(() => null)) as CompanyApiResponse | null;
+
+      if (!response.ok) {
+        setCurrencyCode("DKK");
+        return;
+      }
+
+      setCurrencyCode(normalizeCurrencyCode(body?.settings?.base_currency));
+    } catch {
+      setCurrencyCode("DKK");
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCurrencyCode();
+  }, [loadCurrencyCode]);
 
   const handleCreate = useCallback(async (values: TransactionFormValues) => {
     setNotice(null);
@@ -189,7 +205,7 @@ export function TransactionsWorkspace() {
                 <td className="py-3">{transaction.date}</td>
                 <td>{transaction.description}</td>
                 <td className={transaction.type === "expense" ? "text-rose-300" : "text-emerald-300"}>{transaction.type}</td>
-                <td>{formatAmount(transaction.amount)}</td>
+                <td>{formatCurrencyFromDecimalAmount(transaction.amount, currencyCode)}</td>
                 <td>{transaction.category_id ?? "—"}</td>
                 <td>{transaction.receipt_id ?? "—"}</td>
               </tr>
@@ -198,7 +214,7 @@ export function TransactionsWorkspace() {
         </table>
       </div>
     );
-  }, [error, filteredTransactions, loading]);
+  }, [currencyCode, error, filteredTransactions, loading]);
 
   return (
     <div className="space-y-4">
