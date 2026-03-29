@@ -14,6 +14,7 @@ test('key API routes enforce authenticated-user guard before data access', () =>
     'src/app/api/companies/route.ts',
     'src/app/api/companies/members/route.ts',
     'src/app/api/companies/invitations/route.ts',
+    'src/app/api/companies/invitations/accept/route.ts',
     'src/app/api/companies/switch/route.ts'
   ];
 

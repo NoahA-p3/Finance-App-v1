@@ -133,33 +133,54 @@ export type Database = {
       };
       company_invitations: {
         Row: {
+          acceptance_token_expires_at: string | null;
+          acceptance_token_hash: string | null;
+          accepted_at: string | null;
+          accepted_by: string | null;
           company_id: string;
           created_at: string;
+          expired_at: string | null;
           id: string;
           invited_by: string;
           invited_email: string;
           role: CompanyRoleKey;
           status: "accepted" | "expired" | "pending" | "revoked";
+          status_updated_at: string | null;
+          status_updated_by: string | null;
           updated_at: string;
         };
         Insert: {
+          acceptance_token_expires_at?: string | null;
+          acceptance_token_hash?: string | null;
+          accepted_at?: string | null;
+          accepted_by?: string | null;
           company_id: string;
           created_at?: string;
+          expired_at?: string | null;
           id?: string;
           invited_by: string;
           invited_email: string;
           role: CompanyRoleKey;
           status?: "accepted" | "expired" | "pending" | "revoked";
+          status_updated_at?: string | null;
+          status_updated_by?: string | null;
           updated_at?: string;
         };
         Update: {
+          acceptance_token_expires_at?: string | null;
+          acceptance_token_hash?: string | null;
+          accepted_at?: string | null;
+          accepted_by?: string | null;
           company_id?: string;
           created_at?: string;
+          expired_at?: string | null;
           id?: string;
           invited_by?: string;
           invited_email?: string;
           role?: CompanyRoleKey;
           status?: "accepted" | "expired" | "pending" | "revoked";
+          status_updated_at?: string | null;
+          status_updated_by?: string | null;
           updated_at?: string;
         };
       };

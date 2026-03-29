@@ -1497,3 +1497,58 @@ Replace noop session-revocation audit emission with persisted append-only Supaba
 ### Assumptions / open questions
 - Assumption: session security audit events are personal security telemetry and should not be forced into company-scoped `audit_events`.
 - Open question: whether future security analytics need additional event metadata (IP, user agent) beyond current requirements.
+## Invitation acceptance lifecycle implementation (March 29, 2026)
+
+### Goal
+Implement invitation acceptance with token validation, expiry handling, idempotent transitions, and UI handoff that sets active company for accepted users.
+
+### Current behavior
+- Invitations can be created/listed as `pending` via `/api/companies/invitations`.
+- No acceptance token is generated or stored.
+- No acceptance endpoint exists.
+- Team access UI explicitly states acceptance is not implemented.
+
+### Proposed approach
+- Add additive schema migration for invitation acceptance token hash, expiry, and acceptance audit metadata.
+- Add a `public.accept_company_invitation(p_token text)` security-definer function that:
+  - hashes incoming token and resolves a single invitation,
+  - enforces status + expiry + invited-email validation against authenticated user,
+  - inserts membership idempotently,
+  - transitions invitation state to `accepted`/`expired` with audit metadata,
+  - sets `profiles.active_company_id` to the accepted company,
+  - returns structured result codes for API mapping.
+- Extend invitation create route to mint secure acceptance tokens and return acceptance handoff URL/token for invite delivery.
+- Add `/api/companies/invitations/accept` POST endpoint with strict token validation and idempotent response handling.
+- Add onboarding handoff UI that accepts `?invite=<token>` and executes acceptance flow.
+- Replace Team & Access “not implemented” note with invite-link handoff UX using latest created invitation token.
+- Add contract tests for acceptance, duplicate acceptance, expired token handling, and cross-tenant/email protection.
+
+### Affected files
+- `PLANS.md`
+- `supabase/migrations/<new>_company_invitation_acceptance_flow.sql`
+- `src/app/api/companies/invitations/route.ts`
+- `src/app/api/companies/invitations/accept/route.ts`
+- `src/components/settings/team-access-panel.tsx`
+- `src/app/(dashboard)/onboarding/page.tsx`
+- `src/types/database.ts`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/architecture/SYSTEM_OVERVIEW.md`
+- `docs/product/PRODUCT_MODULE_MAP.md`
+- `README.md`
+- `tests/*` (new/updated invite acceptance contracts)
+
+### Risks
+- Security-definer function could bypass RLS incorrectly if checks are incomplete.
+- Token handling might leak if logged or overexposed in API/UI responses.
+- Existing environments with stale pending invites may need explicit expiry behavior expectations.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm test`
+
+### Assumptions / open questions
+- Assumption: invite delivery remains app-mediated/manual (no outbound email integration in this task).
+- Assumption: status transitions are append-preserving at business level (no deletion), with timestamps and actor metadata.
+- Open question: should future iteration add invite revoke endpoint and one-time display rules for acceptance links?
