@@ -1,3 +1,43 @@
+## Dashboard money-value contract refactor (March 29, 2026)
+
+### Goal
+Refactor dashboard trend and expense payloads to use bigint-safe money strings end-to-end, then format numerics only at chart-render boundaries.
+
+### Current behavior
+- `src/lib/dashboard-data.ts` returns `number` fields for trend series (`revenue`, `expenses`, `profit`) and expense breakdown percentages (`value`).
+- Chart components (`src/components/charts/*`, `src/components/finance/*`) assume numeric values in props and format directly from `number`.
+- No regression test currently validates dashboard handling for monetary values beyond JS safe integer when represented as cents.
+
+### Proposed approach
+1. Change dashboard trend + expense output contracts to string-safe money values (cents strings) and keep bigint arithmetic in data composition.
+2. Update chart component props to accept money string fields plus accessor/formatter callbacks that convert at render time.
+3. Add regression coverage with very large amounts to prove no precision loss in dashboard formatting/aggregation paths.
+4. Document the dashboard money-format contract in testing/architecture docs.
+
+### Affected files
+- `src/lib/dashboard-data.ts`
+- `src/components/charts/line-chart.tsx`
+- `src/components/charts/donut-chart.tsx`
+- `src/components/finance/overview-chart.tsx`
+- `src/components/finance/expense-breakdown.tsx`
+- `tests/transactions-decimal-regression.test.js`
+- `docs/testing/TEST_STRATEGY.md`
+- `PLANS.md`
+
+### Risks
+- Chart math could accidentally reintroduce precision loss if conversion falls back to `number` too early.
+- UI expectations for expense labels (percent vs amount) could drift if format boundaries are unclear.
+
+### Verification steps
+- `npm run test`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: using bigint-safe cent strings is acceptable for trend and expense payload contracts.
+- Assumption: percentage display can be derived at render time from cent-string totals without changing user-visible semantics.
+
 ## Session audit durable retry queue + replay worker (March 29, 2026)
 
 ### Goal

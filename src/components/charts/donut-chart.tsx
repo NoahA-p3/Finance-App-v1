@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 export interface DonutDatum {
   name: string;
-  value: number;
+  amountCents: `${bigint}`;
 }
 
 interface DonutChartProps {
@@ -13,6 +13,8 @@ interface DonutChartProps {
   className?: string;
   innerRadius?: number;
   outerRadius?: number;
+  getValue?: (datum: DonutDatum) => bigint;
+  formatValue?: (value: bigint, total: bigint) => string;
 }
 
 const SIZE = 240;
@@ -31,15 +33,21 @@ export function DonutChart({
   className,
   innerRadius = 58,
   outerRadius = 92,
+  getValue = (datum) => BigInt(datum.amountCents),
+  formatValue = (value, total) => {
+    if (total === 0n) return "0%";
+    return `${Number((value * 10000n) / total) / 100}%`;
+  }
 }: DonutChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const slices = useMemo(() => {
-    const total = data.reduce((sum, item) => sum + item.value, 0);
+    const total = data.reduce((sum, item) => sum + getValue(item), 0n);
     let start = -Math.PI / 2;
 
     return data.map((item, index) => {
-      const angle = total === 0 ? 0 : (item.value / total) * Math.PI * 2;
+      const amount = getValue(item);
+      const angle = total === 0n ? 0 : (Number((amount * 1_000_000n) / total) / 1_000_000) * Math.PI * 2;
       const end = start + angle;
 
       const outerStart = polarToCartesian(outerRadius, start);
@@ -61,6 +69,8 @@ export function DonutChart({
 
       const slice = {
         item,
+        amount,
+        total,
         path,
         color: colors[index % colors.length],
         tooltipPoint,
@@ -69,7 +79,7 @@ export function DonutChart({
       start = end;
       return slice;
     });
-  }, [colors, data, innerRadius, outerRadius]);
+  }, [colors, data, getValue, innerRadius, outerRadius]);
 
   return (
     <div className={className}>
@@ -84,7 +94,7 @@ export function DonutChart({
             onMouseLeave={() => setActiveIndex(null)}
             style={{ transition: "opacity 120ms ease" }}
           >
-            <title>{`${slice.item.name}: ${slice.item.value}%`}</title>
+            <title>{`${slice.item.name}: ${formatValue(slice.amount, slice.total)}`}</title>
           </path>
         ))}
       </svg>
@@ -92,7 +102,7 @@ export function DonutChart({
       {activeIndex !== null ? (
         <div className="pointer-events-none -mt-28 ml-2 w-fit rounded-xl border border-white/20 bg-[#171a36] px-3 py-2 text-xs text-indigo-100 shadow-lg">
           <p className="font-medium text-white">{slices[activeIndex].item.name}</p>
-          <p>{slices[activeIndex].item.value}%</p>
+          <p>{formatValue(slices[activeIndex].amount, slices[activeIndex].total)}</p>
         </div>
       ) : null}
     </div>

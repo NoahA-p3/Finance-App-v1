@@ -1,5 +1,8 @@
 import type { Database } from "@/types/database";
 import type { createClient } from "@/lib/supabase/server";
+import { decimalStringToCentsBigInt } from "@/lib/finance-decimals";
+
+export type CentsString = `${bigint}`;
 
 export interface DashboardKpi {
   title: string;
@@ -9,14 +12,14 @@ export interface DashboardKpi {
 
 export interface TrendPoint {
   label: string;
-  revenue: number;
-  expenses: number;
-  profit: number;
+  revenueCents: CentsString;
+  expensesCents: CentsString;
+  profitCents: CentsString;
 }
 
 export interface ExpenseSlice {
   name: string;
-  value: number;
+  amountCents: CentsString;
 }
 
 export interface RecentTransactionRow {
@@ -44,17 +47,15 @@ type TransactionRow = Database["public"]["Tables"]["transactions"]["Row"];
 type TransactionForDashboard = Pick<TransactionRow, "id" | "amount" | "date" | "description" | "type" | "category_id" | "receipt_id">;
 
 function amountToCents(amount: number | string): bigint {
-  const normalized = String(amount).trim();
-  const negative = normalized.startsWith("-");
-  const unsigned = negative ? normalized.slice(1) : normalized;
-  const [wholePart, decimalPartRaw = ""] = unsigned.split(".");
-  const decimalPart = decimalPartRaw.padEnd(2, "0").slice(0, 2);
-  const cents = BigInt((wholePart || "0") + decimalPart);
-  return negative ? -cents : cents;
+  return decimalStringToCentsBigInt(String(amount));
 }
 
 function centsToNumber(cents: bigint): number {
   return Number(cents) / 100;
+}
+
+function centsToString(cents: bigint): CentsString {
+  return cents.toString() as CentsString;
 }
 
 function monthKey(date: Date) {
@@ -70,8 +71,9 @@ function normalizeCurrencyCode(currencyCode?: string | null) {
   return normalized && /^[A-Z]{3}$/.test(normalized) ? normalized : "DKK";
 }
 
-export function formatCurrencyFromCents(cents: bigint, currencyCode?: string | null) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: normalizeCurrencyCode(currencyCode) }).format(centsToNumber(cents));
+export function formatCurrencyFromCents(cents: bigint | CentsString, currencyCode?: string | null) {
+  const centsBigInt = typeof cents === "bigint" ? cents : BigInt(cents);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: normalizeCurrencyCode(currencyCode) }).format(centsToNumber(centsBigInt));
 }
 
 export async function getDashboardFinanceData(supabase: SupabaseClient, _userId: string, companyId: string): Promise<DashboardFinanceData> {
@@ -127,9 +129,9 @@ export async function getDashboardFinanceData(supabase: SupabaseClient, _userId:
     const bucket = trendByMonth.get(key) ?? { revenue: 0n, expenses: 0n };
     return {
       label: monthLabel(date),
-      revenue: centsToNumber(bucket.revenue),
-      expenses: centsToNumber(bucket.expenses),
-      profit: centsToNumber(bucket.revenue - bucket.expenses)
+      revenueCents: centsToString(bucket.revenue),
+      expensesCents: centsToString(bucket.expenses),
+      profitCents: centsToString(bucket.revenue - bucket.expenses)
     };
   });
 
@@ -141,13 +143,12 @@ export async function getDashboardFinanceData(supabase: SupabaseClient, _userId:
     expenseByCategory.set(key, (expenseByCategory.get(key) ?? 0n) + amountToCents(row.amount));
   }
 
-  const totalExpenses = Array.from(expenseByCategory.values()).reduce((sum, value) => sum + value, 0n);
   const expenseBreakdown: ExpenseSlice[] = Array.from(expenseByCategory.entries())
     .sort((a, b) => (a[1] === b[1] ? 0 : a[1] > b[1] ? -1 : 1))
     .slice(0, 6)
     .map(([name, amount]) => ({
       name,
-      value: totalExpenses === 0n ? 0 : Number((amount * 100n) / totalExpenses)
+      amountCents: centsToString(amount)
     }));
 
   const recentTransactions: RecentTransactionRow[] = transactionRows.slice(0, 12).map((row) => ({

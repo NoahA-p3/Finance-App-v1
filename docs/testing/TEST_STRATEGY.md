@@ -66,6 +66,12 @@ Planned expansion:
 - Migration safety for existing production data.
 - Permission boundaries on profile, team access, and receipts.
 
+## Money-format contract (dashboard/reporting)
+- For persisted finance outputs that represent money totals/trends, use bigint-safe cent strings (for example `"123456"` for DKK 1,234.56) instead of JS `number`.
+- Keep arithmetic in bigint space in data-composition modules (`src/lib/**`) and only convert to display strings at render boundaries.
+- Chart components must accept string-safe money inputs and apply formatting in render callbacks/tooltips, not in backend aggregation paths.
+- Regression tests for money handling should include values above JS safe integer when expressed in cents.
+
 ## Required checks before merge (current minimum)
 1. `npm run lint`
 2. `npm run typecheck`

@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { LineChart } from "@/components/charts/line-chart";
 import type { TrendPoint } from "@/lib/dashboard-data";
+import { formatCurrencyFromCents } from "@/lib/dashboard-data";
 
 interface OverviewChartProps {
   data: TrendPoint[];
@@ -22,10 +23,12 @@ export function OverviewChart({ data }: OverviewChartProps) {
           className="h-[280px]"
           data={data}
           xKey="label"
+          getValue={(datum, key) => BigInt(String(datum[key]))}
+          formatValue={(value) => formatCurrencyFromCents(value)}
           series={[
-            { key: "revenue", label: "Revenue", color: "#38bdf8" },
-            { key: "expenses", label: "Expenses", color: "#fb7185" },
-            { key: "profit", label: "Profit", color: "#4ade80" }
+            { key: "revenueCents", label: "Revenue", color: "#38bdf8" },
+            { key: "expensesCents", label: "Expenses", color: "#fb7185" },
+            { key: "profitCents", label: "Profit", color: "#4ade80" }
           ]}
         />
       ) : (
