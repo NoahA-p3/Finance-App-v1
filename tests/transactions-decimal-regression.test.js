@@ -185,3 +185,22 @@ test('dashboard trend and expense outputs preserve very large monetary values as
     JSON.stringify([{ name: 'Operations', amountCents: expenseCents }])
   );
 });
+
+test('dashboard formatter regression: avoids Number(cents) conversion path', () => {
+  const dashboardDataSource = read('src/lib/dashboard-data.ts');
+
+  assert.doesNotMatch(dashboardDataSource, /Number\s*\(\s*cents\s*\)/);
+});
+
+test('dashboard currency formatter preserves precision above JS safe integer cents', () => {
+  const decimals = loadTsModule('src/lib/finance-decimals.ts');
+  const dashboard = loadTsModuleWithResolver('src/lib/dashboard-data.ts', (specifier) => {
+    if (specifier === '@/lib/finance-decimals') {
+      return decimals;
+    }
+    return undefined;
+  });
+
+  assert.equal(dashboard.formatCurrencyFromCents('900719925474099312', 'DKK'), 'DKK\u00A09,007,199,254,740,993.12');
+  assert.equal(dashboard.formatCurrencyFromCents('-900719925474099312', 'DKK'), '-DKK\u00A09,007,199,254,740,993.12');
+});

@@ -71,6 +71,12 @@ Planned expansion:
 - Keep arithmetic in bigint space in data-composition modules (`src/lib/**`) and only convert to display strings at render boundaries.
 - Chart components must accept string-safe money inputs and apply formatting in render callbacks/tooltips, not in backend aggregation paths.
 - Regression tests for money handling should include values above JS safe integer when expressed in cents.
+- `formatCurrencyFromCents(cents, currencyCode?)` in `src/lib/dashboard-data.ts` is the canonical formatter contract for dashboard/reporting cards and tables:
+  - accepted `cents` inputs: `bigint` or bigint-string (`type CentsString = \`${bigint}\``),
+  - converts to absolute bigint cents, then splits into whole/fraction strings (`whole = abs / 100n`, `fraction = abs % 100n` padded to 2),
+  - applies en-US grouping to the whole part and reuses `Intl.NumberFormat("en-US", { style: "currency", currency })` currency affixes,
+  - prepends `-` for negative values,
+  - must not use `Number(cents)` conversion so values above JS safe-integer cents remain exact.
 
 ## Required checks before merge (current minimum)
 1. `npm run lint`
