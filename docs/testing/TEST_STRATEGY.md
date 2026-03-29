@@ -1,6 +1,6 @@
 # Test Strategy
 
-Related docs: [Golden Datasets](./GOLDEN_DATASETS.md), [Security Rules](../security/SECURITY_RULES.md), [DK VAT Rules](../domain/DK_VAT_RULES.md).
+Related docs: [Golden Datasets](./GOLDEN_DATASETS.md), [Security Rules](../security/SECURITY_RULES.md), [DK VAT Rules](../domain/DK_VAT_RULES.md), [Spec-Linked Test Plans](./SPEC_ROADMAP_TEST_PLANS.md).
 
 **Last verified:** 2026-03-29.
 
@@ -65,6 +65,13 @@ Planned expansion:
 - Transaction + category + receipt flows.
 - Invitation acceptance flow (once implemented).
 - VAT/tax workflows (once implemented).
+
+
+## Spec-linked roadmap test-plan sections
+The following planned modules now have explicit test-plan sections with acceptance-oriented coverage targets:
+- [Invoicing minimal lifecycle](./SPEC_ROADMAP_TEST_PLANS.md#1-invoicing-minimal-lifecycle-test-plan)
+- [Bank/reconciliation baseline](./SPEC_ROADMAP_TEST_PLANS.md#2-bankreconciliation-baseline-test-plan)
+- [VAT review baseline](./SPEC_ROADMAP_TEST_PLANS.md#3-vat-review-baseline-test-plan)
 
 ## Regression-critical areas
 - Ledger integrity and immutability controls.

@@ -118,6 +118,27 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
   - CSV import prototype,
   - unmatched queue UI.
 - Major risks: duplicate/incorrect postings.
+- Related technical spec: [Bank/Reconciliation Baseline Technical Spec](../docs/architecture/BANK_RECONCILIATION_BASELINE_SPEC.md).
+
+### Explicit tickets (dependency-ordered)
+1. **ING-RECON-001 — Reconciliation schema + RLS baseline**
+   - Dependencies: requires `INV-MLC-001` invoice schema references for AR/AP matching keys.
+   - Acceptance checks:
+     - migration adds reconciliation/session/match/event tables with company RLS,
+     - cross-tenant read/write denial assertions are added,
+     - rollback steps documented and tested in migration notes.
+2. **ING-RECON-002 — Reconciliation API baseline (`/api/reconciliation/*`)**
+   - Dependencies: `ING-RECON-001`.
+   - Acceptance checks:
+     - session create/list/match/close routes implemented with role checks,
+     - close endpoint rejects unresolved critical mismatches,
+     - API boundary tests cover invalid IDs and unauthorized role actions.
+3. **ING-RECON-003 — Open-items deterministic contract**
+   - Dependencies: `ING-RECON-002`.
+   - Acceptance checks:
+     - `/api/reconciliation/open-items` returns stable sort + pagination,
+     - deterministic fixture test validates unchanged counts across reruns,
+     - docs/testing spec section is updated with executed checks.
 
 ## 6) Document capture
 - Objective: make receipt handling reliable and auditable.
@@ -144,6 +165,27 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
   - minimal invoice schema,
   - payment matching rules.
 - Major risks: fragmented workflows and manual workarounds.
+- Related technical spec: [Invoicing Minimal Lifecycle Technical Spec](../docs/architecture/INVOICING_MINIMAL_LIFECYCLE_SPEC.md).
+
+### Explicit tickets (dependency-ordered)
+1. **INV-MLC-001 — Invoice schema + RLS + rollback baseline**
+   - Dependencies: existing company RBAC and active-company runtime path.
+   - Acceptance checks:
+     - migration introduces `sales_invoices`, `sales_invoice_lines`, and `invoice_events`,
+     - decimal-only money fields and `(company_id, invoice_number)` uniqueness enforced,
+     - rollback notes include pre-drop snapshot/export and reverse dependency order.
+2. **INV-MLC-002 — Invoice API minimal lifecycle**
+   - Dependencies: `INV-MLC-001`.
+   - Acceptance checks:
+     - `/api/invoices` create/list/detail and `issue/record-payment/void` actions implemented,
+     - ownership fields are server-derived (client-supplied ownership rejected),
+     - route tests cover valid and invalid status transitions.
+3. **INV-MLC-003 — Audit/event immutability + integration tests**
+   - Dependencies: `INV-MLC-002`.
+   - Acceptance checks:
+     - event append-only protections enforced in DB and API behavior,
+     - integration tests validate cross-tenant denial and role constraints,
+     - spec-linked test-plan section references executed commands/results.
 
 ## 8) VAT and tax engine
 - Objective: Denmark-relevant VAT/tax calculations and review.
@@ -157,6 +199,27 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
   - implement VAT rule table,
   - golden dataset test suite.
 - Major risks: incorrect VAT outcomes.
+- Related technical spec: [VAT Review Baseline Technical Spec](../docs/architecture/VAT_REVIEW_BASELINE_SPEC.md).
+
+### Explicit tickets (dependency-ordered)
+1. **VAT-RVW-001 — VAT review schema + RLS + rollback baseline**
+   - Dependencies: `INV-MLC-001` and `ING-RECON-001` for source data alignment.
+   - Acceptance checks:
+     - migration introduces VAT code/run/review/event tables with company isolation,
+     - global default VAT codes vs company overrides are explicitly handled,
+     - rollback plan documents snapshot/replay validation for deterministic parity.
+2. **VAT-RVW-002 — VAT preview/generate/review APIs**
+   - Dependencies: `VAT-RVW-001`.
+   - Acceptance checks:
+     - `/api/vat/reviews/preview`, `/generate`, list/detail, and approve routes implemented,
+     - explainability payload includes taxable-base and rate-source provenance,
+     - unauthorized approve/mutation attempts are denied.
+3. **VAT-RVW-003 — Golden dataset + deterministic regression coverage**
+   - Dependencies: `VAT-RVW-002`.
+   - Acceptance checks:
+     - test fixtures include deterministic VAT periods and expected outputs,
+     - repeated run with same input hash + engine version yields identical totals,
+     - documented `Assumption`/`TODO` markers for unimplemented legal-form-specific logic.
 
 ## 9) Reports and exports
 - Objective: produce reliable bookkeeping and tax support reports.

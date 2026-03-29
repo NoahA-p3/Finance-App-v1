@@ -2,6 +2,8 @@
 
 **As of:** 2026-03-29.
 
+> Update (2026-03-29): Detailed per-module follow-up specs now live in [`INVOICING_MINIMAL_LIFECYCLE_SPEC.md`](./INVOICING_MINIMAL_LIFECYCLE_SPEC.md), [`BANK_RECONCILIATION_BASELINE_SPEC.md`](./BANK_RECONCILIATION_BASELINE_SPEC.md), and [`VAT_REVIEW_BASELINE_SPEC.md`](./VAT_REVIEW_BASELINE_SPEC.md).
+
 Related source-of-truth docs:
 - Product scope: [`docs/product/PRD.md`](../product/PRD.md), [`docs/product/MVP_SCOPE.md`](../product/MVP_SCOPE.md), [`docs/product/DELIVERY_PHASES.md`](../product/DELIVERY_PHASES.md), [`docs/product/PRODUCT_MODULE_MAP.md`](../product/PRODUCT_MODULE_MAP.md)
 - Domain constraints: [`docs/domain/DK_ACCOUNTING_RULES.md`](../domain/DK_ACCOUNTING_RULES.md), [`docs/domain/DK_VAT_RULES.md`](../domain/DK_VAT_RULES.md), [`docs/domain/LEGAL_FORM_RULES.md`](../domain/LEGAL_FORM_RULES.md)
