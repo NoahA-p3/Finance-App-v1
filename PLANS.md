@@ -1989,3 +1989,40 @@ Add Supabase-backed integration tests that execute Next.js finance route handler
 ### Assumptions / open questions
 - Assumption: local integration environment runs against Next.js development server for route-level assertions.
 - Assumption: current seeded fixture + plan entitlement updates are sufficient to deterministically trigger entitlement lock branches.
+
+## Posting account mapping extraction + typed Supabase contracts (March 29, 2026)
+
+### Goal
+Replace `supabase: any` usage in posting service with typed client contracts derived from `Database`, extract transaction-type-to-account derivation into a dedicated mapping module with explicit fallback + validation, and add contract tests for mapping/rejection behavior.
+
+### Current behavior
+- `src/lib/postings/service.ts` accepts `supabase: any` across posting functions.
+- Transaction account derivation is inline via `deriveLineAccounts(...)` with implicit defaulting to revenue mapping for any non-expense value.
+- There are no explicit contract tests focused on posting account mapping fallback/rejection behavior.
+
+### Proposed approach
+1. Introduce typed posting-service client/query contracts derived from `Database` row/insert types.
+2. Move account derivation into `src/lib/postings/account-mapping.ts` with:
+   - explicit canonical mappings for expense/revenue,
+   - explicit fallback aliases,
+   - validation that rejects unmapped/invalid transaction types.
+3. Replace posting service inline derivation with the new mapping module.
+4. Add contract tests that assert expense/revenue mapping and rejection contract markers for missing mappings.
+
+### Affected files
+- `src/lib/postings/service.ts`
+- `src/lib/postings/account-mapping.ts`
+- `tests/postings-account-mapping-contract.test.js`
+- `PLANS.md`
+
+### Risks
+- Tightening mapping validation can surface previously hidden invalid transaction types by failing closed.
+- Source-contract tests can miss runtime drift if semantics change without marker changes.
+
+### Verification steps
+- `npm run test -- tests/postings-account-mapping-contract.test.js`
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: posting should fail closed when transaction type cannot be confidently mapped to ledger accounts.
