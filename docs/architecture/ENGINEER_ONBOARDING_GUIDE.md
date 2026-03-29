@@ -2,7 +2,7 @@
 
 This guide is for engineers new to the repository and focuses on what is implemented in code today.
 
-**Last verified:** 2026-03-27.
+**Last verified:** 2026-03-29.
 
 ## Last-verified policy
 - Keep this date synchronized with the latest evidence review for this file.
@@ -18,11 +18,10 @@ Current MVP capabilities implemented in repo evidence:
 - Protected dashboard route group and middleware gating.
 - Profile + company context and active company switching.
 - Company-scoped transactions, categories, receipts, and posting/reversal APIs.
-- Company members/invitations baseline (pending invitation management).
+- Company members/invitations baseline, including acceptance lifecycle via token + authenticated user checks.
 
 Still planned or partial:
 - VAT/tax engine automation.
-- Invitation acceptance flow.
 - Several settings tabs that are intentionally placeholder-level.
 
 ---
@@ -56,22 +55,33 @@ Dashboard and reports are no longer mock-backed in the active route pages:
 
 ---
 
-## 4) Explicit placeholders to keep in mind
+## 4) Explicit placeholders and partial areas to keep in mind
 
 1. **Settings tabs placeholders**
    - Multiple tabs intentionally render placeholder cards (banking/payments, integrations, automation, payroll, developer, security/audit).
    - `sales-documents` and `accounting-tax` also contain explicit transitional/placeholder guidance.
 
-2. **Invitation acceptance missing**
-   - Team access UI and invitation APIs support listing + creating pending invitations.
-   - Acceptance flow is explicitly called out as not implemented yet.
+2. **Invitation workflows are now additive but still maturing**
+   - Team access APIs support listing + creating pending invitations.
+   - Acceptance route is implemented at `src/app/api/companies/invitations/accept/route.ts`.
+   - Acceptance persistence/status lifecycle is implemented in `supabase/migrations/202603290001_company_invitation_acceptance_flow.sql`.
+   - Remaining depth (still planned): richer invitation lifecycle UX and broader multi-user role workflow coverage.
 
 3. **VAT engine planned**
    - Accounting & Tax settings copy explicitly states VAT engine and tax-rule automation are TODO/planned.
 
 ---
 
-## 5) Testing commands and scope limitations (actual)
+## 5) Updated evidence pointers for core claims
+
+- Invitation acceptance API boundary and result handling: `src/app/api/companies/invitations/accept/route.ts`.
+- Invitation acceptance token/status lifecycle and `accept_company_invitation(...)`: `supabase/migrations/202603290001_company_invitation_acceptance_flow.sql`.
+- Posting baseline with reversal + period-lock checks + audit inserts: `src/lib/postings/service.ts`.
+- Posting schema, period locks, posted-state checks, and append-only audit guardrails: `supabase/migrations/202603270002_posting_and_audit_immutability.sql`.
+
+---
+
+## 6) Testing commands and scope limitations (actual)
 
 Available commands:
 - `npm run test` -> `node --test tests/*.test.js`
@@ -87,7 +97,7 @@ Current automated test scope limitations:
 
 ---
 
-## 6) Recommended first read order
+## 7) Recommended first read order
 
 1. `README.md`
 2. `docs/architecture/SYSTEM_OVERVIEW.md`
@@ -99,7 +109,7 @@ Current automated test scope limitations:
 
 ---
 
-## 7) High-risk areas for contributors
+## 8) High-risk areas for contributors
 
 - Extending legacy/divergent schema artifacts instead of canonical runtime path.
 - Using float math for money handling.

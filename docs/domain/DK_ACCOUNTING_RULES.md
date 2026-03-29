@@ -4,6 +4,8 @@
 
 Related docs: [DK VAT Rules](./DK_VAT_RULES.md), [Legal Form Rules](./LEGAL_FORM_RULES.md), [Data Model](../architecture/DATA_MODEL.md).
 
+**Last verified:** 2026-03-29.
+
 ## Practical bookkeeping rules the product should respect
 - Every financial event should map to a durable accounting record.
 - Records must have traceable source documentation where required (receipt/invoice/voucher).
@@ -15,26 +17,27 @@ Related docs: [DK VAT Rules](./DK_VAT_RULES.md), [Legal Form Rules](./LEGAL_FORM
 - Source docs should include date, counterparty, amount, and VAT relevance when possible.
 - Missing documentation should be visibly flagged for review.
 
-## Audit trail and traceability
-- User attribution exists today through `user_id` and auth context.
-- `created_at` timestamps are present on core tables.
-- **Gap:** No dedicated immutable audit-event table yet.
-- **Gap:** No explicit “posted” state or locking semantics on transactions.
+## Audit trail and traceability (current baseline)
+- User attribution exists through auth context and actor fields.
+- `created_at`/`occurred_at` timestamps are present on core posting/audit entities.
+- Dedicated `audit_events` table exists with append-only mutation guards and company-scoped RLS.
+- Posting/reversal APIs insert explicit audit events for key posting actions.
 
-## Journal entry integrity
-- Current model is single-record `transactions` table (`type`, `amount`, etc.), not double-entry journal.
-- For compliance-grade robustness, planned model should support:
-  - immutable posted entries,
-  - balanced debits/credits,
-  - reversal postings.
-- **Status:** Planned; not implemented.
+## Journal entry integrity (current baseline)
+- Baseline posting model exists via `journal_entries` + `journal_lines`.
+- `journal_entries.status` supports `draft` / `posted` / `reversed` with posted-state field constraints.
+- Reversal linkage is supported (`reversal_of_journal_entry_id`) and single-reversal uniqueness is enforced.
+- Source transactions with finalized postings are guarded from destructive mutation.
 
-## Period locking and corrections
-- Current state: no period table, close state, or lock policy in schema.
-- Planned behavior:
-  - close accounting periods,
-  - block destructive edits in closed periods,
-  - allow correction via dated reversal/adjustment entries.
+## Period locking and corrections (current baseline)
+- `period_locks` table exists with company-scoped access control.
+- Posting service checks lock ranges before posting/reversal operations.
+- Closed-period edits are constrained through lock checks and append-only correction patterns.
+
+## Remaining planned depth (separate from current baseline)
+- Baseline is not yet a full compliance-grade accounting engine.
+- Planned depth includes richer adjustment workflows, stricter close controls, and broader reporting-grade validation coverage.
+- VAT/tax automation depth remains planned and should not be treated as complete.
 
 ## Financial records and retention expectations
 - Receipt files are stored in private Supabase bucket with user-scoped access policies.
@@ -48,13 +51,19 @@ Related docs: [DK VAT Rules](./DK_VAT_RULES.md), [Legal Form Rules](./LEGAL_FORM
   - likely stronger requirements for year-end reporting and controls.
 - **Status in code:** no legal-form-specific enforcement currently.
 
-## Supported in current code vs missing
+## Supported in current code vs planned depth
 
 | Rule area | Current support | Status |
 |---|---|---|
-| Per-user data isolation | RLS and auth checks on core tables/routes | Implemented |
-| Source document storage | Receipt upload + storage policies | Partial |
-| Decimal storage in DB | `numeric(12,2)` columns in migrations | Implemented |
-| Immutable posting model | No posted/reversal mechanism | Planned |
-| Period closing | No lock model | Planned |
-| Audit event log | No dedicated table | Planned |
+| Cross-tenant isolation | Company membership + RLS checks on scoped tables/routes | Implemented |
+| Source document storage | Receipt upload + private storage policies | Partial |
+| Decimal storage in DB | `numeric(12,2)` in finance/posting amounts | Implemented |
+| Posted-state baseline | `journal_entries` status model + posted/reversed constraints | Implemented |
+| Reversal controls | Reversal linkage + single-reversal uniqueness + service checks | Implemented |
+| Period closing baseline | `period_locks` + posting-time lock checks | Implemented |
+| Audit event log baseline | `audit_events` + append-only trigger guards | Implemented |
+| Compliance-grade depth | Advanced controls/reporting breadth | Planned |
+
+## Evidence pointers
+- Posting service behaviors (posting, reversal, period-lock checks, audit inserts): `src/lib/postings/service.ts`.
+- Posting schema, lock tables, state constraints, and append-only audit guards: `supabase/migrations/202603270002_posting_and_audit_immutability.sql`.
