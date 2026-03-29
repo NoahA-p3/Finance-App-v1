@@ -83,17 +83,23 @@ Dashboard and reports are no longer mock-backed in the active route pages:
 
 ## 6) Testing commands and scope limitations (actual)
 
+**As of:** 2026-03-29.
+
 Available commands:
 - `npm run test` -> `node --test tests/*.test.js`
+- `npm run test:integration:local` -> boots local Supabase, applies migrations via reset, then runs Node test files under `tests/integration/*.test.js`
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
 
 Current automated test scope limitations:
-- Tests are mostly contract/static assertions over source files and migrations.
-- There is no full integration harness for live Supabase interactions in this repo.
+- Tests in `tests/*.test.js` are mostly contract/static assertions over source files and migrations.
+- Integration runtime coverage exists via the local Supabase harness in `npm run test:integration:local` for suites in `tests/integration/*.test.js`.
+- PR CI (`.github/workflows/pr-ci.yml`) conditionally runs the **Integration (Supabase local)** job when integration-impacting paths change or when the PR has the `ci:full-integration` label.
 - No e2e browser suite is wired in scripts.
-- As a result, passing tests indicates repo-contract consistency, not full runtime behavioral coverage.
+- As a result, passing fast contract tests indicates repo-contract consistency, while integration confidence depends on the conditional integration gate.
+
+For broader testing policy and coverage expectations, see [docs/testing/TEST_STRATEGY.md](../testing/TEST_STRATEGY.md).
 
 ---
 
