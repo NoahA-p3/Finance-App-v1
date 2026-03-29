@@ -5,7 +5,7 @@ import {
   listAuthenticatedUserSessions,
   revokeAuthenticatedUserSession
 } from "@/lib/session-management";
-import { emitSessionRevokedEvent } from "@/lib/session-events";
+import { emitSessionRevokedEvent, enqueueSessionRevokedEventRetry } from "@/lib/session-events";
 
 interface RouteContext {
   params: Promise<{
@@ -57,11 +57,13 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unable to revoke session." }, { status: 502 });
   }
 
+  const revokedAt = new Date().toISOString();
+
   try {
     await emitSessionRevokedEvent(authContext.supabase, {
       actorUserId: authContext.user.id,
       revokedSessionId: sessionId,
-      revokedAt: new Date().toISOString()
+      revokedAt
     });
   } catch (error) {
     console.error("session_revocation_audit_write_failed", {
@@ -69,7 +71,20 @@ export async function DELETE(_request: Request, context: RouteContext) {
       revokedSessionId: sessionId,
       error: error instanceof Error ? error.message : "unknown_error"
     });
-    // TODO: enqueue failed session audit event for async retry once a durable queue worker is available.
+
+    try {
+      await enqueueSessionRevokedEventRetry(authContext.supabase, {
+        actorUserId: authContext.user.id,
+        revokedSessionId: sessionId,
+        revokedAt
+      });
+    } catch (enqueueError) {
+      console.error("session_revocation_audit_retry_enqueue_failed", {
+        actorUserId: authContext.user.id,
+        revokedSessionId: sessionId,
+        error: enqueueError instanceof Error ? enqueueError.message : "unknown_error"
+      });
+    }
   }
 
   return NextResponse.json({ success: true }, { status: 200 });

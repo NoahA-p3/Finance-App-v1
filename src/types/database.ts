@@ -35,11 +35,79 @@ export type Database = {
           occurred_at?: string;
         };
       };
+      security_event_retry_attempts: {
+        Row: {
+          attempted_at: string;
+          delivered_event_id: string | null;
+          delivery_status: string;
+          error_code: string | null;
+          error_message: string | null;
+          id: number;
+          idempotency_key: string;
+          queue_id: string;
+          worker_id: string;
+        };
+        Insert: {
+          attempted_at?: string;
+          delivered_event_id?: string | null;
+          delivery_status: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          id?: never;
+          idempotency_key: string;
+          queue_id: string;
+          worker_id: string;
+        };
+        Update: {
+          attempted_at?: string;
+          delivered_event_id?: string | null;
+          delivery_status?: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          id?: never;
+          idempotency_key?: string;
+          queue_id?: string;
+          worker_id?: string;
+        };
+      };
+      security_event_retry_queue: {
+        Row: {
+          actor_user_id: string;
+          enqueued_at: string;
+          event_type: string;
+          id: string;
+          idempotency_key: string;
+          metadata: Json;
+          occurred_at: string;
+          target_session_id: string;
+        };
+        Insert: {
+          actor_user_id: string;
+          enqueued_at?: string;
+          event_type: string;
+          id?: string;
+          idempotency_key: string;
+          metadata?: Json;
+          occurred_at: string;
+          target_session_id: string;
+        };
+        Update: {
+          actor_user_id?: string;
+          enqueued_at?: string;
+          event_type?: string;
+          id?: string;
+          idempotency_key?: string;
+          metadata?: Json;
+          occurred_at?: string;
+          target_session_id?: string;
+        };
+      };
       security_session_events: {
         Row: {
           actor_user_id: string;
           event_type: string;
           id: string;
+          idempotency_key: string;
           metadata: Json;
           occurred_at: string;
           target_session_id: string;
@@ -48,6 +116,7 @@ export type Database = {
           actor_user_id: string;
           event_type: string;
           id?: string;
+          idempotency_key: string;
           metadata?: Json;
           occurred_at?: string;
           target_session_id: string;
@@ -56,6 +125,7 @@ export type Database = {
           actor_user_id?: string;
           event_type?: string;
           id?: string;
+          idempotency_key?: string;
           metadata?: Json;
           occurred_at?: string;
           target_session_id?: string;

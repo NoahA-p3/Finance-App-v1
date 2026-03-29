@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 
 const {
   hasIntegrationEnv,
@@ -213,9 +214,55 @@ if (!hasIntegrationEnv()) {
     assert.equal(ownerBPostedView.length, 0, 'Cross-tenant user should not read company A posting rows');
   });
 
-  test(
-    'session revocation audit failure is tracked for async replay (future integration placeholder)',
-    { skip: 'TODO: enable once retry queue + session revocation endpoint integration harness is implemented.' },
-    () => {}
-  );
+  test('session revocation audit failures are durably queued and replayed idempotently', async () => {
+    const admin = getAdminClient();
+    const occurredAt = new Date().toISOString();
+    const idempotencyKey = `session.revoked:${fixture.userIds.ownerA}:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:${occurredAt}`;
+
+    const { data: queuedRow, error: queueInsertError } = await ownerA
+      .from('security_event_retry_queue')
+      .insert({
+        idempotency_key: idempotencyKey,
+        actor_user_id: fixture.userIds.ownerA,
+        target_session_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        event_type: 'session.revoked',
+        occurred_at: occurredAt,
+        metadata: {}
+      })
+      .select('id')
+      .single();
+    assert.equal(queueInsertError, null, queueInsertError?.message);
+
+    const { data: preReplayEvents, error: preReplayEventsError } = await admin
+      .from('security_session_events')
+      .select('id')
+      .eq('idempotency_key', idempotencyKey);
+    assert.equal(preReplayEventsError, null, preReplayEventsError?.message);
+    assert.equal(preReplayEvents.length, 0, 'Expected no security event before replay job');
+
+    execFileSync(process.execPath, ['scripts/replay-security-event-retry-queue.mjs', '--limit=200'], {
+      stdio: 'pipe',
+      env: process.env
+    });
+
+    const { data: replayedEvents, error: replayedEventsError } = await admin
+      .from('security_session_events')
+      .select('id,idempotency_key')
+      .eq('idempotency_key', idempotencyKey);
+    assert.equal(replayedEventsError, null, replayedEventsError?.message);
+    assert.equal(replayedEvents.length, 1, 'Expected one replayed security event');
+
+    execFileSync(process.execPath, ['scripts/replay-security-event-retry-queue.mjs', '--limit=200'], {
+      stdio: 'pipe',
+      env: process.env
+    });
+
+    const { data: deliveredAttempts, error: deliveredAttemptsError } = await admin
+      .from('security_event_retry_attempts')
+      .select('id')
+      .eq('queue_id', queuedRow.id)
+      .eq('delivery_status', 'delivered');
+    assert.equal(deliveredAttemptsError, null, deliveredAttemptsError?.message);
+    assert.equal(deliveredAttempts.length, 1, 'Expected replay worker to record delivered once for idempotent queue row');
+  });
 }
