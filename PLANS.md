@@ -1593,3 +1593,56 @@ Add operational recovery runbooks under `docs/ops/` and wire them into existing 
 ### Assumptions / open questions
 - Assumption: recovery execution uses Supabase CLI (`supabase db push`) and standard Postgres SQL verification queries.
 - TODO: add automated post-restore smoke tests once infra supports environment-level restore rehearsals.
+
+## Supabase integration test harness + category write-permission alignment (March 29, 2026)
+
+### Goal
+Add an executable integration test suite under `tests/integration/` that runs against a local/ephemeral Supabase database with migrations applied, covering cross-tenant isolation, read-only write denial, and posting immutability/period-lock behavior.
+
+### Current behavior
+- Existing tests are mainly source-contract assertions (`tests/*.test.js`) and do not execute against a live database.
+- No integration test runner currently provisions or resets a local Supabase stack for deterministic data setup.
+- `read_only` write denial is enforced for transactions/receipts/postings, but categories currently rely on shared-membership policies without a dedicated write permission gate.
+
+### Proposed approach
+1. Add a local integration runner script that:
+   - boots local Supabase,
+   - resets DB with migrations,
+   - exports local Supabase env vars,
+   - executes `node --test tests/integration/*.test.js`,
+   - and stops Supabase afterward.
+2. Add integration helpers + fixtures seeding that uses deterministic IDs from `tests/fixtures/golden-datasets.js` and decimal-safe string amounts.
+3. Add integration suites for:
+   - cross-tenant denial and same-company allow on `transactions`, `categories`, and `receipts` tables backing `/api/transactions`, `/api/categories`, `/api/receipts`,
+   - role-based write denial for `read_only`,
+   - posting creation/reversal constraints via posted-entry immutability trigger and period-lock rejection paths.
+4. Align category write controls with role-based write rules:
+   - additive migration to split category read/mutate policies and gate mutation via `finance.categories.write`,
+   - add corresponding API permission check and permission constant.
+5. Document setup/execution in `docs/testing/TEST_STRATEGY.md` and `README.md`.
+
+### Affected files
+- `tests/integration/*` (new integration harness + suites)
+- `scripts/run-supabase-integration-tests.mjs` (new)
+- `package.json` (new integration script)
+- `supabase/migrations/<new>_categories_write_permissions_alignment.sql`
+- `src/lib/company-permissions.ts`
+- `src/app/api/categories/route.ts`
+- `docs/testing/TEST_STRATEGY.md`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- Local integration runner depends on Supabase CLI + Docker availability.
+- Category policy changes could affect existing flows where read-only users currently create categories.
+- Integration fixtures can drift unless docs and datasets are kept aligned.
+
+### Verification steps
+- `npm run test:integration:local` (or direct `node --test tests/integration/*.test.js` when env is already exported)
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: category creation should be treated as a finance write action denied to `read_only`.
+- Assumption: local Supabase stack is the canonical integration target for this repository.

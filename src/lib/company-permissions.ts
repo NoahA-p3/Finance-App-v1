@@ -7,6 +7,7 @@ export const COMPANY_PERMISSIONS = {
   INVITATIONS_READ: "company.invitations.read",
   INVITATIONS_MANAGE: "company.invitations.manage",
   FINANCE_TRANSACTIONS_WRITE: "finance.transactions.write",
+  FINANCE_CATEGORIES_WRITE: "finance.categories.write",
   FINANCE_RECEIPTS_WRITE: "finance.receipts.write",
   FINANCE_POSTINGS_WRITE: "finance.postings.write",
   FINANCE_PERIOD_LOCKS_MANAGE: "finance.period_locks.manage"
