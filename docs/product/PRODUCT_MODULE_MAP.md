@@ -1,6 +1,7 @@
 # Product Module Map
 
 Related docs: [PRD](./PRD.md), [Delivery Phases](./DELIVERY_PHASES.md), [User Flows](../ux/USER_FLOWS.md), [System Overview](../architecture/SYSTEM_OVERVIEW.md).
+For Settings tab-level implementation clarity (tab status, persisted models, routes, placeholders), see [Settings Information Architecture](../architecture/SETTINGS_INFORMATION_ARCHITECTURE.md#settings-tab-readiness-matrix).
 
 Status labels:
 - **Implemented**: supported by current code paths and data model.

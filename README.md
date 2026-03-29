@@ -197,6 +197,7 @@ Documentation is structured around 12 product modules (user/company management t
 - Module boundaries and status: `docs/product/PRODUCT_MODULE_MAP.md`
 - Delivery phases and priority outcomes: `docs/product/DELIVERY_PHASES.md`
 - User journeys across modules: `docs/ux/USER_FLOWS.md`
+- Settings tab-level implementation clarity (status/models/APIs/placeholders): `docs/architecture/SETTINGS_INFORMATION_ARCHITECTURE.md` (see **Settings tab readiness matrix**).
 
 ## Working with Codex in this repo
 - Read `AGENTS.md` first.
