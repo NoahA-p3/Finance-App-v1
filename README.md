@@ -88,7 +88,8 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run build` — production build
 - `npm run start` — run built app
-- `npm run test` — run Node test suite (`node --test tests/*.test.js`)
+- `npm run test` — run fast Node contract test suite (`node --test tests/*.test.js`)
+- `npm run test:integration:local` — boot local Supabase, reset/apply migrations, and run integration tests (`node --test tests/integration/*.test.js`)
 - `npm run deadcode:audit-dashboard-components` — import-graph audit from `src/app/**` into legacy dashboard component scopes
 
 ## Dead-code import audit process
@@ -115,8 +116,9 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - [ ] If docs and runtime evidence still disagree, documented the gap explicitly in the PR summary.
 
 ## Current automated test coverage and limitations
-- `npm run test` executes Node built-in tests under `tests/*.test.js`.
-- Current tests focus on repository contract checks (API/migration/source assertions), not full live integration behavior.
+- `npm run test` executes Node built-in contract tests under `tests/*.test.js`.
+- `npm run test:integration:local` executes Supabase-backed integration tests under `tests/integration/*.test.js` against a local ephemeral database with migrations applied (`supabase db reset --local --yes`).
+- Integration coverage currently prioritizes cross-tenant isolation, `read_only` write denial, and posting/period-lock/immutability invariants backing finance APIs.
 - No e2e browser test suite is currently wired in package scripts.
 - Use `npm run lint` + `npm run typecheck` as baseline quality checks for all changes.
 
@@ -134,6 +136,11 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
   ```bash
   supabase db push
   ```
+- Integration test flow (local/ephemeral Supabase):
+  ```bash
+  npm run test:integration:local
+  ```
+  This command performs: `supabase start` -> `supabase db reset --local --yes` (applies all migrations) -> `node --test tests/integration/*.test.js` -> `supabase stop`.
 
 ## Repository structure
 - `src/app/(auth)` — login/signup/forgot-password/reset-password routes

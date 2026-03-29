@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
-import { getCompanyMembershipContext } from "@/lib/company-permissions";
+import { COMPANY_PERMISSIONS, getCompanyMembershipContext, hasCompanyPermission } from "@/lib/company-permissions";
 
 export async function GET() {
   const authContext = await requireAuthenticatedApiUser();
@@ -25,6 +25,9 @@ export async function POST(req: NextRequest) {
 
   const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
   if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+  if (!hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_CATEGORIES_WRITE)) {
+    return NextResponse.json({ error: "Missing required permission: finance.categories.write" }, { status: 403 });
+  }
 
   const payload = (await req.json().catch(() => null)) as { name?: unknown } | null;
   const name = typeof payload?.name === "string" ? payload.name.trim() : "";
@@ -47,6 +50,9 @@ export async function DELETE(req: NextRequest) {
 
   const membership = await getCompanyMembershipContext(authContext.supabase, authContext.user.id);
   if (!membership) return NextResponse.json({ error: "No company membership found." }, { status: 404 });
+  if (!hasCompanyPermission(membership, COMPANY_PERMISSIONS.FINANCE_CATEGORIES_WRITE)) {
+    return NextResponse.json({ error: "Missing required permission: finance.categories.write" }, { status: 403 });
+  }
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });

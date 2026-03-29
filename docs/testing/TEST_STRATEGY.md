@@ -2,7 +2,7 @@
 
 Related docs: [Golden Datasets](./GOLDEN_DATASETS.md), [Security Rules](../security/SECURITY_RULES.md), [DK VAT Rules](../domain/DK_VAT_RULES.md).
 
-**Last verified:** 2026-03-27.
+**Last verified:** 2026-03-29.
 
 ## Last-verified policy
 - This date records when this testing guidance was last checked against real repository scripts/tests.
@@ -15,6 +15,7 @@ Current executable commands in `package.json`:
 - `npm run typecheck`
 - `npm run build`
 - `npm run deadcode:audit-dashboard-components` (import-graph reachability audit from `src/app/**` into legacy dashboard component scopes)
+- `npm run test:integration:local` (boots local Supabase, applies migrations via reset, runs `tests/integration/*.test.js`)
 
 ## Current automated test scope (and limitations)
 Implemented test files currently validate codebase contracts such as:
@@ -28,7 +29,7 @@ Implemented test files currently validate codebase contracts such as:
 
 Limitations to state explicitly:
 - Tests are source/migration contract assertions (string/pattern checks), not full runtime integration tests.
-- No database-seeded integration suite is currently wired into `npm test`.
+- Database-seeded integration tests now live under `tests/integration/*.test.js` and are run via `npm run test:integration:local` (separate from fast contract tests in `npm run test`).
 - No e2e browser flow tests are currently wired into scripts.
 - VAT/tax engine behavior is not covered because the engine is still planned.
 
@@ -40,11 +41,16 @@ Limitations to state explicitly:
   - period lock and reversal rules,
   - report aggregation math (decimal-safe).
 
-### Integration tests (target)
-- API route handlers against a Supabase test environment.
-- RLS behavior by user identity and company membership.
-- Migration correctness and rollback/recovery checks.
-- Storage policies for receipt upload/read/update/delete boundaries.
+### Integration tests (current + target)
+Current executable integration suite (`tests/integration/supabase-rls-and-posting.integration.test.js`) covers core DB-backed API invariants using local Supabase auth + RLS:
+- cross-tenant denial and same-company allow for `transactions`, `categories`, `receipts` (backing `/api/transactions`, `/api/categories`, `/api/receipts`),
+- role-based write denial for `read_only`,
+- posting/reversal immutability enforcement (`journal_entries` append-only behavior) and period-lock precondition query behavior.
+
+Planned expansion:
+- HTTP-level route integration assertions with authenticated cookie/session wiring against the Next.js API layer.
+- migration rollback/recovery rehearsal automation.
+- storage bucket upload/read policy assertions at object level.
 
 ### End-to-end tests (target)
 - Auth lifecycle (signup, login, logout, protected redirects).
@@ -64,8 +70,9 @@ Limitations to state explicitly:
 1. `npm run lint`
 2. `npm run typecheck`
 3. `npm run test`
-4. `npm run build` (recommended for schema/API/route changes)
-5. `npm run deadcode:audit-dashboard-components` when refactoring dashboard/navigation component trees
+4. `npm run test:integration:local` when changing auth/RLS/finance-permission/posting behavior
+5. `npm run build` (recommended for schema/API/route changes)
+6. `npm run deadcode:audit-dashboard-components` when refactoring dashboard/navigation component trees
 
 For docs-only changes, lint/typecheck are the baseline minimum.
 
@@ -77,6 +84,6 @@ For docs-only changes, lint/typecheck are the baseline minimum.
   - update README/docs paths in the same PR.
 
 ## Current gaps summary
-- No executable integration/e2e test harness yet.
-- No automated golden dataset execution yet.
+- Integration harness exists for local Supabase, but HTTP-level Next.js route integration coverage is still pending.
+- No e2e browser flow coverage yet.
 - No CI policy file documented in repo for mandatory gate enforcement.
