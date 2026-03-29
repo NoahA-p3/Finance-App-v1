@@ -6,7 +6,9 @@ This runbook documents the intended execution sequence for SQL files in `supabas
 
 ## Canonical run order
 
-Run files in lexicographic order (timestamp prefix):
+Run files in lexicographic order by **full filename** (not only timestamp prefix).
+
+> Ordering rule for equal timestamp prefixes (for example, `202603290001_*`): sort by the complete filename in ascending lexicographic order.
 
 1. `202603200001_init.sql`
 2. `202603200002_auth_profiles.sql`
@@ -22,7 +24,8 @@ Run files in lexicographic order (timestamp prefix):
 12. `202603270002_posting_and_audit_immutability.sql`
 13. `202603270003_finance_write_permissions_and_rls_alignment.sql`
 14. `202603280001_companies_bootstrap_rls_fix.sql`
-15. `202603290001_security_session_events.sql`
+15. `202603290001_company_invitation_acceptance_flow.sql`
+16. `202603290001_security_session_events.sql`
 
 ## Sequence-sensitive dependency checkpoints
 
@@ -47,6 +50,12 @@ Run files in lexicographic order (timestamp prefix):
 ### E) User-scoped session security audit after auth foundation
 - `202603290001_security_session_events.sql` depends on `auth.users` and should run after core auth/profile migrations.
 - It is independent from company-scoped posting `audit_events`; no company foreign key is required.
+
+### F) Same-prefix migration pair ordering (`202603290001_*`)
+- `202603290001_company_invitation_acceptance_flow.sql` and `202603290001_security_session_events.sql` intentionally share the same timestamp prefix.
+- Apply in full-filename lexicographic order:
+  1. `202603290001_company_invitation_acceptance_flow.sql`
+  2. `202603290001_security_session_events.sql`
 
 ## Legacy branch handling note
 
