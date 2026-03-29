@@ -34,3 +34,84 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  integration:
+    name: Integration (Supabase local)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect integration-impacting changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            integration:
+              - 'src/app/api/**'
+              - 'src/lib/postings/**'
+              - 'supabase/migrations/**'
+              - 'scripts/run-supabase-integration-tests.mjs'
+              - 'tests/integration/**'
+              - '.github/workflows/pr-ci.yml'
+
+      - name: Decide whether full integration is required
+        id: gate
+        run: |
+          should_run=false
+
+          if [[ "${{ steps.changes.outputs.integration }}" == "true" ]]; then
+            should_run=true
+          fi
+
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'ci:full-integration') }}" == "true" ]]; then
+            should_run=true
+          fi
+
+          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
+          echo "integration_required=$should_run"
+
+      - name: Setup Node.js
+        if: steps.gate.outputs.should_run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.gate.outputs.should_run == 'true'
+        run: npm ci
+
+      - name: Setup Supabase CLI
+        if: steps.gate.outputs.should_run == 'true'
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run integration tests against local Supabase
+        if: steps.gate.outputs.should_run == 'true'
+        run: |
+          mkdir -p ci-artifacts
+          set -o pipefail
+          npm run test:integration:local 2>&1 | tee ci-artifacts/integration-test.log
+
+      - name: Capture Supabase diagnostics
+        if: always() && steps.gate.outputs.should_run == 'true'
+        run: |
+          mkdir -p ci-artifacts
+          supabase status -o pretty > ci-artifacts/supabase-status.log 2>&1 || true
+          supabase logs --local > ci-artifacts/supabase-logs.log 2>&1 || true
+
+      - name: Upload integration artifacts
+        if: always() && steps.gate.outputs.should_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-local-logs
+          path: ci-artifacts/
+          if-no-files-found: warn
+
+      - name: Skip note (integration not required)
+        if: steps.gate.outputs.should_run != 'true'
+        run: |
+          echo "Skipping integration tests: no matching paths and no 'ci:full-integration' label present."

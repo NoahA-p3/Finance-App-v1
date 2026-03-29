@@ -70,9 +70,20 @@ Planned expansion:
 1. `npm run lint`
 2. `npm run typecheck`
 3. `npm run test`
-4. `npm run test:integration:local` when changing auth/RLS/finance-permission/posting behavior
-5. `npm run build` (recommended for schema/API/route changes)
-6. `npm run deadcode:audit-dashboard-components` when refactoring dashboard/navigation component trees
+4. `npm run build` (recommended for schema/API/route changes)
+5. `npm run deadcode:audit-dashboard-components` when refactoring dashboard/navigation component trees
+
+### Integration CI gate policy
+The PR CI workflow includes a separate **Integration (Supabase local)** job that runs `npm run test:integration:local` when either trigger is met:
+- changed paths include `src/app/api/**`, `src/lib/postings/**`, `supabase/migrations/**`, `tests/integration/**`, `scripts/run-supabase-integration-tests.mjs`, or `.github/workflows/pr-ci.yml`, or
+- the PR is labeled `ci:full-integration`.
+
+This means integration checks are mandatory for API/postings/migration and related integration harness changes by default, and can be forced for any PR via label.
+
+When the integration job runs, it uploads `integration-local-logs` artifacts with:
+- integration command output,
+- Supabase status output,
+- Supabase local logs.
 
 For docs-only changes, lint/typecheck are the baseline minimum.
 
@@ -86,4 +97,4 @@ For docs-only changes, lint/typecheck are the baseline minimum.
 ## Current gaps summary
 - Integration harness exists for local Supabase, but HTTP-level Next.js route integration coverage is still pending.
 - No e2e browser flow coverage yet.
-- No CI policy file documented in repo for mandatory gate enforcement.
+- CI policy now documents conditional integration gating; branch-protection enforcement mode is still a governance decision.
