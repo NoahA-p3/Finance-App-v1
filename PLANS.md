@@ -1646,3 +1646,42 @@ Add an executable integration test suite under `tests/integration/` that runs ag
 ### Assumptions / open questions
 - Assumption: category creation should be treated as a finance write action denied to `read_only`.
 - Assumption: local Supabase stack is the canonical integration target for this repository.
+
+## Session revocation audit failure policy hardening (March 29, 2026)
+
+### Goal
+Define deterministic runtime behavior when session revocation succeeds but security audit persistence fails, and codify this policy in route handling/tests/docs.
+
+### Current behavior
+- `DELETE /api/me/sessions/{session_id}` revokes the session, then calls `emitSessionRevokedEvent(...)` without local error handling.
+- If the audit write throws, the route can fail with an unhandled error shape and no explicit internal telemetry or retry guidance.
+
+### Proposed approach
+1. Adopt **best-effort audit durability** policy for session revocation:
+   - Session revocation success response remains `200 { success: true }`.
+   - Audit write failures are caught and logged with non-sensitive structured details.
+   - Add an explicit retry-queue placeholder comment/TODO for future background remediation.
+2. Keep external response shape stable and avoid leaking storage internals.
+3. Update security docs to explicitly state this policy under session/audit controls.
+4. Add contract tests for route-level catch policy and a future integration-test placeholder for replay/retry validation once queue infrastructure exists.
+
+### Affected files
+- `src/app/api/me/sessions/[session_id]/route.ts`
+- `docs/security/SECURITY_RULES.md`
+- `tests/session-security-audit-contract.test.js`
+- `tests/integration/supabase-rls-and-posting.integration.test.js`
+- `PLANS.md`
+
+### Risks
+- Best-effort semantics can leave a temporary audit gap when write fails.
+- Without queue implementation, remediation remains manual/instrumentation-driven.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm test`
+
+### Assumptions / open questions
+- Assumption: preserving user-facing revocation completion is preferred to avoid ambiguity for security actions.
+- TODO: implement durable background retry worker and dead-letter tracking for failed session audit writes.
