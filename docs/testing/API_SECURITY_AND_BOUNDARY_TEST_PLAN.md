@@ -8,8 +8,10 @@ Related docs: [Test Strategy](./TEST_STRATEGY.md), [Golden Datasets](./GOLDEN_DA
 Establish an initial executable regression layer for API auth gates, company isolation, role permissions, transaction validation + entitlement boundaries, receipt upload boundaries, and deterministic fixture coverage.
 
 ## Current test model
-- Existing tests are contract assertions over route/library source and migrations.
-- No seeded Supabase integration harness is currently wired into `npm run test`.
+- The baseline suite is split across fast Node contract tests (`tests/*.test.js`) and Supabase-backed integration tests (`tests/integration/*.test.js`).
+- Supabase integration execution is wired through `scripts/run-supabase-integration-tests.mjs` (used by `npm run test:integration:local`) to start local Supabase, reset/apply migrations, run integration tests, and shut Supabase down.
+- Current integration coverage includes cross-tenant isolation, `read_only` write denial, and posting/period-lock immutability invariants in `tests/integration/supabase-rls-and-posting.integration.test.js`.
+- **As of:** 2026-03-29.
 
 ## Scope for this test-plan slice
 1. API auth enforcement for key route handlers in `src/app/api/*`.

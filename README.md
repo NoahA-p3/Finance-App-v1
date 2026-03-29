@@ -123,6 +123,7 @@ These checks run automatically via `.github/workflows/pr-ci.yml` on every pull r
 - [ ] Added an explicit **As of: YYYY-MM-DD** date in every updated status section.
 - [ ] Added direct evidence links to changed claims (prefer `src/app/api/*`, `src/lib/*`, `supabase/migrations/*`).
 - [ ] If docs and runtime evidence still disagree, documented the gap explicitly in the PR summary.
+- [ ] Validated every status/coverage documentation claim against concrete code evidence (routes, scripts, tests, workflows) in the same PR.
 
 ## Current automated test coverage and limitations
 - `npm run test` executes Node built-in contract tests under `tests/*.test.js`.
