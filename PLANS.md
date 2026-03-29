@@ -1,3 +1,39 @@
+## PR CI integration-gate enhancement plan (March 29, 2026)
+
+### Goal
+Extend PR CI with a separate Supabase-backed integration job, selective trigger policy, artifact capture, and contributor documentation updates.
+
+### Current behavior
+- PR CI has one quality job running lint/typecheck/unit/build checks only.
+- No dedicated integration job in CI for `npm run test:integration:local`.
+- No PR-level artifact upload for Supabase/integration diagnostics.
+- Docs do not define mandatory integration trigger policy.
+
+### Proposed approach
+- Add an `integration` job to `.github/workflows/pr-ci.yml`.
+- Use path filtering plus a `ci:full-integration` label override to control when integration runs.
+- Install Supabase CLI and run `npm run test:integration:local` with log capture.
+- Always upload integration artifacts when the job executes.
+- Document the trigger policy and artifact expectations in `CONTRIBUTING.md` and `docs/testing/TEST_STRATEGY.md`.
+
+### Affected files
+- `.github/workflows/pr-ci.yml`
+- `CONTRIBUTING.md`
+- `docs/testing/TEST_STRATEGY.md`
+- `PLANS.md`
+
+### Risks
+- Path filters may miss edge-case files that should require integration checks.
+- Additional CI job may still increase runtime for qualifying PRs.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: `ci:full-integration` is acceptable as the explicit maintainer override label.
+- Open question: whether branch protection should require the integration job unconditionally or conditionally.
+
 ## CI workflow + migration-order coverage check (March 29, 2026)
 
 ### Goal
