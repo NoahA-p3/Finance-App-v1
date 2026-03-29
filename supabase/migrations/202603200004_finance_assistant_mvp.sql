@@ -106,3 +106,34 @@ values (
 on conflict (id) do update
 set allowed_mime_types = excluded.allowed_mime_types,
     file_size_limit = excluded.file_size_limit;
+
+-- Rollback / recovery notes:
+-- Snapshot before rollback:
+--   create table if not exists public._snapshot_202603200004_users as table public.users;
+--   create table if not exists public._snapshot_202603200004_accounts as table public.accounts;
+--   create table if not exists public._snapshot_202603200004_categories as table public.categories;
+--   create table if not exists public._snapshot_202603200004_transactions as table public.transactions;
+--   create table if not exists public._snapshot_202603200004_receipts as table public.receipts;
+--   create table if not exists public._snapshot_202603200004_policies as
+--     select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+--     from pg_policies
+--     where schemaname = 'public'
+--       and tablename in ('users','accounts','categories','transactions','receipts');
+-- Recovery rollback (legacy-branch destructive cleanup):
+--   drop table if exists public.receipts cascade;
+--   drop table if exists public.transactions cascade;
+--   drop table if exists public.categories cascade;
+--   drop table if exists public.accounts cascade;
+--   drop table if exists public.users cascade;
+-- Re-verify after rollback or restore:
+--   select to_regclass('public.users') as users_table,
+--          to_regclass('public.accounts') as accounts_table,
+--          to_regclass('public.categories') as categories_table,
+--          to_regclass('public.transactions') as transactions_table,
+--          to_regclass('public.receipts') as receipts_table;
+--   select policyname, tablename, cmd
+--   from pg_policies
+--   where schemaname = 'public'
+--     and tablename in ('users','accounts','categories','transactions','receipts')
+--   order by tablename, policyname;
+

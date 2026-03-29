@@ -93,3 +93,30 @@ create policy "Users delete own receipts" on storage.objects
     bucket_id = 'receipts'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- Rollback / recovery notes:
+-- Snapshot before rollback:
+--   create table if not exists public._snapshot_202603200001_categories as table public.categories;
+--   create table if not exists public._snapshot_202603200001_transactions as table public.transactions;
+--   create table if not exists public._snapshot_202603200001_receipts as table public.receipts;
+--   create table if not exists public._snapshot_202603200001_storage_policies as
+--     select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+--     from pg_policies
+--     where schemaname in ('public', 'storage')
+--       and ((schemaname = 'public' and tablename in ('categories', 'transactions', 'receipts'))
+--         or (schemaname = 'storage' and tablename = 'objects'));
+-- Recovery rollback (destructive for current objects):
+--   drop table if exists public.transactions cascade;
+--   drop table if exists public.receipts cascade;
+--   drop table if exists public.categories cascade;
+--   delete from storage.buckets where id = 'receipts';
+-- Re-verify after rollback or restore:
+--   select to_regclass('public.categories') as categories_table,
+--          to_regclass('public.transactions') as transactions_table,
+--          to_regclass('public.receipts') as receipts_table;
+--   select policyname, schemaname, tablename, cmd
+--   from pg_policies
+--   where schemaname in ('public', 'storage')
+--     and tablename in ('categories', 'transactions', 'receipts', 'objects')
+--   order by schemaname, tablename, policyname;
+
