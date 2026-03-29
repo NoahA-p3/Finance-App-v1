@@ -14,12 +14,31 @@ Define the MVP baseline that is either implemented today or required to stabiliz
 - Early onboarding and settings surfaces
 - Internal plan/entitlement read path with server-enforced soft limits (monthly voucher counter + rolling turnover cap)
 
+## Accounting-core boundary clarification (full ledger engine vs current runtime baseline)
+**As of:** 2026-03-29.
+
+### Already implemented in runtime baseline (posting/reversal/period locks)
+- Posting create/list baseline exists for company-scoped journal activity.
+- Reversal flow exists for posted records, preserving append-only correction behavior.
+- Period lock create/list baseline exists.
+- DB-level immutability and append-only audit-event constraints exist for posting/audit records.
+
+File-level evidence pointers:
+- Posting routes: [`src/app/api/postings/route.ts`](../../src/app/api/postings/route.ts), [`src/app/api/postings/[posting_id]/reverse/route.ts`](../../src/app/api/postings/[posting_id]/reverse/route.ts), [`src/app/api/postings/period-locks/route.ts`](../../src/app/api/postings/period-locks/route.ts)
+- Posting service: [`src/lib/postings/service.ts`](../../src/lib/postings/service.ts)
+- Journal/audit immutability migration: [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../../supabase/migrations/202603270002_posting_and_audit_immutability.sql)
+- Cross-check references: [`docs/product/PRODUCT_MODULE_MAP.md`](./PRODUCT_MODULE_MAP.md), [`docs/architecture/TECHNICAL_MODULES.md`](../architecture/TECHNICAL_MODULES.md), [`tasks/EPICS.md`](../../tasks/EPICS.md)
+
+### Still excluded from “full ledger engine” scope
+- Full chart-of-accounts strategy and deeper accounting controls beyond baseline posting/reversal/period-lock flows.
+- Compliance-grade VAT/tax calculation and filing automation.
+- Fixed-assets and broader accounting/reporting depth described in Module 4 target-state docs.
+
 ## Explicitly out of scope for stabilized MVP
 - Full invoice/quote/order lifecycle
-- Full double-entry ledger engine and period locking
 - Automated bank sync and reconciliation engine
 - Payroll, year-end filing workspace, and developer platform
-- Compliance-grade VAT/tax automation
+- Full ledger-engine completion beyond implemented posting/reversal/period-lock baseline
 - External billing provider coupling (subscriptions remain internal-source in current MVP)
 
 ## Launch segment
