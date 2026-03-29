@@ -50,8 +50,10 @@ if (!hasIntegrationEnv()) {
 } else {
   let fixture;
   let ownerA;
+  let ownerB;
   let readOnlyA;
   let ownerCookie;
+  let ownerBCookie;
   let readOnlyCookie;
   let nextServer;
   let baseUrl;
@@ -59,9 +61,12 @@ if (!hasIntegrationEnv()) {
   test.before(async () => {
     fixture = await seedIntegrationFixture();
     ownerA = await createAuthedClient(fixture.users.ownerA.email, fixture.users.ownerA.password);
+    await createAuthedClient(fixture.users.ownerA.email, fixture.users.ownerA.password);
+    ownerB = await createAuthedClient(fixture.users.ownerB.email, fixture.users.ownerB.password);
     readOnlyA = await createAuthedClient(fixture.users.readOnlyA.email, fixture.users.readOnlyA.password);
 
     ownerCookie = await buildSessionCookie(ownerA);
+    ownerBCookie = await buildSessionCookie(ownerB);
     readOnlyCookie = await buildSessionCookie(readOnlyA);
 
     const port = 3300 + Math.floor(Math.random() * 200);
@@ -249,5 +254,204 @@ if (!hasIntegrationEnv()) {
     assert.equal(createPostingResponse.status, 400);
     const createPostingPayload = await createPostingResponse.json();
     assert.match(createPostingPayload.error, /inside a locked accounting period/);
+  });
+
+  test('/api/me/account and /api/me/devices cover unauthorized + minimal success contracts', async () => {
+    const unauthorizedAccount = await fetch(`${baseUrl}/api/me/account`);
+    assert.equal(unauthorizedAccount.status, 401);
+    assert.deepEqual(await unauthorizedAccount.json(), { error: 'Unauthorized' });
+
+    const authorizedAccount = await fetch(`${baseUrl}/api/me/account`, {
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(authorizedAccount.status, 200);
+    const accountPayload = await authorizedAccount.json();
+    assert.ok(accountPayload?.profile);
+    assert.equal(typeof accountPayload.profile.name, 'string');
+    assert.equal(typeof accountPayload.profile.email, 'string');
+    assert.equal(typeof accountPayload.profile.securityStatus, 'string');
+    assert.equal(typeof accountPayload.profile.activeSessions, 'number');
+    assert.equal(typeof accountPayload.profile.mfaEnabled, 'boolean');
+    assert.equal(typeof accountPayload.profile.emailVerified, 'boolean');
+
+    const unauthorizedDevices = await fetch(`${baseUrl}/api/me/devices`);
+    assert.equal(unauthorizedDevices.status, 401);
+    assert.deepEqual(await unauthorizedDevices.json(), { error: 'Unauthorized' });
+
+    const authorizedDevices = await fetch(`${baseUrl}/api/me/devices`, {
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(authorizedDevices.status, 200);
+    const devicesPayload = await authorizedDevices.json();
+    assert.ok(Array.isArray(devicesPayload.devices));
+  });
+
+  test('/api/me/login-alerts covers unauthorized + minimal success contracts', async () => {
+    const unauthorized = await fetch(`${baseUrl}/api/me/login-alerts`);
+    assert.equal(unauthorized.status, 401);
+    assert.deepEqual(await unauthorized.json(), { error: 'Unauthorized' });
+
+    const authorized = await fetch(`${baseUrl}/api/me/login-alerts`, {
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(authorized.status, 200);
+    const payload = await authorized.json();
+    assert.ok(Array.isArray(payload.alerts));
+  });
+
+  test('/api/me/mfa/* covers GET + POST + DELETE contracts and unauthorized branches', async () => {
+    const unauthorizedGet = await fetch(`${baseUrl}/api/me/mfa`);
+    assert.equal(unauthorizedGet.status, 401);
+    assert.deepEqual(await unauthorizedGet.json(), { error: 'Unauthorized' });
+
+    const authorizedGet = await fetch(`${baseUrl}/api/me/mfa`, {
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(authorizedGet.status, 200);
+    const mfaPayload = await authorizedGet.json();
+    assert.equal(typeof mfaPayload.mfaEnabled, 'boolean');
+    assert.ok(Array.isArray(mfaPayload.factors));
+
+    const unauthorizedEnroll = await fetch(`${baseUrl}/api/me/mfa/enroll`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ friendlyName: 'Integration test factor' })
+    });
+    assert.equal(unauthorizedEnroll.status, 401);
+    assert.deepEqual(await unauthorizedEnroll.json(), { error: 'Unauthorized' });
+
+    const challengeMissingFactor = await fetch(`${baseUrl}/api/me/mfa/challenge`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+    assert.equal(challengeMissingFactor.status, 400);
+    assert.deepEqual(await challengeMissingFactor.json(), { error: 'factorId is required.' });
+
+    const verifyMissingFields = await fetch(`${baseUrl}/api/me/mfa/verify`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+    assert.equal(verifyMissingFields.status, 400);
+    assert.deepEqual(await verifyMissingFields.json(), { error: 'factorId, challengeId, and code are required.' });
+
+    const authorizedEnroll = await fetch(`${baseUrl}/api/me/mfa/enroll`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ friendlyName: 'Integration test factor' })
+    });
+
+    assert.ok([200, 400].includes(authorizedEnroll.status));
+    const enrollPayload = await authorizedEnroll.json();
+    if (authorizedEnroll.status === 200) {
+      assert.equal(typeof enrollPayload.factorId, 'string');
+      assert.equal(typeof enrollPayload.uri, 'string');
+      assert.equal(typeof enrollPayload.qrCode, 'string');
+
+      const deleteEnrolledFactor = await fetch(`${baseUrl}/api/me/mfa/${enrollPayload.factorId}`, {
+        method: 'DELETE',
+        headers: { Cookie: ownerCookie }
+      });
+      assert.equal(deleteEnrolledFactor.status, 200);
+      assert.deepEqual(await deleteEnrolledFactor.json(), { success: true });
+    } else {
+      assert.deepEqual(enrollPayload, { error: 'Unable to start MFA enrollment.' });
+    }
+
+    const unauthorizedDelete = await fetch(`${baseUrl}/api/me/mfa/11111111-1111-4111-8111-111111111111`, {
+      method: 'DELETE'
+    });
+    assert.equal(unauthorizedDelete.status, 401);
+    assert.deepEqual(await unauthorizedDelete.json(), { error: 'Unauthorized' });
+
+    const deleteUnknownFactor = await fetch(`${baseUrl}/api/me/mfa/11111111-1111-4111-8111-111111111111`, {
+      method: 'DELETE',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(deleteUnknownFactor.status, 400);
+    assert.deepEqual(await deleteUnknownFactor.json(), { error: 'Unable to disable MFA.' });
+  });
+
+  test('/api/me/sessions/:session_id covers revoke success/failure and audit fallback contract', async () => {
+    const ownerASessionsResponse = await fetch(`${baseUrl}/api/me/sessions`, {
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(ownerASessionsResponse.status, 200);
+    const ownerASessionsPayload = await ownerASessionsResponse.json();
+    assert.ok(Array.isArray(ownerASessionsPayload.sessions));
+    assert.ok(ownerASessionsPayload.sessions.length >= 2, 'Expected at least two owner sessions for revoke test');
+
+    const currentSession = ownerASessionsPayload.sessions.find((entry) => entry.isCurrent);
+    assert.ok(currentSession, 'Expected to resolve current session');
+
+    const otherSession = ownerASessionsPayload.sessions.find((entry) => entry.id !== currentSession.id);
+    assert.ok(otherSession, 'Expected a revocable non-current session');
+
+    const unauthorizedDelete = await fetch(`${baseUrl}/api/me/sessions/${otherSession.id}`, {
+      method: 'DELETE'
+    });
+    assert.equal(unauthorizedDelete.status, 401);
+    assert.deepEqual(await unauthorizedDelete.json(), { error: 'Unauthorized' });
+
+    const invalidIdDelete = await fetch(`${baseUrl}/api/me/sessions/not-a-uuid`, {
+      method: 'DELETE',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(invalidIdDelete.status, 400);
+    assert.deepEqual(await invalidIdDelete.json(), { error: 'Invalid session id.' });
+
+    const ownerBSessionsResponse = await fetch(`${baseUrl}/api/me/sessions`, {
+      headers: { Cookie: ownerBCookie }
+    });
+    assert.equal(ownerBSessionsResponse.status, 200);
+    const ownerBSessionsPayload = await ownerBSessionsResponse.json();
+    const ownerBSession = ownerBSessionsPayload.sessions[0];
+    assert.ok(ownerBSession?.id);
+
+    const forbiddenCrossUserDelete = await fetch(`${baseUrl}/api/me/sessions/${ownerBSession.id}`, {
+      method: 'DELETE',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(forbiddenCrossUserDelete.status, 403);
+    assert.deepEqual(await forbiddenCrossUserDelete.json(), { error: 'Forbidden' });
+
+    const successfulDelete = await fetch(`${baseUrl}/api/me/sessions/${otherSession.id}`, {
+      method: 'DELETE',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(successfulDelete.status, 200);
+    assert.deepEqual(await successfulDelete.json(), { success: true });
+
+    const admin = getAdminClient();
+    const { data: securityEvents, error: securityEventsError } = await admin
+      .from('security_session_events')
+      .select('id')
+      .eq('actor_user_id', fixture.userIds.ownerA)
+      .eq('target_session_id', otherSession.id)
+      .eq('event_type', 'session.revoked');
+    assert.equal(securityEventsError, null, securityEventsError?.message);
+
+    const { data: retryQueueEvents, error: retryQueueError } = await admin
+      .from('security_event_retry_queue')
+      .select('id')
+      .eq('actor_user_id', fixture.userIds.ownerA)
+      .eq('target_session_id', otherSession.id)
+      .eq('event_type', 'session.revoked');
+    assert.equal(retryQueueError, null, retryQueueError?.message);
+
+    assert.ok(
+      securityEvents.length > 0 || retryQueueEvents.length > 0,
+      'Expected session revoke to create security audit event or fallback retry-queue event'
+    );
   });
 }
