@@ -50,6 +50,13 @@ jobs:
           filters: |
             integration:
               - 'src/app/api/**'
+              # Shared runtime security logic should trigger Supabase integration tests,
+              # even when route files are unchanged.
+              - 'src/lib/company-permissions.ts'
+              - 'src/lib/auth.ts'
+              - 'src/lib/session-management.ts'
+              - 'src/lib/session-events.ts'
+              - 'src/lib/entitlements.ts'
               - 'src/lib/postings/**'
               - 'supabase/migrations/**'
               - 'scripts/run-supabase-integration-tests.mjs'
