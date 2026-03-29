@@ -27,12 +27,21 @@ Pull requests are required to pass the repository CI workflow (`.github/workflow
 
 - `npm ci`
 - `npm run check:migration-order`
+- `npm run check:legacy-runtime-references`
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
 - `npm run build`
 
 The migration-order check ensures `supabase/migrations/MIGRATION_ORDER.md` includes every SQL file under `supabase/migrations/`.
+
+The legacy runtime-reference check fails PRs when runtime app code in `src/app/**` or `src/lib/**` references legacy entities/columns (`public.users`, `public.accounts`, `transactions.account_id`, `receipts.file_url`). Legacy references are allowed in allowlisted documentation and migration paths (`docs/**`, `supabase/migrations/**`).
+
+### Intentional bypass for explicit legacy-support work
+
+If a PR intentionally adds runtime legacy references for explicit legacy-support work, apply the PR label `ci:allow-legacy-runtime`.
+
+In CI, that label sets `ALLOW_LEGACY_RUNTIME_REFERENCES=1` for the guard step so the check is bypassed for that run. Include a clear justification in the PR description and remove the label once legacy-support work is complete.
 
 ## Integration CI policy (Supabase local)
 

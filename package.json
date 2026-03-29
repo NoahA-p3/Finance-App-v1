@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.js",
     "check:migration-order": "node scripts/check-migration-order.mjs",
+    "check:legacy-runtime-references": "node scripts/check-legacy-runtime-references.mjs",
     "deadcode:audit-dashboard-components": "node scripts/audit-dashboard-import-graph.mjs",
     "test:integration:local": "node scripts/run-supabase-integration-tests.mjs",
     "security-events:replay-retry-queue": "node scripts/replay-security-event-retry-queue.mjs"
