@@ -50,6 +50,15 @@ Use this runbook after a restore-worthy incident (data corruption, failed destru
 - Post-restore verification checks pass (RLS, trigger immutability, receipt storage access).
 - Incident log contains restore timestamp, operator, backup ID, and verification results.
 
+## Lightweight rehearsal log template
+Use this template for restore drills and migration-release rehearsals.
+
+| Date (UTC) | Operator | Result (Pass/Fail) | Issues / Notes |
+| --- | --- | --- | --- |
+| YYYY-MM-DD | <name> | Pass \| Fail | <summary of blockers, follow-ups, ticket links> |
+
+Store completed entries in release notes and/or incident timeline docs for audit traceability.
+
 ## Related runbooks
 - [Backup Assumptions](./BACKUP_ASSUMPTIONS.md)
 - [Migration Rollback Sequence](./MIGRATION_ROLLBACK_SEQUENCE.md)

@@ -6,6 +6,11 @@ Use this checklist before promoting a migration-containing release.
 
 ## Mandatory checks
 - [ ] Migration list and order reviewed against `supabase/migrations/MIGRATION_ORDER.md`.
+- [ ] Backup policy verified for this release window:
+  - [ ] Backup cadence validated (latest successful snapshot timestamp recorded).
+  - [ ] Retention period validated for database + receipts backup artifacts.
+  - [ ] Target RPO/RTO reviewed and feasible for this release risk profile.
+  - [ ] Ownership/escalation contacts confirmed and on-call aware.
 - [ ] Recovery runbooks reviewed:
   - [ ] `docs/ops/BACKUP_ASSUMPTIONS.md`
   - [ ] `docs/ops/RESTORE_RUNBOOK.md`
@@ -13,6 +18,9 @@ Use this checklist before promoting a migration-containing release.
   - [ ] `docs/ops/POST_RESTORE_VERIFICATION.md`
 - [ ] Rollback owner assigned for release window.
 - [ ] Post-restore verification owner assigned.
+- [ ] Latest rehearsal log entries captured:
+  - [ ] `docs/ops/RESTORE_RUNBOOK.md` lightweight rehearsal log updated or linked in release notes.
+  - [ ] `docs/ops/POST_RESTORE_VERIFICATION.md` lightweight rehearsal log updated or linked in release notes.
 
 ## Conditional requirement (security/finance migrations)
 If any migration in the release touches security-sensitive or finance tables/policies (including RLS, triggers, audit, receipts, transactions, postings, memberships, roles/permissions), runbook review is **required** and must be recorded in release notes.

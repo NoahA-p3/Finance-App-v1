@@ -127,3 +127,10 @@ Record results with:
 - Immutability checks: pass/fail
 - Receipt storage checks: pass/fail
 - Follow-up actions
+
+## Lightweight rehearsal log template
+Use this quick log for post-restore verification rehearsals tied to migration releases.
+
+| Date (UTC) | Operator | Result (Pass/Fail) | Issues / Notes |
+| --- | --- | --- | --- |
+| YYYY-MM-DD | <name> | Pass \| Fail | <failed checks, remediation owner, due date> |
