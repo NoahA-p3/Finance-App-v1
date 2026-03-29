@@ -70,6 +70,7 @@ test('finance routes use active company scoping instead of trusting client owner
 
 test('finance mutation routes enforce explicit finance write permissions', () => {
   const transactionsRoute = read('src/app/api/transactions/route.ts');
+  const categoriesRoute = read('src/app/api/categories/route.ts');
   const receiptsRoute = read('src/app/api/receipts/route.ts');
   const postingsRoute = read('src/app/api/postings/route.ts');
   const reverseRoute = read('src/app/api/postings/[posting_id]/reverse/route.ts');
@@ -78,6 +79,10 @@ test('finance mutation routes enforce explicit finance write permissions', () =>
   assert.match(transactionsRoute, /COMPANY_PERMISSIONS\.FINANCE_TRANSACTIONS_WRITE/);
   assert.match(transactionsRoute, /Missing required permission: finance\.transactions\.write/);
   assert.match(transactionsRoute, /status:\s*403/);
+
+  assert.match(categoriesRoute, /COMPANY_PERMISSIONS\.FINANCE_CATEGORIES_WRITE/);
+  assert.match(categoriesRoute, /Missing required permission: finance\.categories\.write/);
+  assert.match(categoriesRoute, /status:\s*403/);
 
   assert.match(receiptsRoute, /COMPANY_PERMISSIONS\.FINANCE_RECEIPTS_WRITE/);
   assert.match(receiptsRoute, /Missing required permission: finance\.receipts\.write/);

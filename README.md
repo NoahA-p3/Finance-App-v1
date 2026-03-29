@@ -26,7 +26,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Company settings persistence now includes invoice settings, branding/logo metadata placeholders, branch/department placeholders, and CVR number storage.
 - CVR lookup adapter endpoint (`GET /api/companies/cvr?cvr=<8-digit>`) with explicit manual fallback when provider integration is not configured.
 - Finance APIs (`/api/transactions`, `/api/categories`, `/api/receipts`) are active-company scoped and enforce membership + `company_id` isolation with **company-shared** row visibility inside the same company.
-- Finance mutation permissions are explicitly keyed: `finance.transactions.write`, `finance.receipts.write`, `finance.postings.write`, and `finance.period_locks.manage` (seeded to baseline `owner` + `staff`; not seeded to `read_only`).
+- Finance mutation permissions are explicitly keyed: `finance.transactions.write`, `finance.categories.write`, `finance.receipts.write`, `finance.postings.write`, and `finance.period_locks.manage` (seeded to baseline `owner` + `staff`; not seeded to `read_only`, including category create/delete mutations).
 - Posting APIs (`/api/postings`, `/api/postings/{posting_id}/reverse`, `/api/postings/period-locks`) provide append-only journal posting, reversal traceability, and period lock enforcement.
 - Posted transaction records are protected against destructive update/delete by database-level immutability guards; corrections are made through reversal flows.
 - Internal billing baseline includes plans/subscriptions/entitlements (`/api/entitlements`) and server-side soft-limit enforcement on transaction writes for monthly vouchers + rolling 12-month turnover cap.
@@ -122,6 +122,7 @@ These checks run automatically via `.github/workflows/pr-ci.yml` on every pull r
 - [ ] If posting, reversal, period-lock, journal, or audit-event behavior changed, updated all three alignment docs together: `docs/security/SECURITY_RULES.md`, `docs/architecture/TECHNICAL_MODULES.md`, and `tasks/EPICS.md`.
 - [ ] Added an explicit **As of: YYYY-MM-DD** date in every updated status section.
 - [ ] Added direct evidence links to changed claims (prefer `src/app/api/*`, `src/lib/*`, `supabase/migrations/*`).
+- [ ] For categories mutation permission claims, include evidence to `supabase/migrations/202603290002_categories_write_permissions_alignment.sql` and `src/app/api/categories/route.ts`.
 - [ ] If docs and runtime evidence still disagree, documented the gap explicitly in the PR summary.
 - [ ] Validated every status/coverage documentation claim against concrete code evidence (routes, scripts, tests, workflows) in the same PR.
 

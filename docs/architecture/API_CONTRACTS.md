@@ -103,10 +103,12 @@ All other endpoint groupings in this document are target contracts for phased im
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
   - Finance mutation endpoints require explicit permission keys:
     - `POST /api/transactions` requires `finance.transactions.write`.
+    - `POST /api/categories` and `DELETE /api/categories?id=<id>` require `finance.categories.write`.
     - `POST /api/receipts` requires `finance.receipts.write`.
     - `POST /api/postings` and `POST /api/postings/{posting_id}/reverse` require `finance.postings.write`.
     - `POST /api/postings/period-locks` requires `finance.period_locks.manage`.
-  - Baseline role seeding grants the finance write/manage keys to `owner` and `staff`; `read_only` remains read-only for same-company finance writes.
+  - Baseline role seeding grants finance write/manage keys (including category mutation) to `owner` and `staff`; `read_only` is explicitly excluded from category mutation and remains read-only for same-company finance writes.
+  - Evidence: `supabase/migrations/202603290002_categories_write_permissions_alignment.sql` (role-permission + RLS alignment) and `src/app/api/categories/route.ts` (runtime permission guard + 403 response).
   - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
   - `POST /api/transactions` enforces plan limits server-side for `monthly_vouchers` and `rolling_turnover_12m_dkk`; responses include `entitlement_warning` and soft-lock `upgrade_prompt` payloads when thresholds are reached.
   - Enforcement rollout is feature-flagged by plan tier via `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS`.
