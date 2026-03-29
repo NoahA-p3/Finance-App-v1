@@ -9,9 +9,9 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 
 | Module | Status | Evidence |
 |---|---|---|
-| 1) Repo and developer foundation | partial | Baseline scripts/docs exist; CI/test depth still limited in repo. |
+| 1) Repo and developer foundation | partial | CI baseline and both contract + Supabase integration test flows are documented and wired; deeper coverage breadth remains in progress. [`.github/workflows/pr-ci.yml`](../.github/workflows/pr-ci.yml), [`scripts/run-supabase-integration-tests.mjs`](../scripts/run-supabase-integration-tests.mjs), [`tests/integration/supabase-rls-and-posting.integration.test.js`](../tests/integration/supabase-rls-and-posting.integration.test.js) |
 | 2) Accounting domain model | partial | Transaction/category primitives are live, but full legal-form-aware canonical model is incomplete. [`src/app/api/transactions/route.ts`](../src/app/api/transactions/route.ts), [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
-| 3) Auth, tenancy, and roles | partial | Auth, company membership, role permissions, and invitation list/create are present; full invitation acceptance and richer role rollout remain open. [`src/app/api/companies/invitations/route.ts`](../src/app/api/companies/invitations/route.ts), [`src/lib/company-permissions.ts`](../src/lib/company-permissions.ts), [`supabase/migrations/202603250002_company_rbac_baseline.sql`](../supabase/migrations/202603250002_company_rbac_baseline.sql) |
+| 3) Auth, tenancy, and roles | partial | Auth, membership, baseline roles, and invitation create/list/**accept** are implemented; richer production role matrix and invitation lifecycle hardening remain in progress. [`src/app/api/companies/invitations/route.ts`](../src/app/api/companies/invitations/route.ts), [`src/app/api/companies/invitations/accept/route.ts`](../src/app/api/companies/invitations/accept/route.ts), [`src/lib/company-permissions.ts`](../src/lib/company-permissions.ts), [`supabase/migrations/202603250002_company_rbac_baseline.sql`](../supabase/migrations/202603250002_company_rbac_baseline.sql) |
 | 4) Ledger core | partial | Posting, reversal, period locks, and immutability guards are implemented baseline; deeper accounting completeness still planned. [`src/app/api/postings/route.ts`](../src/app/api/postings/route.ts), [`src/app/api/postings/[posting_id]/reverse/route.ts`](../src/app/api/postings/%5Bposting_id%5D/reverse/route.ts), [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
 | 5) Transaction ingestion | partial | Manual transaction API insert/list exists; import/matching engine absent. [`src/app/api/transactions/route.ts`](../src/app/api/transactions/route.ts) |
 | 6) Document capture | partial | Receipt upload/list API and storage constraints exist; OCR/linking UX depth is incomplete. [`src/app/api/receipts/route.ts`](../src/app/api/receipts/route.ts), [`supabase/migrations/202603200004_finance_assistant_mvp.sql`](../supabase/migrations/202603200004_finance_assistant_mvp.sql) |
@@ -19,23 +19,27 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 | 8) VAT and tax engine | planned | No VAT/tax rule engine implementation in evidence scope. |
 | 9) Reports and exports | partial | Persisted dashboard/report summary logic exists; formal report/export contracts remain limited. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
 | 10) Integrations | partial | Minimal CVR lookup adapter exists; broad connector/webhook/job platform is not implemented. [`src/app/api/companies/cvr/route.ts`](../src/app/api/companies/cvr/route.ts), [`src/lib/cvr/adapter.ts`](../src/lib/cvr/adapter.ts) |
-| 11) Security and operations | partial | Audit-event append-only table and immutability triggers exist; broader incident/restore ops runbooks are still limited. [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql) |
+| 11) Security and operations | partial | Audit-event append-only controls and operations runbooks are present; ongoing maturity is around validation cadence/drills and deeper hardening. [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql), [`docs/ops/RESTORE_RUNBOOK.md`](../docs/ops/RESTORE_RUNBOOK.md), [`docs/ops/POST_RESTORE_VERIFICATION.md`](../docs/ops/POST_RESTORE_VERIFICATION.md) |
 | 12) UX polish and launch readiness | partial | Many production loops are still scaffold-level; persisted data has replaced some prior placeholders. [`src/lib/dashboard-data.ts`](../src/lib/dashboard-data.ts) |
 
 ## 1) Repo and developer foundation
 - Objective: maintain reliable engineering baseline and documentation.
 - Current status: **partial**.
+- **As of:** 2026-03-29.
+- Implemented baseline:
+  - CI definition is present and enforces core checks on pull requests.
+  - Fast contract tests and Supabase-backed integration tests are both wired in repository scripts.
+- Evidence: [`.github/workflows/pr-ci.yml`](../.github/workflows/pr-ci.yml), [`scripts/run-supabase-integration-tests.mjs`](../scripts/run-supabase-integration-tests.mjs), [`tests/integration/supabase-rls-and-posting.integration.test.js`](../tests/integration/supabase-rls-and-posting.integration.test.js), [`README.md`](../README.md).
 - Main gaps:
-  - no automated tests,
-  - no CI definition visible,
-  - schema direction ambiguity across migrations.
+  - integration/e2e coverage depth is still expanding,
+  - schema direction ambiguity across some migrations still needs governance.
 - Epics:
   - docs-as-source-of-truth completion,
-  - baseline quality gate setup,
+  - baseline quality gate hardening,
   - migration governance rules.
 - Task ideas:
-  - add test runner and minimal smoke tests,
-  - add migration README with rollback plan template.
+  - expand deterministic integration scenarios for more route boundaries,
+  - add migration README/runbook refinements with rollback drills.
   - **Docs-alignment ticket (2026-03-29):** synchronize posting/audit capability claims across `docs/security/SECURITY_RULES.md`, `docs/architecture/TECHNICAL_MODULES.md`, and `tasks/EPICS.md` whenever posting/audit runtime behavior changes.
     - Scope: remove stale "missing audit table" / "journal planned" statements where repo evidence shows implemented posting/audit baseline.
     - Evidence requirements: include file-level bullets tied to `src/app/api/postings/*`, `src/lib/postings/service.ts`, and `supabase/migrations/202603270002_posting_and_audit_immutability.sql`.
@@ -64,20 +68,21 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 ## 3) Auth, tenancy, and roles
 - Objective: secure multi-tenant behavior and role-aware collaboration.
 - Current status: **partial**.
-- As of 2026-03-27, implemented baseline:
-  - company tenancy API surface exists under `src/app/api/companies/*` (company profile CRUD, company switch, members, and invitations list/create),
+- **As of:** 2026-03-29.
+- Implemented baseline:
+  - company tenancy API surface exists under `src/app/api/companies/*` (company profile CRUD, company switch, members, invitation list/create, and invitation accept),
   - permission helpers and role checks exist in `src/lib/company-permissions.ts`,
   - foundational schema + RLS are in migrations `202603250001_companies_bootstrap.sql` and `202603250002_company_rbac_baseline.sql`.
-- Evidence: [`src/app/api/companies/route.ts`](../src/app/api/companies/route.ts), [`src/app/api/companies/switch/route.ts`](../src/app/api/companies/switch/route.ts), [`src/app/api/companies/members/route.ts`](../src/app/api/companies/members/route.ts), [`src/app/api/companies/invitations/route.ts`](../src/app/api/companies/invitations/route.ts), [`src/lib/company-permissions.ts`](../src/lib/company-permissions.ts), [`supabase/migrations/202603250001_companies_bootstrap.sql`](../supabase/migrations/202603250001_companies_bootstrap.sql), [`supabase/migrations/202603250002_company_rbac_baseline.sql`](../supabase/migrations/202603250002_company_rbac_baseline.sql).
+- Evidence: [`src/app/api/companies/route.ts`](../src/app/api/companies/route.ts), [`src/app/api/companies/switch/route.ts`](../src/app/api/companies/switch/route.ts), [`src/app/api/companies/members/route.ts`](../src/app/api/companies/members/route.ts), [`src/app/api/companies/invitations/route.ts`](../src/app/api/companies/invitations/route.ts), [`src/app/api/companies/invitations/accept/route.ts`](../src/app/api/companies/invitations/accept/route.ts), [`src/lib/company-permissions.ts`](../src/lib/company-permissions.ts), [`supabase/migrations/202603250001_companies_bootstrap.sql`](../supabase/migrations/202603250001_companies_bootstrap.sql), [`supabase/migrations/202603250002_company_rbac_baseline.sql`](../supabase/migrations/202603250002_company_rbac_baseline.sql).
 - Main gaps:
-  - invitation lifecycle is not end-to-end (acceptance/onboarding flow still missing),
+  - invitation lifecycle still needs deeper hardening (expiry/resend/revocation/completion-state coverage),
   - role model is still baseline-first and needs a richer, production-ready matrix across advanced roles.
 - Epics:
-  - invitation acceptance and membership activation flow,
+  - invitation lifecycle hardening and membership activation completion,
   - richer role matrix and permission policy hardening,
   - auth flow hardening and tenancy integration test coverage.
 - Task ideas:
-  - implement invitation acceptance endpoint + UI handoff,
+  - add invitation edge-case coverage (expired/revoked/replayed token paths),
   - define and apply expanded role matrix constraints,
   - add permission/tenancy integration tests for same-company vs cross-company access.
 - Major risks: unauthorized access if expanded without rigorous RLS.
@@ -183,16 +188,17 @@ Related docs: [PRD](../docs/product/PRD.md), [System Overview](../docs/architect
 ## 11) Security and operations
 - Objective: harden data protection and operational readiness.
 - Current status: **partial**.
-- As of 2026-03-27: explicit append-only `audit_events` table and immutability triggers exist, but incident response/backup runbook maturity is still limited.
-- Evidence: [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql).
-- Main gaps: no incident/restore docs, unknown backup runbook.
+- **As of:** 2026-03-29.
+- Implemented baseline: explicit append-only `audit_events` table and immutability triggers exist, and incident/backup/restore operations runbooks are documented.
+- Evidence: [`supabase/migrations/202603270002_posting_and_audit_immutability.sql`](../supabase/migrations/202603270002_posting_and_audit_immutability.sql), [`docs/ops/RESTORE_RUNBOOK.md`](../docs/ops/RESTORE_RUNBOOK.md), [`docs/ops/POST_RESTORE_VERIFICATION.md`](../docs/ops/POST_RESTORE_VERIFICATION.md), [`docs/ops/MIGRATION_ROLLBACK_SEQUENCE.md`](../docs/ops/MIGRATION_ROLLBACK_SEQUENCE.md), [`docs/ops/BACKUP_ASSUMPTIONS.md`](../docs/ops/BACKUP_ASSUMPTIONS.md), [`docs/ops/RELEASE_READINESS_CHECKLIST.md`](../docs/ops/RELEASE_READINESS_CHECKLIST.md).
+- Main gaps: runbook execution cadence, recovery drill evidence, and incident-response maturity still need ongoing operational validation.
 - Epics:
   - security review cadence,
   - audit-event architecture hardening,
-  - ops runbooks.
+  - ops runbook validation drills.
 - Task ideas:
   - sensitive action logging coverage review,
-  - restore drill documentation.
+  - recurring restore drill documentation with dated evidence.
 - Major risks: compliance/security incidents.
 
 ## 12) UX polish and launch readiness
