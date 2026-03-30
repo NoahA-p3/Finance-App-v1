@@ -252,6 +252,137 @@ if (!hasIntegrationEnv()) {
     assert.equal(validPayload.notes, 'Updated via integration test');
   });
 
+  test('/api/companies/invitations/* covers resend/revoke status guards and accept replay/expired/revoked branches', async () => {
+    const inviteEmail = fixture.users.ownerB.email.toLowerCase();
+
+    const createResponse = await fetch(`${baseUrl}/api/companies/invitations`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ invited_email: inviteEmail, role: 'staff' })
+    });
+
+    assert.equal(createResponse.status, 201);
+    const createPayload = await createResponse.json();
+    assert.equal(createPayload?.invitation?.status, 'pending');
+    assert.equal(typeof createPayload?.delivery?.acceptance?.token, 'string');
+
+    const replayToken = createPayload.delivery.acceptance.token;
+
+    const firstAcceptResponse = await fetch(`${baseUrl}/api/companies/invitations/accept`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerBCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ token: replayToken })
+    });
+    assert.equal(firstAcceptResponse.status, 200);
+    const firstAcceptPayload = await firstAcceptResponse.json();
+    assert.equal(firstAcceptPayload.accepted, true);
+    assert.equal(firstAcceptPayload.already_accepted, false);
+
+    const replayAcceptResponse = await fetch(`${baseUrl}/api/companies/invitations/accept`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerBCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ token: replayToken })
+    });
+    assert.equal(replayAcceptResponse.status, 200);
+    const replayAcceptPayload = await replayAcceptResponse.json();
+    assert.equal(replayAcceptPayload.accepted, true);
+    assert.equal(replayAcceptPayload.already_accepted, true);
+
+    const resendAcceptedResponse = await fetch(`${baseUrl}/api/companies/invitations/${createPayload.invitation.id}/resend`, {
+      method: 'POST',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(resendAcceptedResponse.status, 409);
+    const resendAcceptedPayload = await resendAcceptedResponse.json();
+    assert.equal(resendAcceptedPayload.status, 'accepted');
+
+    const revokeAcceptedResponse = await fetch(`${baseUrl}/api/companies/invitations/${createPayload.invitation.id}/revoke`, {
+      method: 'POST',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(revokeAcceptedResponse.status, 409);
+    const revokeAcceptedPayload = await revokeAcceptedResponse.json();
+    assert.equal(revokeAcceptedPayload.status, 'accepted');
+
+    const revokedInviteResponse = await fetch(`${baseUrl}/api/companies/invitations`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ invited_email: `revoked-${inviteEmail}`, role: 'staff' })
+    });
+    assert.equal(revokedInviteResponse.status, 201);
+    const revokedInvitePayload = await revokedInviteResponse.json();
+    const revokedToken = revokedInvitePayload.delivery.acceptance.token;
+
+    const revokePendingResponse = await fetch(`${baseUrl}/api/companies/invitations/${revokedInvitePayload.invitation.id}/revoke`, {
+      method: 'POST',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(revokePendingResponse.status, 200);
+
+    const acceptRevokedResponse = await fetch(`${baseUrl}/api/companies/invitations/accept`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerBCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ token: revokedToken })
+    });
+    assert.equal(acceptRevokedResponse.status, 409);
+    const acceptRevokedPayload = await acceptRevokedResponse.json();
+    assert.match(acceptRevokedPayload.error, /not pending/);
+
+    const expiredInviteResponse = await fetch(`${baseUrl}/api/companies/invitations`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ invited_email: `expired-${inviteEmail}`, role: 'staff' })
+    });
+    assert.equal(expiredInviteResponse.status, 201);
+    const expiredInvitePayload = await expiredInviteResponse.json();
+    const expiredToken = expiredInvitePayload.delivery.acceptance.token;
+
+    const admin = getAdminClient();
+    const { error: expireUpdateError } = await admin
+      .from('company_invitations')
+      .update({ acceptance_token_expires_at: '2000-01-01T00:00:00.000Z' })
+      .eq('id', expiredInvitePayload.invitation.id);
+    assert.equal(expireUpdateError, null, expireUpdateError?.message);
+
+    const acceptExpiredResponse = await fetch(`${baseUrl}/api/companies/invitations/accept`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerBCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ token: expiredToken })
+    });
+    assert.equal(acceptExpiredResponse.status, 410);
+    const acceptExpiredPayload = await acceptExpiredResponse.json();
+    assert.match(acceptExpiredPayload.error, /expired/i);
+
+    const resendExpiredResponse = await fetch(`${baseUrl}/api/companies/invitations/${expiredInvitePayload.invitation.id}/resend`, {
+      method: 'POST',
+      headers: { Cookie: ownerCookie }
+    });
+    assert.equal(resendExpiredResponse.status, 409);
+    const resendExpiredPayload = await resendExpiredResponse.json();
+    assert.equal(resendExpiredPayload.status, 'expired');
+  });
+
   test('/api/categories denies read_only and allows owner', async () => {
     const denied = await fetch(`${baseUrl}/api/categories`, {
       method: 'POST',

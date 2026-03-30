@@ -1,3 +1,50 @@
+## Invitation revoke/resend lifecycle + delivery adapter decoupling (March 30, 2026)
+
+### Goal
+Add invitation lifecycle management endpoints for resend/revoke with explicit status-transition guards, decouple onboarding URL delivery via an adapter interface, extend Team Access UI actions for pending invites, and add route-level integration tests for replayed/revoked/expired token acceptance branches.
+
+### Current behavior
+- Company invitation API currently supports list/create plus token acceptance (`GET/POST /api/companies/invitations`, `POST /api/companies/invitations/accept`).
+- Invitation creation always returns token/onboarding URL directly from the route handler, with no adapter seam for future outbound email providers.
+- Team Access panel lists pending invites but does not expose resend/revoke actions.
+- Route integration tests do not yet cover acceptance replayed-token, revoked-token, or expired-token branches end-to-end through HTTP handlers.
+
+### Proposed approach
+1. Introduce a company-invitation delivery adapter interface in `src/lib` and move onboarding URL composition + delivery-mode response shaping behind that adapter (default: manual app-mediated delivery; email provider optional/not configured).
+2. Add invitation route handlers under `src/app/api/companies/invitations/[id]/*`:
+   - `POST /revoke` for pending→revoked transition only.
+   - `POST /resend` for pending invitation token refresh + delivery adapter invocation.
+   Both endpoints enforce auth, active-company membership, permission `company.invitations.manage`, UUID boundary validation, and explicit status checks for `pending|accepted|expired|revoked`.
+3. Extend `TeamAccessPanel` to show resend/revoke actions on pending invites, including loading/error/success handling and latest delivery details from create/resend responses.
+4. Extend `tests/integration/next-route-handlers.integration.test.js` with invitation acceptance lifecycle coverage for replayed token, revoked token, and expired token scenarios.
+5. Update API/docs surfaces (`README.md`, `docs/architecture/API_CONTRACTS.md`) for the new endpoints and adapter-mediated delivery semantics.
+
+### Affected files
+- `src/lib/company-invitations/delivery-adapter.ts` (new)
+- `src/app/api/companies/invitations/route.ts`
+- `src/app/api/companies/invitations/[id]/revoke/route.ts` (new)
+- `src/app/api/companies/invitations/[id]/resend/route.ts` (new)
+- `src/components/settings/team-access-panel.tsx`
+- `tests/integration/next-route-handlers.integration.test.js`
+- `README.md`
+- `docs/architecture/API_CONTRACTS.md`
+- `PLANS.md`
+
+### Risks
+- Status transition handling could drift across create/resend/revoke flows if shared checks are inconsistent.
+- Manual delivery adapter response shape changes could break existing UI if not kept backward-compatible enough.
+- Integration tests rely on local Supabase + Next dev server and can be environment-sensitive.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run test -- tests/integration/next-route-handlers.integration.test.js`
+
+### Assumptions / open questions
+- Assumption: resend is allowed only when invitation status is `pending`; accepted/expired/revoked invitations must not be resent and should return deterministic conflict responses.
+- Assumption: default delivery adapter remains app-mediated/manual in this repo; outbound email provider integration is optional and not required for this change.
+
 ## VAT-RVW-001 baseline schema + read-only preview endpoint (March 30, 2026)
 
 ### Goal

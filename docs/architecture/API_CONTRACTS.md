@@ -50,6 +50,8 @@ Currently implemented route handlers in `src/app/api/*`:
 - `PATCH /api/companies/members`
 - `GET /api/companies/invitations`
 - `POST /api/companies/invitations`
+- `POST /api/companies/invitations/:id/resend`
+- `POST /api/companies/invitations/:id/revoke`
 - `POST /api/companies/invitations/accept`
 - `POST /api/companies/switch`
 - `GET /api/companies/cvr?cvr=<8-digit>`
@@ -91,7 +93,9 @@ All other endpoint groupings in this document are target contracts for phased im
   - `GET /api/companies/members` requires `company.members.read`.
   - `PATCH /api/companies/members` requires `company.members.manage` and updates member role assignments.
   - `GET /api/companies/invitations` lists pending invitations and requires `company.invitations.read`.
-  - `POST /api/companies/invitations` creates pending invitations, mints acceptance token metadata, and requires `company.invitations.manage`.
+  - `POST /api/companies/invitations` creates pending invitations, mints acceptance token metadata, dispatches via invitation delivery adapter, and requires `company.invitations.manage`.
+  - `POST /api/companies/invitations/:id/resend` refreshes token metadata for pending invites only and returns adapter delivery metadata; non-pending statuses (`accepted`, `expired`, `revoked`) return `409`.
+  - `POST /api/companies/invitations/:id/revoke` transitions pending invites to `revoked`; non-pending statuses (`accepted`, `expired`, `revoked`) return `409`.
   - `POST /api/companies/invitations/accept` validates invite token/status, accepts idempotently, and switches `profiles.active_company_id` to the accepted company.
   - `POST /api/companies/switch` validates target membership and persists `profiles.active_company_id`.
   - `GET /api/companies/cvr?cvr=<8-digit>` uses an adapter interface; when provider integration is unavailable it returns explicit manual fallback guidance.

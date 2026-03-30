@@ -31,6 +31,14 @@ interface InvitationAcceptance {
   onboarding_url: string;
 }
 
+interface InvitationDelivery {
+  provider: string;
+  status: "manual_display" | "queued" | "provider_unavailable";
+  provider_available: boolean;
+  acceptance: InvitationAcceptance | null;
+  message?: string;
+}
+
 interface FieldErrors {
   invited_email?: string;
   role?: string;
@@ -69,6 +77,7 @@ export function TeamAccessPanel() {
   const [inviteActionMessage, setInviteActionMessage] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [latestAcceptance, setLatestAcceptance] = useState<InvitationAcceptance | null>(null);
+  const [inviteActionByInvitationId, setInviteActionByInvitationId] = useState<Record<string, "resend" | "revoke" | null>>({});
 
   const sortedMembers = useMemo(() => [...members].sort((left, right) => left.created_at.localeCompare(right.created_at)), [members]);
 
@@ -186,7 +195,7 @@ export function TeamAccessPanel() {
     const payload = (await response.json().catch(() => ({}))) as {
       error?: string;
       invitation?: InvitationRecord;
-      acceptance?: InvitationAcceptance;
+      delivery?: InvitationDelivery;
     };
 
     if (!response.ok || !payload.invitation) {
@@ -197,12 +206,64 @@ export function TeamAccessPanel() {
 
     const nextInvitation = payload.invitation;
     setInvitations((current) => [nextInvitation, ...current]);
-    setLatestAcceptance(payload.acceptance ?? null);
+    setLatestAcceptance(payload.delivery?.acceptance ?? null);
     setInviteEmail("");
     setInviteRole("staff");
     setInviteFieldErrors({});
     setInviteActionMessage("Invitation sent.");
     setIsInviting(false);
+  }
+
+  async function handleResendInvitation(invitation: InvitationRecord) {
+    setInviteActionByInvitationId((current) => ({ ...current, [invitation.id]: "resend" }));
+    setInviteActionError(null);
+    setInviteActionMessage(null);
+
+    const response = await fetch(`/api/companies/invitations/${invitation.id}/resend`, {
+      method: "POST"
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      invitation?: InvitationRecord;
+      delivery?: InvitationDelivery;
+    };
+
+    setInviteActionByInvitationId((current) => ({ ...current, [invitation.id]: null }));
+
+    if (!response.ok || !payload.invitation) {
+      setInviteActionError(payload.error ?? "Unable to resend invitation.");
+      return;
+    }
+
+    setInvitations((current) => current.map((entry) => (entry.id === payload.invitation?.id ? payload.invitation : entry)));
+    setLatestAcceptance(payload.delivery?.acceptance ?? null);
+    setInviteActionMessage("Invitation resent.");
+  }
+
+  async function handleRevokeInvitation(invitation: InvitationRecord) {
+    setInviteActionByInvitationId((current) => ({ ...current, [invitation.id]: "revoke" }));
+    setInviteActionError(null);
+    setInviteActionMessage(null);
+
+    const response = await fetch(`/api/companies/invitations/${invitation.id}/revoke`, {
+      method: "POST"
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      invitation?: InvitationRecord;
+    };
+
+    setInviteActionByInvitationId((current) => ({ ...current, [invitation.id]: null }));
+
+    if (!response.ok || !payload.invitation) {
+      setInviteActionError(payload.error ?? "Unable to revoke invitation.");
+      return;
+    }
+
+    setInvitations((current) => current.filter((entry) => entry.id !== payload.invitation?.id));
+    setInviteActionMessage("Invitation revoked.");
   }
 
   return (
@@ -341,6 +402,26 @@ export function TeamAccessPanel() {
                   <p className="mt-1 text-xs text-indigo-100/70">Role: {invitation.role}</p>
                   <p className="mt-1 text-xs text-indigo-100/60">Invited: {formatDate(invitation.created_at)}</p>
                   <p className="mt-1 text-xs text-indigo-100/60">Expires: {formatDate(invitation.acceptance_token_expires_at)}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-8 px-2 text-xs"
+                      disabled={inviteActionByInvitationId[invitation.id] !== undefined && inviteActionByInvitationId[invitation.id] !== null}
+                      onClick={() => void handleResendInvitation(invitation)}
+                    >
+                      {inviteActionByInvitationId[invitation.id] === "resend" ? "Resending..." : "Resend"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-8 px-2 text-xs text-rose-100 hover:text-rose-50"
+                      disabled={inviteActionByInvitationId[invitation.id] !== undefined && inviteActionByInvitationId[invitation.id] !== null}
+                      onClick={() => void handleRevokeInvitation(invitation)}
+                    >
+                      {inviteActionByInvitationId[invitation.id] === "revoke" ? "Revoking..." : "Revoke"}
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
