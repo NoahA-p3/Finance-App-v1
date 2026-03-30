@@ -30,6 +30,7 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 18. `202603290003_security_event_retry_queue.sql`
 19. `202603300001_integration_connections.sql`
 20. `202603300001_transactions_notes_column.sql`
+21. `202603300002_vat_review_baseline.sql`
 
 ## Sequence-sensitive dependency checkpoints
 
@@ -68,6 +69,12 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 ### H) Integrations baseline after company bootstrap
 - `202603300001_integration_connections.sql` depends on company/membership tables and `public.set_updated_at()` from `202603250001_companies_bootstrap.sql`.
 - It is independent of posting and entitlement flows, but must run after company schema bootstrap and RBAC baseline so API permission checks map cleanly.
+
+### I) VAT review baseline after company bootstrap and shared RLS foundations
+- `202603300002_vat_review_baseline.sql` depends on:
+  - `202603250001_companies_bootstrap.sql` (`companies`, `company_memberships`, and shared `public.set_updated_at()`),
+  - auth/profile foundation (`auth.users`, `public.profiles`) for actor references and membership scoping.
+- It is additive and independent of posting table triggers, but assumes canonical company-scoped tenancy and role rows are present.
 
 ## Legacy branch handling note
 

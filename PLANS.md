@@ -1,3 +1,59 @@
+## VAT-RVW-001 baseline schema + read-only preview endpoint (March 30, 2026)
+
+### Goal
+Implement the first VAT review baseline slice by adding VAT review schema + RLS migration, a read-only deterministic preview endpoint (`/api/vat/reviews/preview`), and integration coverage for company isolation + decimal correctness using deterministic golden fixtures.
+
+### Current behavior
+- No dedicated VAT review tables or RLS policies exist in the canonical runtime schema.
+- No `/api/vat/*` runtime route handlers exist.
+- Golden dataset fixtures include datasets 1, 4, and 5 only; VAT-registered dataset scenarios are still mostly specification-level.
+
+### Proposed approach
+1. Add an additive migration for `vat_codes`, `vat_review_runs`, `vat_period_reviews`, and append-only `vat_review_events`, including:
+   - strict numeric/decimal columns,
+   - company isolation via RLS,
+   - global/default VAT code visibility (`company_id is null`) with company overrides.
+2. Add a deterministic preview service + route handler at `POST /api/vat/reviews/preview` that:
+   - enforces auth + active-company membership + privileged role checks,
+   - computes preview totals from persisted transactions without writing side effects,
+   - returns explainability metadata (rate source + taxable-base provenance),
+   - marks legal-form-specific behavior as `Assumption`/`TODO`.
+3. Extend deterministic fixtures with Dataset 2 VAT-registered inputs and expected preview totals.
+4. Add integration tests that validate:
+   - company isolation for preview results,
+   - decimal correctness of VAT totals in preview output.
+5. Update docs and generated DB type contracts to reflect new schema/API baseline.
+
+### Affected files
+- `supabase/migrations/<new>_vat_review_baseline.sql`
+- `supabase/migrations/MIGRATION_ORDER.md`
+- `src/types/database.ts`
+- `src/lib/vat/reviews/preview.ts`
+- `src/app/api/vat/reviews/preview/route.ts`
+- `tests/fixtures/golden-datasets.js`
+- `tests/golden-dataset-fixtures.test.js`
+- `tests/integration/next-route-handlers.integration.test.js`
+- `README.md`
+- `docs/architecture/API_CONTRACTS.md`
+- `PLANS.md`
+
+### Risks
+- VAT rate interpretation can be incorrect if runtime assumptions differ from future VAT rule-engine decisions.
+- Role gating could drift from future role matrix updates (for example, if `admin` is introduced later).
+- Type drift risk if migration and `src/types/database.ts` updates are not kept aligned.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run test -- tests/golden-dataset-fixtures.test.js`
+- `npm run test -- tests/integration/next-route-handlers.integration.test.js`
+
+### Assumptions / open questions
+- Assumption: baseline preview treats `transactions.amount` as VAT-inclusive gross amount for deterministic preview-only totals until invoice/reconciliation-aligned source models land.
+- Assumption: privileged preview roles for this baseline are `owner` and `accountant`; `admin` remains TODO because no `admin` role exists in current repository role contracts.
+- TODO: legal-form-specific VAT behavior for enkeltmandsvirksomhed vs ApS remains future scope pending explicit repository evidence.
+
 ## Entitlements decimal parsing hardening (March 29, 2026)
 
 ### Goal

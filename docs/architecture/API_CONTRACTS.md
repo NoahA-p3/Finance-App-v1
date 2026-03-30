@@ -159,6 +159,7 @@ All other endpoint groupings in this document are target contracts for phased im
   - cashbook entry CRUD, posting-template CRUD, posting import
 - VAT:
   - VAT code CRUD, VAT return prepare/detail/transaction drilldown/submit/export
+  - Implemented MVP baseline slice: `POST /api/vat/reviews/preview` (read-only deterministic period preview; approve/submit lifecycle remains planned)
 - Reports and assets:
   - financial report resources, report exports, saved reports CRUD, fixed-asset workflow endpoints
 
