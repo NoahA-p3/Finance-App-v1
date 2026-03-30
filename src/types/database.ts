@@ -699,6 +699,152 @@ export type Database = {
           key?: CompanyRoleKey;
         };
       };
+      vat_codes: {
+        Row: {
+          code: string;
+          company_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          direction: "input" | "output";
+          id: string;
+          is_active: boolean;
+          rate_decimal: number | string;
+        };
+        Insert: {
+          code: string;
+          company_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description: string;
+          direction: "input" | "output";
+          id?: string;
+          is_active?: boolean;
+          rate_decimal: number | string;
+        };
+        Update: {
+          code?: string;
+          company_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string;
+          direction?: "input" | "output";
+          id?: string;
+          is_active?: boolean;
+          rate_decimal?: number | string;
+        };
+      };
+      vat_period_reviews: {
+        Row: {
+          approved_at: string | null;
+          approved_by: string | null;
+          company_id: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          input_vat_total: number | string;
+          net_vat_decimal: number | string;
+          output_vat_total: number | string;
+          period_end: string;
+          period_start: string;
+          status: "approved" | "draft" | "filed" | "in_review";
+          updated_at: string;
+        };
+        Insert: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          company_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          input_vat_total?: number | string;
+          net_vat_decimal?: number | string;
+          output_vat_total?: number | string;
+          period_end: string;
+          period_start: string;
+          status?: "approved" | "draft" | "filed" | "in_review";
+          updated_at?: string;
+        };
+        Update: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          company_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          input_vat_total?: number | string;
+          net_vat_decimal?: number | string;
+          output_vat_total?: number | string;
+          period_end?: string;
+          period_start?: string;
+          status?: "approved" | "draft" | "filed" | "in_review";
+          updated_at?: string;
+        };
+      };
+      vat_review_events: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          event_payload_json: Json;
+          event_type: string;
+          id: string;
+          performed_by: string | null;
+          vat_period_review_id: string;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          event_payload_json?: Json;
+          event_type: string;
+          id?: string;
+          performed_by?: string | null;
+          vat_period_review_id: string;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          event_payload_json?: Json;
+          event_type?: string;
+          id?: string;
+          performed_by?: string | null;
+          vat_period_review_id?: string;
+        };
+      };
+      vat_review_runs: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          created_by: string | null;
+          engine_version: string;
+          id: string;
+          input_hash: string;
+          period_end: string;
+          period_start: string;
+          result_json: Json;
+        };
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          engine_version: string;
+          id?: string;
+          input_hash: string;
+          period_end: string;
+          period_start: string;
+          result_json: Json;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          engine_version?: string;
+          id?: string;
+          input_hash?: string;
+          period_end?: string;
+          period_start?: string;
+          result_json?: Json;
+        };
+      };
       usage_counters: {
         Row: {
           company_id: string;

@@ -30,6 +30,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Finance APIs (`/api/transactions`, `/api/categories`, `/api/receipts`) are active-company scoped and enforce membership + `company_id` isolation with **company-shared** row visibility inside the same company.
 - Finance mutation permissions are explicitly keyed: `finance.transactions.write`, `finance.categories.write`, `finance.receipts.write`, `finance.postings.write`, and `finance.period_locks.manage` (seeded to baseline `owner` + `staff`; not seeded to `read_only`, including category create/delete mutations).
 - Posting APIs (`/api/postings`, `/api/postings/{posting_id}/reverse`, `/api/postings/period-locks`) provide append-only journal posting, reversal traceability, and period lock enforcement.
+- VAT review baseline now includes read-only deterministic preview via `POST /api/vat/reviews/preview` (no review-run persistence side effects in this endpoint).
 - Posted transaction records are protected against destructive update/delete by database-level immutability guards; corrections are made through reversal flows.
 - Internal billing baseline includes plans/subscriptions/entitlements (`/api/entitlements`) and server-side soft-limit enforcement on transaction writes for monthly vouchers + rolling 12-month turnover cap.
 - Entitlement enforcement now uses strict decimal parsing for configured limits and revenue amounts; malformed enforced limit values fail closed with a deterministic soft-lock response instead of silently coercing to zero.
@@ -162,6 +163,7 @@ These checks run automatically via `.github/workflows/pr-ci.yml` on every pull r
 - **Settings tabs:** tabs with planned status remain hidden by strict readiness gating until persisted models and API contracts exist; some visible tabs still include placeholder guidance while UI extraction is in progress.
 - **Invitation acceptance:** tokenized invite acceptance is implemented via onboarding handoff (`/onboarding?invite=<token>`) and `POST /api/companies/invitations/accept`.
 - **VAT engine:** VAT/tax automation engine remains planned and is not fully implemented in this repository.
+- **VAT review baseline assumption:** preview currently treats `transactions.amount` as VAT-inclusive gross and uses baseline direction-level VAT codes; legal-form-specific VAT behavior for enkeltmandsvirksomhed vs ApS remains `TODO`.
 
 ## Supabase and database
 - SQL migrations: `supabase/migrations/`

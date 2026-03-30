@@ -9,6 +9,7 @@ const {
   createAuthedClient,
   getAdminClient
 } = require('./helpers/supabase-integration-helpers');
+const { GOLDEN_DATASET_FIXTURES } = require('../fixtures/golden-datasets');
 
 function getAuthCookieName() {
   const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL);
@@ -276,6 +277,62 @@ if (!hasIntegrationEnv()) {
     const allowedPayload = await allowed.json();
     assert.ok(allowedPayload.id);
     assert.ok(allowedPayload.name.startsWith('Allowed Category'));
+  });
+
+  test('/api/vat/reviews/preview is company-isolated and decimal-correct for deterministic VAT fixture', async () => {
+    const admin = getAdminClient();
+    const dataset2 = GOLDEN_DATASET_FIXTURES.dataset_2_freelancer_vat_registered;
+
+    const companyATransactions = dataset2.transactions.map((transaction) => ({
+      id: transaction.id,
+      user_id: fixture.userIds.ownerA,
+      company_id: fixture.companyAId,
+      description: `VAT dataset company A ${transaction.id.slice(-4)}`,
+      amount: transaction.amount,
+      type: transaction.type,
+      date: transaction.date
+    }));
+
+    const companyBSeed = {
+      id: crypto.randomUUID(),
+      user_id: fixture.userIds.ownerB,
+      company_id: fixture.companyBId,
+      description: 'Cross-company VAT seed row',
+      amount: '1000.00',
+      type: 'revenue',
+      date: dataset2.vat_period.period_start
+    };
+
+    const { error: seedCompanyAError } = await admin.from('transactions').upsert(companyATransactions);
+    assert.equal(seedCompanyAError, null, seedCompanyAError?.message);
+
+    const { error: seedCompanyBError } = await admin.from('transactions').upsert(companyBSeed);
+    assert.equal(seedCompanyBError, null, seedCompanyBError?.message);
+
+    const previewResponse = await fetch(`${baseUrl}/api/vat/reviews/preview`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        period_start: dataset2.vat_period.period_start,
+        period_end: dataset2.vat_period.period_end
+      })
+    });
+
+    assert.equal(previewResponse.status, 200);
+    const previewPayload = await previewResponse.json();
+
+    assert.equal(previewPayload.totals.output_vat_total, dataset2.expected_preview.output_vat_total);
+    assert.equal(previewPayload.totals.input_vat_total, dataset2.expected_preview.input_vat_total);
+    assert.equal(previewPayload.totals.net_vat_decimal, dataset2.expected_preview.net_vat_decimal);
+
+    const lineIds = new Set(previewPayload.explainability.lines.map((line) => line.transaction_id));
+    for (const transaction of dataset2.transactions) {
+      assert.ok(lineIds.has(transaction.id), `Expected preview lines to include ${transaction.id}`);
+    }
+    assert.ok(!lineIds.has(companyBSeed.id), 'Expected cross-company transaction to be excluded from preview output');
   });
 
   test('/api/receipts validates missing file and unsupported file type', async () => {

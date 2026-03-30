@@ -18,6 +18,30 @@ const GOLDEN_DATASET_FIXTURES = Object.freeze({
       { id: "10000001-0000-4000-8000-000000000008", type: "expense", amount: "310.00", date: "2026-01-27", receipt_attached: true }
     ]
   },
+  dataset_2_freelancer_vat_registered: {
+    id: "22222222-2222-4222-8222-222222222222",
+    name: "Dataset 2 — Freelancer, VAT registered",
+    legal_form: "enkeltmandsvirksomhed",
+    vat_registered: true,
+    company_id: "aaaaaaa2-aaaa-4aaa-8aaa-aaaaaaaaaaa2",
+    user_id: "bbbbbbb2-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+    generated_at: "2026-01-15T10:00:00.000Z",
+    vat_period: {
+      period_start: "2026-01-01",
+      period_end: "2026-01-31"
+    },
+    transactions: [
+      { id: "20000002-0000-4000-8000-000000000001", type: "revenue", amount: "99.99", date: "2026-01-04" },
+      { id: "20000002-0000-4000-8000-000000000002", type: "revenue", amount: "50.00", date: "2026-01-10" },
+      { id: "20000002-0000-4000-8000-000000000003", type: "expense", amount: "49.99", date: "2026-01-12" },
+      { id: "20000002-0000-4000-8000-000000000004", type: "expense", amount: "20.00", date: "2026-01-18" }
+    ],
+    expected_preview: {
+      output_vat_total: "30.00",
+      input_vat_total: "14.00",
+      net_vat_decimal: "16.00"
+    }
+  },
   dataset_4_single_owner_aps: {
     id: "44444444-4444-4444-8444-444444444444",
     name: "Dataset 4 — Single-owner ApS",
