@@ -80,6 +80,7 @@ The product-module source of truth is `docs/product/PRODUCT_MODULE_MAP.md` (Modu
     - Scope: remove stale "missing audit table" / "journal planned" statements where repo evidence shows implemented posting/audit baseline.
     - Evidence requirements: include file-level bullets tied to `src/app/api/postings/*`, `src/lib/postings/service.ts`, and `supabase/migrations/202603270002_posting_and_audit_immutability.sql`.
     - Exit criteria: each changed claim includes an explicit `As of: YYYY-MM-DD` marker and direct evidence links.
+  - **Docs-consistency checklist item (2026-03-30):** when module statuses change, update `docs/product/PRD.md`, `docs/product/PRODUCT_MODULE_MAP.md`, and `docs/architecture/TECHNICAL_MODULES.md` in the same PR with matching `As of` dates and runtime evidence links.
 - Major risks: drift between docs, schema, and runtime behavior.
 
 ## 2) Accounting domain model

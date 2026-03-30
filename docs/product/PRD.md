@@ -28,6 +28,8 @@ The current repository is an MVP foundation. It already includes authentication,
 ## Module scope and status
 The product roadmap is organized into numbered modules for traceability:
 
+**As of:** 2026-03-30 (cross-doc synchronized).
+
 1. User and company management — **Partial**
 2. Contacts and master data — **Planned**
 3. Sales, quotes, orders, and invoicing — **Planned**
@@ -35,13 +37,17 @@ The product roadmap is organized into numbered modules for traceability:
 5. Receipts, expenses, and bookkeeping automation — **Partial**
 6. Payments and checkout — **Planned**
 7. Payroll — **Planned**
-8. Integrations and developer platform — **Planned**
+8. Integrations and developer platform — **Partial**
 9. Year-end, tax return, and filing help — **Planned**
-10. Support, onboarding, learning, and migration — **Partial**
+10. Support, onboarding, learning, and migration — **Planned**
 11. Financing and partner services — **Planned**
 12. Home dashboard and navigation — **Partial**
 
 See [Product Module Map](./PRODUCT_MODULE_MAP.md) for detailed boundaries and ownership.
+
+Changed status evidence (runtime paths):
+- **Module 8 (Partial):** minimal integration baseline exists via CVR endpoint and adapter in `src/app/api/companies/cvr/route.ts` and `src/lib/cvr/adapter.ts`.
+- **Module 10 (Planned):** no support/learning/migration runtime module in canonical evidence scope (`src/app/api/*`, `src/lib/*`, `supabase/migrations/*`).
 
 ## Current implementation baseline (repo-verified)
 - Auth lifecycle (signup/login/logout) and protected routes

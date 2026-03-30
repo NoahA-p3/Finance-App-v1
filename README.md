@@ -131,6 +131,7 @@ These checks run automatically via `.github/workflows/pr-ci.yml` on every pull r
 
 ### Documentation consistency checklist (include in same PR as feature changes)
 - [ ] For any module status change, synchronized all module-status docs in the same PR: `docs/product/PRODUCT_MODULE_MAP.md`, `docs/architecture/TECHNICAL_MODULES.md`, and `tasks/EPICS.md` (with matching canonical scope notes).
+- [ ] If `docs/product/PRD.md` includes module statuses, updated PRD statuses + evidence notes in the same PR to match the synchronized module-status docs.
 - [ ] Updated status docs when runtime behavior changed: `tasks/EPICS.md`, `docs/product/PRODUCT_MODULE_MAP.md`, and `AGENTS.md`.
 - [ ] If posting, reversal, period-lock, journal, or audit-event behavior changed, updated all three alignment docs together: `docs/security/SECURITY_RULES.md`, `docs/architecture/TECHNICAL_MODULES.md`, and `tasks/EPICS.md`.
 - [ ] Added an explicit **As of: YYYY-MM-DD** date in every updated status section.

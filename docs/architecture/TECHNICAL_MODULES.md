@@ -10,7 +10,7 @@ Status labels:
 - **Planned**: documented target design.
 
 ## Technical status table (aligned to product modules)
-**As of:** 2026-03-29 (cross-doc synchronized).
+**As of:** 2026-03-30 (cross-doc synchronized).
 
 | Product module | Technical status | Scope note | Technical evidence summary |
 |---|---|---|---|
@@ -43,7 +43,7 @@ Status labels:
 ## 4. Accounting Core — **Partial**
 - Schema domains: fiscal periods, accounts, journal entries/lines, cashbook/posting templates/import jobs, VAT returns, reports, fixed assets.
 - API groups: `/companies/{company_id}/accounts*`, `/journal-entries*`, `/fiscal-periods*`, `/vat-*`, `/reports*`, `/fixed-assets*`.
-- **As of:** 2026-03-29.
+- **As of:** 2026-03-30.
 - Current repo evidence: posting/journal baseline is implemented (create/list postings, reverse postings, period locks, and audit-event writes) while VAT and fixed-assets modules are still planned.
 - Evidence (file-level):
   - Posting API routes: `src/app/api/postings/route.ts`, `src/app/api/postings/[posting_id]/reverse/route.ts`, `src/app/api/postings/period-locks/route.ts`.
