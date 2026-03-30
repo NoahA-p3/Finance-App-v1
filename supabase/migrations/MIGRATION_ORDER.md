@@ -28,7 +28,8 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 16. `202603290001_security_session_events.sql`
 17. `202603290002_categories_write_permissions_alignment.sql`
 18. `202603290003_security_event_retry_queue.sql`
-19. `202603300001_transactions_notes_column.sql`
+19. `202603300001_integration_connections.sql`
+20. `202603300001_transactions_notes_column.sql`
 
 ## Sequence-sensitive dependency checkpoints
 
@@ -62,6 +63,11 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 - Apply in full-filename lexicographic order:
   1. `202603290001_company_invitation_acceptance_flow.sql`
   2. `202603290001_security_session_events.sql`
+
+
+### H) Integrations baseline after company bootstrap
+- `202603300001_integration_connections.sql` depends on company/membership tables and `public.set_updated_at()` from `202603250001_companies_bootstrap.sql`.
+- It is independent of posting and entitlement flows, but must run after company schema bootstrap and RBAC baseline so API permission checks map cleanly.
 
 ## Legacy branch handling note
 

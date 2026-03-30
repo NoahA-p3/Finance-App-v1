@@ -330,6 +330,47 @@ export type Database = {
           department_label?: string | null;
         };
       };
+      integration_connections: {
+        Row: {
+          company_id: string;
+          config: Json;
+          created_at: string;
+          created_by: string;
+          display_name: string | null;
+          id: string;
+          last_error_message: string | null;
+          last_synced_at: string | null;
+          provider_key: string;
+          status: "connected" | "disconnected" | "error";
+          updated_at: string;
+        };
+        Insert: {
+          company_id: string;
+          config?: Json;
+          created_at?: string;
+          created_by: string;
+          display_name?: string | null;
+          id?: string;
+          last_error_message?: string | null;
+          last_synced_at?: string | null;
+          provider_key: string;
+          status?: "connected" | "disconnected" | "error";
+          updated_at?: string;
+        };
+        Update: {
+          company_id?: string;
+          config?: Json;
+          created_at?: string;
+          created_by?: string;
+          display_name?: string | null;
+          id?: string;
+          last_error_message?: string | null;
+          last_synced_at?: string | null;
+          provider_key?: string;
+          status?: "connected" | "disconnected" | "error";
+          updated_at?: string;
+        };
+      };
       company_subscriptions: {
         Row: {
           company_id: string;

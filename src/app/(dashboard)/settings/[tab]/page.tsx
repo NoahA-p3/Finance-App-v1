@@ -130,8 +130,8 @@ export default async function SettingsTabPage({ params }: { params: Promise<{ ta
             title="Integrations"
             description="This tab is for third-party connections and integration operational status, including sync health and traceability metadata."
             bullets={[
-              "When implemented, include connect/disconnect, configuration, and last sync/error details.",
-              "Expose retry actions and field mappings only when backed by persisted integration models.",
+              "Backend baseline exists: /api/integrations persists company-scoped connection metadata.",
+              "Dedicated in-tab connect/disconnect, retry actions, and mapping controls are staged TODOs.",
               "Keep day-to-day accounting and sales workflows outside this tab."
             ]}
           />

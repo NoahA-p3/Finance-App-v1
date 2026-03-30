@@ -26,6 +26,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Company context switching via `POST /api/companies/switch`, persisted in `profiles.active_company_id`, and exposed in dashboard top navigation.
 - Company settings persistence now includes invoice settings, branding/logo metadata placeholders, branch/department placeholders, and CVR number storage.
 - CVR lookup adapter endpoint (`GET /api/companies/cvr?cvr=<8-digit>`) with explicit manual fallback when provider integration is not configured.
+- Integrations baseline API (`GET/POST /api/integrations`) with company-scoped persisted connection metadata (`public.integration_connections`) for backend-first Settings rollout.
 - Finance APIs (`/api/transactions`, `/api/categories`, `/api/receipts`) are active-company scoped and enforce membership + `company_id` isolation with **company-shared** row visibility inside the same company.
 - Finance mutation permissions are explicitly keyed: `finance.transactions.write`, `finance.categories.write`, `finance.receipts.write`, `finance.postings.write`, and `finance.period_locks.manage` (seeded to baseline `owner` + `staff`; not seeded to `read_only`, including category create/delete mutations).
 - Posting APIs (`/api/postings`, `/api/postings/{posting_id}/reverse`, `/api/postings/period-locks`) provide append-only journal posting, reversal traceability, and period lock enforcement.
@@ -62,10 +63,10 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
   - `NEXT_PUBLIC_ENABLE_SESSION_MANAGEMENT` (optional, set to `false` to hide the Settings session-management panel while backend remains available)
   - `NEXT_PUBLIC_ENABLE_ADVANCED_ROLES` (optional, default `false`; when `true`, allows assigning advanced placeholder roles: accountant, auditor, payroll-only, sales-only, integration-admin)
   - `NEXT_PUBLIC_ENABLE_ENTITLEMENTS` (optional, default `true`; controls Settings plan/entitlements panel visibility)
-  - `NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION` (optional, default `true`; set to `false` to hide Automation settings tab)
-  - `NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL` (optional, default `true`; set to `false` to hide Payroll settings tab)
-  - `NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER` (optional, default `true`; set to `false` to hide Developer settings tab)
-  - `NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT` (optional, default `true`; set to `false` to hide Security & Audit settings tab)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION` (optional, default hidden; set to `true` to expose Automation after backend readiness exists)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL` (optional, default hidden; set to `true` to expose Payroll after backend readiness exists)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER` (optional, default hidden; set to `true` to expose Developer after backend readiness exists)
+  - `NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT` (optional, default hidden; set to `true` to expose Security & Audit after backend readiness exists)
   - `ENABLE_ENTITLEMENT_ENFORCEMENT` (optional, default `true`; global server-side plan-limit enforcement switch)
   - `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS` (optional CSV allowlist; e.g. `starter,growth` for per-tier rollout)
 4. Start dev server:
@@ -150,8 +151,15 @@ These checks run automatically via `.github/workflows/pr-ci.yml` on every pull r
   ```
 - After fixing invalid rows, retry the write path (for example `POST /api/transactions`) to confirm entitlement enforcement resumes normally.
 
+## Settings tab exposure rules
+- Settings tab visibility is fail-closed and evaluated in this order: backend readiness -> permission checks -> optional-tab feature flags.
+- Tabs with planned status and no persisted model/API contract are hidden from Settings navigation by default.
+- Optional planned tabs (`automation`, `payroll`, `developer`, `security-audit`) stay hidden unless their `NEXT_PUBLIC_ENABLE_SETTINGS_*` flag is explicitly `true`.
+- In production-like environments (`NODE_ENV=production` or `VERCEL_ENV=preview|production`), optional tab exposure must be explicit (`true`) and is never inferred from missing flags.
+- Backend-first candidate status: Integrations now has persisted model + API baseline (`public.integration_connections`, `/api/integrations`), but the Settings UI remains partial and intentionally staged.
+
 ## Explicit placeholders still remaining
-- **Settings tabs:** multiple settings tabs intentionally render placeholder guidance until backed by persisted feature models.
+- **Settings tabs:** tabs with planned status remain hidden by strict readiness gating until persisted models and API contracts exist; some visible tabs still include placeholder guidance while UI extraction is in progress.
 - **Invitation acceptance:** tokenized invite acceptance is implemented via onboarding handoff (`/onboarding?invite=<token>`) and `POST /api/companies/invitations/accept`.
 - **VAT engine:** VAT/tax automation engine remains planned and is not fully implemented in this repository.
 
