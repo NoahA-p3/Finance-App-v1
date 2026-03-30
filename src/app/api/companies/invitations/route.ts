@@ -1,4 +1,3 @@
-import { randomBytes, createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthenticatedApiUser } from "@/lib/auth";
 import {
@@ -11,8 +10,8 @@ import {
   isBaselineRole
 } from "@/lib/company-permissions";
 import { isAdvancedRolesEnabled } from "@/lib/auth-flags";
-
-const INVITATION_TTL_HOURS = 24 * 7;
+import { getInvitationDeliveryAdapter } from "@/lib/company-invitations/delivery-adapter";
+import { createInvitationToken } from "@/lib/company-invitations/tokens";
 
 function normalizeEmail(value: unknown) {
   if (typeof value !== "string") {
@@ -29,14 +28,6 @@ function isAllowedRole(role: string) {
   }
 
   return isAdvancedRolesEnabled() && isAdvancedRole(role);
-}
-
-function createInvitationToken() {
-  const token = randomBytes(24).toString("hex");
-  const tokenHash = createHash("sha256").update(token).digest("hex");
-  const expiresAt = new Date(Date.now() + INVITATION_TTL_HOURS * 60 * 60 * 1000).toISOString();
-
-  return { token, tokenHash, expiresAt };
 }
 
 export async function GET() {
@@ -136,17 +127,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  const origin = req.nextUrl.origin;
-  const acceptancePath = `/onboarding?invite=${encodeURIComponent(token)}`;
+  const deliveryAdapter = getInvitationDeliveryAdapter();
+  const delivery = await deliveryAdapter.deliverInvitation({
+    companyId: membership.companyId,
+    invitationId: invitation.id,
+    invitedEmail: invitation.invited_email,
+    role: invitation.role,
+    token,
+    expiresAt,
+    origin: req.nextUrl.origin
+  });
 
   return NextResponse.json(
     {
       invitation,
-      acceptance: {
-        token,
-        expires_at: expiresAt,
-        onboarding_url: `${origin}${acceptancePath}`
-      }
+      delivery
     },
     { status: 201 }
   );

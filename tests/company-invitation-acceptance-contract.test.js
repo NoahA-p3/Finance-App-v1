@@ -18,14 +18,21 @@ test('acceptance API endpoint validates token input and maps idempotent acceptan
   assert.match(acceptRoute, /Invitation is not pending/);
 });
 
-test('invitation create route mints acceptance token hash and expiry metadata', () => {
+test('invitation create and resend flows use token minting + delivery adapter seams', () => {
   const invitationsRoute = read('src/app/api/companies/invitations/route.ts');
+  const tokenUtils = read('src/lib/company-invitations/tokens.ts');
+  const deliveryAdapter = read('src/lib/company-invitations/delivery-adapter.ts');
+  const resendRoute = read('src/app/api/companies/invitations/[id]/resend/route.ts');
+  const revokeRoute = read('src/app/api/companies/invitations/[id]/revoke/route.ts');
 
   assert.match(invitationsRoute, /createInvitationToken/);
-  assert.match(invitationsRoute, /createHash\("sha256"\)/);
+  assert.match(invitationsRoute, /getInvitationDeliveryAdapter/);
+  assert.match(tokenUtils, /createHash\("sha256"\)/);
   assert.match(invitationsRoute, /acceptance_token_hash/);
   assert.match(invitationsRoute, /acceptance_token_expires_at/);
-  assert.match(invitationsRoute, /onboarding_url/);
+  assert.match(deliveryAdapter, /onboarding_url/);
+  assert.match(resendRoute, /Invitation cannot be resent when status is/);
+  assert.match(revokeRoute, /Invitation cannot be revoked when status is/);
 });
 
 test('migration enforces token-based acceptance with expiry and cross-tenant email checks', () => {
