@@ -2,7 +2,7 @@
 
 Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model](./DATA_MODEL.md), [API Contracts](./API_CONTRACTS.md), [Security Rules](../security/SECURITY_RULES.md).
 
-**Last verified:** 2026-03-29.
+**Last verified:** 2026-03-30.
 
 ## Last-verified policy
 - Keep this date as the evidence timestamp for architecture claims in this file.
@@ -32,6 +32,7 @@ Related docs: [Technical Module Boundaries](./TECHNICAL_MODULES.md), [Data Model
   - companies/member access (`/api/companies*`),
   - finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`),
   - posting endpoints (`/api/postings*`).
+- CVR lookup integration (`GET /api/companies/cvr?cvr=<8-digit>`) uses an environment-driven adapter implementation with safe fallback: missing/incomplete CVR provider env configuration returns explicit manual-entry fallback (`provider: "not_configured"`), while provider timeout/network/non-2xx/invalid-payload paths map to non-sensitive `unavailable` responses.
 - Auth gating in middleware:
   - `src/middleware.ts`
   - `src/lib/supabase/middleware.ts`

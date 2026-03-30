@@ -1,3 +1,43 @@
+## CVR adapter environment-driven provider + outcome mapping (March 30, 2026)
+
+### Goal
+Keep the existing `getCvrLookupAdapter()` contract while adding an environment-driven provider implementation in `src/lib/cvr/adapter.ts`, including timeout/error-to-outcome mapping and explicit non-sensitive fallback semantics.
+
+### Current behavior
+- `getCvrLookupAdapter()` always returns an unconfigured adapter.
+- CVR lookup always responds with `status: "unavailable"` and manual-entry guidance.
+- No provider timeout handling or provider-status mapping (`ok`, `not_found`, `unavailable`) exists yet.
+
+### Proposed approach
+1. Add env-driven adapter selection while preserving `getCvrLookupAdapter(): CvrLookupAdapter` signature.
+2. Implement a provider-backed adapter using fetch + abort timeout and deterministic mapping:
+   - success -> `ok`
+   - 404 -> `not_found`
+   - timeout/network/5xx/invalid payload -> `unavailable` with non-sensitive messaging.
+3. Keep safe fallback behavior when env config is missing or disabled by returning the existing unconfigured/manual adapter.
+4. Add contract tests that assert presence of `ok`, `not_found`, and `unavailable` mapping and guard against leaking raw provider error details.
+5. Update `README.md` and architecture docs with required env vars and operational fallback behavior.
+
+### Affected files
+- `src/lib/cvr/adapter.ts`
+- `tests/cvr-adapter.contract.test.js`
+- `README.md`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/architecture/SYSTEM_OVERVIEW.md`
+- `PLANS.md`
+
+### Risks
+- Provider payload shape assumptions may not match all external providers.
+- Overly broad error mapping may hide actionable operator diagnostics if documentation is unclear.
+
+### Verification steps
+- `npm run test -- tests/cvr-adapter.contract.test.js`
+- `npm run lint`
+- `npm run typecheck`
+
+### Assumptions / open questions
+- Assumption: provider integration is opt-in via environment variables and should fail closed to manual fallback when config is incomplete.
+- Assumption: generic unavailable messaging is preferred over relaying upstream error details to clients.
 ## Invitation revoke/resend lifecycle + delivery adapter decoupling (March 30, 2026)
 
 ### Goal

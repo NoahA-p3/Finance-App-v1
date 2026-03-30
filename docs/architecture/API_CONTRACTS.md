@@ -98,7 +98,10 @@ All other endpoint groupings in this document are target contracts for phased im
   - `POST /api/companies/invitations/:id/revoke` transitions pending invites to `revoked`; non-pending statuses (`accepted`, `expired`, `revoked`) return `409`.
   - `POST /api/companies/invitations/accept` validates invite token/status, accepts idempotently, and switches `profiles.active_company_id` to the accepted company.
   - `POST /api/companies/switch` validates target membership and persists `profiles.active_company_id`.
-  - `GET /api/companies/cvr?cvr=<8-digit>` uses an adapter interface; when provider integration is unavailable it returns explicit manual fallback guidance.
+  - `GET /api/companies/cvr?cvr=<8-digit>` uses `getCvrLookupAdapter()` and keeps a stable adapter contract.
+  - CVR provider mode is environment-driven and opt-in: `CVR_LOOKUP_PROVIDER=http_json` + required `CVR_LOOKUP_BASE_URL` + `CVR_LOOKUP_API_KEY` (optional `CVR_LOOKUP_TIMEOUT_MS`, default `2500`).
+  - If required CVR provider env vars are missing, lookup fails closed to `provider: "not_configured"` + `status: "unavailable"` with manual-entry guidance.
+  - Provider outcome mapping contract: successful payload => `status: "ok"`; provider `404` => `status: "not_found"`; timeout/network/non-2xx/invalid-payload => `status: "unavailable"` with non-sensitive error messaging.
   - `GET /api/entitlements` returns active company plan, entitlement limits, and usage snapshots.
   - `POST /api/entitlements/admin/seed` allows owner-only internal subscription seeding/switching for rollout/testing (provider-agnostic source).
   - Active company context is resolved from `profiles.active_company_id` (with safe first-membership fallback).

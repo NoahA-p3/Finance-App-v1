@@ -25,7 +25,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Company RBAC baseline with seeded roles (`owner`, `staff`, `read_only`), server-enforced permission checks on settings/member management, and invitation lifecycle endpoints (`GET/POST /api/companies/invitations`, `POST /api/companies/invitations/:id/resend`, `POST /api/companies/invitations/:id/revoke`, `POST /api/companies/invitations/accept`, `GET/PATCH /api/companies/members`).
 - Company context switching via `POST /api/companies/switch`, persisted in `profiles.active_company_id`, and exposed in dashboard top navigation.
 - Company settings persistence now includes invoice settings, branding/logo metadata placeholders, branch/department placeholders, and CVR number storage.
-- CVR lookup adapter endpoint (`GET /api/companies/cvr?cvr=<8-digit>`) with explicit manual fallback when provider integration is not configured.
+- CVR lookup adapter endpoint (`GET /api/companies/cvr?cvr=<8-digit>`) with environment-driven provider support and explicit manual fallback when provider integration is not configured or unavailable.
 - Integrations baseline API (`GET/POST /api/integrations`) with company-scoped persisted connection metadata (`public.integration_connections`) for backend-first Settings rollout.
 - Finance APIs (`/api/transactions`, `/api/categories`, `/api/receipts`) are active-company scoped and enforce membership + `company_id` isolation with **company-shared** row visibility inside the same company.
 - Finance mutation permissions are explicitly keyed: `finance.transactions.write`, `finance.categories.write`, `finance.receipts.write`, `finance.postings.write`, and `finance.period_locks.manage` (seeded to baseline `owner` + `staff`; not seeded to `read_only`, including category create/delete mutations).
@@ -70,6 +70,10 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
   - `NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT` (optional, default hidden; set to `true` to expose Security & Audit after backend readiness exists)
   - `ENABLE_ENTITLEMENT_ENFORCEMENT` (optional, default `true`; global server-side plan-limit enforcement switch)
   - `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS` (optional CSV allowlist; e.g. `starter,growth` for per-tier rollout)
+  - `CVR_LOOKUP_PROVIDER` (**required for provider mode**; set to `http_json` to enable provider lookup path)
+  - `CVR_LOOKUP_BASE_URL` (**required for provider mode**; provider base URL used for `GET /cvr/{cvr}` lookup calls)
+  - `CVR_LOOKUP_API_KEY` (**required for provider mode**; bearer token for provider authorization header)
+  - `CVR_LOOKUP_TIMEOUT_MS` (optional, default `2500`; request timeout in milliseconds for provider lookup calls)
 4. Start dev server:
    ```bash
    npm run dev
@@ -163,6 +167,7 @@ These checks run automatically via `.github/workflows/pr-ci.yml` on every pull r
 - **Settings tabs:** tabs with planned status remain hidden by strict readiness gating until persisted models and API contracts exist; some visible tabs still include placeholder guidance while UI extraction is in progress.
 - **Invitation acceptance:** tokenized invite acceptance is implemented via onboarding handoff (`/onboarding?invite=<token>`) and `POST /api/companies/invitations/accept`.
 - **Invitation delivery adapter:** invite delivery now goes through `src/lib/company-invitations/delivery-adapter.ts` (default `manual_display` adapter). Outbound email-provider delivery is optional/not yet implemented in this repo.
+- **CVR provider operations:** provider mode is opt-in via `CVR_LOOKUP_PROVIDER=http_json` plus required CVR env vars. If any required CVR env var is missing (or provider mode is not enabled), CVR lookup fails closed to explicit manual-entry fallback. Provider `404` maps to `not_found`; timeout/network/invalid-provider-payload paths map to `unavailable` with non-sensitive messages.
 - **VAT engine:** VAT/tax automation engine remains planned and is not fully implemented in this repository.
 - **VAT review baseline assumption:** preview currently treats `transactions.amount` as VAT-inclusive gross and uses baseline direction-level VAT codes; legal-form-specific VAT behavior for enkeltmandsvirksomhed vs ApS remains `TODO`.
 
