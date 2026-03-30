@@ -41,6 +41,8 @@ Currently implemented route handlers in `src/app/api/*`:
 - `DELETE /api/categories?id=<id>`
 - `GET /api/receipts`
 - `POST /api/receipts`
+- `POST /api/receipts/{id}/link`
+- `POST /api/receipts/{id}/unlink`
 - `GET /api/companies`
 - `POST /api/companies`
 - `PATCH /api/companies`
@@ -100,12 +102,14 @@ All other endpoint groupings in this document are target contracts for phased im
   - Company-scoped finance endpoints (`/api/transactions`, `/api/categories`, `/api/receipts`) resolve and enforce active-company membership plus `company_id` filtering.
   - `GET /api/categories` returns persisted category rows (`id`, `name`, `created_at`) for the active company membership context.
   - `GET /api/receipts` returns persisted receipt metadata (`id`, `path`, `created_at`, `transaction_id`) for the active company.
+  - `POST /api/receipts/{id}/link` validates `transaction_id` input, enforces active-company ownership for both rows, updates receipt↔transaction linkage, and returns updated receipt/transaction summaries for client refresh.
+  - `POST /api/receipts/{id}/unlink` enforces active-company ownership for the receipt, clears receipt↔transaction linkage, and returns updated receipt/transaction summaries.
   - Receipt preview/download links are not returned directly; private-path access should use a controlled signed-URL flow.
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
   - Finance mutation endpoints require explicit permission keys:
     - `POST /api/transactions` and `PATCH /api/transactions/{id}` require `finance.transactions.write`.
     - `POST /api/categories` and `DELETE /api/categories?id=<id>` require `finance.categories.write`.
-    - `POST /api/receipts` requires `finance.receipts.write`.
+    - `POST /api/receipts`, `POST /api/receipts/{id}/link`, and `POST /api/receipts/{id}/unlink` require `finance.receipts.write`.
     - `POST /api/postings` and `POST /api/postings/{posting_id}/reverse` require `finance.postings.write`.
     - `POST /api/postings/period-locks` requires `finance.period_locks.manage`.
   - Baseline role seeding grants finance write/manage keys (including category mutation) to `owner` and `staff`; `read_only` is explicitly excluded from category mutation and remains read-only for same-company finance writes.

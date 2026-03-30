@@ -2106,3 +2106,46 @@ Add active-company scoped transaction update support for category assignment, no
 ### Assumptions / open questions
 - Assumption: empty-string notes should be normalized to `null`.
 - Assumption: transaction description/amount/date/type remain immutable in this endpoint to preserve narrow scope.
+
+## Receipt↔transaction link/unlink endpoints + inbox linking UX (March 30, 2026)
+
+### Goal
+Add explicit receipt link/unlink API actions with active-company ownership validation, return updated receipt/transaction summaries for immediate UI refresh, and wire the receipt inbox UI to select transactions and trigger those actions.
+
+### Current behavior
+- Receipts can be uploaded/listed via `/api/receipts` but there is no dedicated link/unlink route.
+- Transaction create/edit flows accept raw UUID receipt references (`receipt_id`) and rely on users entering IDs manually.
+- Receipt inbox UI shows linked transaction ID but cannot directly pick a transaction and link/unlink from the inbox.
+
+### Proposed approach
+1. Add `POST /api/receipts/{id}/link` and `POST /api/receipts/{id}/unlink` route handlers.
+2. Validate route/body UUIDs at boundary and enforce auth + membership + write permission before data updates.
+3. Enforce active-company ownership checks for both receipt and transaction rows (`company_id = membership.companyId`).
+4. Keep receipt↔transaction relation synchronized by clearing prior links and writing both sides (`receipts.transaction_id`, `transactions.receipt_id`) in a deterministic order.
+5. Return response payload with both updated summaries: `{ receipt, transaction }`.
+6. Update `receipt-inbox-client` to fetch available transactions, provide transaction selector per receipt, call link/unlink endpoints, and update local state from returned summaries.
+7. Remove raw receipt UUID input from transaction creation form to avoid manual-ID linking in standard flow.
+8. Update API docs/README to include the new link/unlink endpoints and inbox-driven linking UX.
+
+### Affected files
+- `src/app/api/receipts/[id]/link/route.ts` (new)
+- `src/app/api/receipts/[id]/unlink/route.ts` (new)
+- `src/components/receipts/receipt-inbox-client.tsx`
+- `src/components/transactions/transaction-form.tsx`
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- Bidirectional relationship updates can drift if one side updates and the other fails; route logic must minimize partial-link states.
+- Extra inbox transaction fetch can increase initial page load time.
+- Removing raw UUID input from transaction form could impact users relying on manual linking; inbox flow should be the default replacement.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: endpoints should require `finance.receipts.write` permission because linking/unlinking is anchored in receipt workflow.
+- Assumption: linking a receipt to a transaction should replace any existing link on either side to preserve a single active association.

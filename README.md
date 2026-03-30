@@ -18,6 +18,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Transaction CRUD surface (currently list + create + scoped metadata update via `/api/transactions` + `PATCH /api/transactions/{id}` for category, notes, and receipt linkage).
 - Category browse/create/delete via `/api/categories` (`GET`, `POST`, `DELETE`).
 - Receipt upload + persisted inbox metadata listing via `/api/receipts` (`POST` upload, `GET` active-company receipt rows).
+- Receipt inbox linking actions via `POST /api/receipts/{id}/link` and `POST /api/receipts/{id}/unlink`, returning updated receipt/transaction summaries for immediate UI refresh.
 - Receipt upload validation enforces allowed MIME types (`application/pdf`, `image/jpeg`, `image/png`, `image/webp`), a 10 MB max file size limit, unsafe filename rejection, and normalized object keys under `user_id/company_id/<uuid>.<ext>`.
 - Company bootstrap/profile API (`/api/companies`) with persisted onboarding/settings fields (name, contact/address, VAT status, fiscal year start, base currency).
 - Company bootstrap RLS policy supports creator read access during first-company creation so owner membership + settings inserts can complete in one onboarding flow.
@@ -33,6 +34,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Entitlement enforcement now uses strict decimal parsing for configured limits and revenue amounts; malformed enforced limit values fail closed with a deterministic soft-lock response instead of silently coercing to zero.
 - Dashboard/reporting pages currently read persisted company-scoped data via `src/lib/dashboard-data.ts` (`transactions`, `categories`, `company_settings.base_currency`) and compute KPI/trend/breakdown outputs server-side.
 - Transactions workspace amount rendering uses company settings currency (`company_settings.base_currency`) with a normalized `DKK` fallback when settings are unavailable or invalid.
+- Receipt linking in UI is inbox-driven with transaction selection, replacing manual raw UUID entry in the transaction-create form.
 
 ## Tech stack (observed in repo)
 - Next.js `15.2.6` + React `19` + TypeScript
