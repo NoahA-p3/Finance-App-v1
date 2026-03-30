@@ -2149,3 +2149,43 @@ Add explicit receipt link/unlink API actions with active-company ownership valid
 ### Assumptions / open questions
 - Assumption: endpoints should require `finance.receipts.write` permission because linking/unlinking is anchored in receipt workflow.
 - Assumption: linking a receipt to a transaction should replace any existing link on either side to preserve a single active association.
+
+## Settings strict readiness gate + Integrations backend-first candidate (March 30, 2026)
+
+### Goal
+Hide planned Settings tabs by default behind a strict readiness gate, document deterministic tab-exposure behavior across environments, and introduce one backend-first candidate (Integrations) with persisted model + API route.
+
+### Current behavior
+- `src/lib/settings/navigation.ts` shows `banking-payments` and `integrations` for company settings managers even though both are marked planned in architecture docs.
+- Optional planned tabs (`automation`, `payroll`, `developer`, `security-audit`) are currently enabled by default unless env flags are set to `false`.
+- No dedicated persisted integrations model or `/api/integrations` route exists yet.
+
+### Proposed approach
+1. Add a strict tab-readiness map in `src/lib/settings/navigation.ts` so planned tabs are hidden unless backend model+API readiness is explicitly marked.
+2. Change optional tab flags to fail-closed defaults (`hidden` unless explicitly enabled), with production-like environments requiring explicit `true` semantics.
+3. Add an additive migration + generated type updates for an `integration_connections` company-scoped table with RLS.
+4. Add `/api/integrations` route handlers (`GET`, `POST`) with auth, company-membership scoping, settings-manage permission checks, and request validation.
+5. Update settings architecture + README documentation to define tab exposure rules and environment semantics unambiguously.
+
+### Affected files
+- `src/lib/settings/navigation.ts`
+- `src/app/api/integrations/route.ts`
+- `supabase/migrations/202603300001_integration_connections.sql`
+- `src/types/database.ts`
+- `docs/architecture/SETTINGS_INFORMATION_ARCHITECTURE.md`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- New strict gating may hide tabs expected by existing internal environments unless flags are explicitly set.
+- Adding new table/API without UI forms still leaves integration UX partial by design.
+- Generated DB types can drift if migration/table contracts are not mirrored correctly.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Assumptions / open questions
+- Assumption: introducing a backend-first Integrations API/table is sufficient to satisfy the “implementation candidate” requirement before wider tab exposure.
+- TODO: follow-up UI work should replace placeholder-only Integrations content with persisted-data controls that call `/api/integrations`.

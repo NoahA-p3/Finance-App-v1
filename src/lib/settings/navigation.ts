@@ -90,24 +90,57 @@ const TAB_DEFINITIONS: SettingsTabDefinition[] = [
   }
 ];
 
+const SETTINGS_TAB_BACKEND_READINESS: Record<SettingsTabKey, boolean> = {
+  personal: true,
+  company: true,
+  "team-access": true,
+  "sales-documents": true,
+  "accounting-tax": true,
+  "banking-payments": false,
+  integrations: true,
+  automation: false,
+  payroll: false,
+  developer: false,
+  "security-audit": false
+};
+
+const OPTIONAL_TAB_FLAGS: Partial<Record<SettingsTabKey, string>> = {
+  automation: "NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION",
+  payroll: "NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL",
+  developer: "NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER",
+  "security-audit": "NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT"
+};
+
+function isProductionLikeEnvironment() {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview";
+}
+
+function isBackendReady(key: SettingsTabKey) {
+  return SETTINGS_TAB_BACKEND_READINESS[key];
+}
+
 function isOptionalTabEnabled(key: SettingsTabKey) {
-  if (key === "automation") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_AUTOMATION !== "false";
+  const flagName = OPTIONAL_TAB_FLAGS[key];
+
+  if (!flagName) {
+    return true;
   }
 
-  if (key === "payroll") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_PAYROLL !== "false";
+  const rawValue = process.env[flagName];
+
+  if (rawValue === "true") {
+    return true;
   }
 
-  if (key === "developer") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_DEVELOPER !== "false";
+  if (rawValue === "false") {
+    return false;
   }
 
-  if (key === "security-audit") {
-    return process.env.NEXT_PUBLIC_ENABLE_SETTINGS_SECURITY_AUDIT !== "false";
+  if (isProductionLikeEnvironment()) {
+    return false;
   }
 
-  return true;
+  return false;
 }
 
 export function getSettingsTabs(membership: CompanyMembershipContext | null) {
@@ -124,6 +157,10 @@ export function getSettingsTabs(membership: CompanyMembershipContext | null) {
   const canAccessSecurityAudit = canManageCompanySettings && isOptionalTabEnabled("security-audit");
 
   return TAB_DEFINITIONS.filter((tab) => {
+    if (!isBackendReady(tab.key)) {
+      return false;
+    }
+
     if (tab.key === "personal") {
       return true;
     }
