@@ -14,7 +14,6 @@ export interface TransactionFormValues {
   type: TransactionType;
   date: string;
   category_id?: string;
-  receipt_id?: string;
 }
 
 const INITIAL_VALUES: TransactionFormValues = {
@@ -22,8 +21,7 @@ const INITIAL_VALUES: TransactionFormValues = {
   amount: "",
   type: "expense",
   date: new Date().toISOString().slice(0, 10),
-  category_id: "",
-  receipt_id: ""
+  category_id: ""
 };
 
 interface TransactionFormProps {
@@ -113,16 +111,6 @@ export function TransactionForm({ onSubmit, categories }: TransactionFormProps) 
           categories={categories}
           placeholder={categories.length > 0 ? "Select category" : "No categories available"}
         />
-
-        <label className="text-sm text-indigo-100/85">
-          Receipt ID (optional)
-          <Input
-            value={values.receipt_id ?? ""}
-            onChange={(event) => updateField("receipt_id", event.target.value)}
-            placeholder="UUID"
-            className="mt-1"
-          />
-        </label>
       </div>
 
       {error ? <p className="text-sm text-rose-300">{error}</p> : null}

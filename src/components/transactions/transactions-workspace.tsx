@@ -140,8 +140,7 @@ export function TransactionsWorkspace() {
         amount: values.amount,
         type: values.type,
         date: values.date,
-        category_id: values.category_id?.trim() ? values.category_id.trim() : undefined,
-        receipt_id: values.receipt_id?.trim() ? values.receipt_id.trim() : undefined
+        category_id: values.category_id?.trim() ? values.category_id.trim() : undefined
       })
     });
 

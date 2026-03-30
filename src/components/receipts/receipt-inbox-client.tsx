@@ -16,6 +16,21 @@ interface ReceiptListResponse {
   error?: string;
 }
 
+interface TransactionSummary {
+  id: string;
+  description: string;
+  amount: string | number;
+  type: "expense" | "revenue";
+  date: string;
+  receipt_id: string | null;
+}
+
+interface ReceiptLinkResponse {
+  receipt?: ReceiptRow;
+  transaction?: TransactionSummary | null;
+  error?: string;
+}
+
 function extractFileName(path: string) {
   const parts = path.split("/");
   return parts[parts.length - 1] ?? path;
@@ -23,9 +38,12 @@ function extractFileName(path: string) {
 
 export function ReceiptInboxClient() {
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
+  const [transactions, setTransactions] = useState<TransactionSummary[]>([]);
+  const [selectedTransactionByReceipt, setSelectedTransactionByReceipt] = useState<Record<string, string>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [pendingReceiptActionId, setPendingReceiptActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchReceipts = useCallback(async () => {
@@ -50,9 +68,40 @@ export function ReceiptInboxClient() {
     }
   }, []);
 
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const response = await fetch("/api/transactions", { method: "GET", cache: "no-store" });
+      const payload = (await response.json()) as TransactionSummary[] | { error?: string };
+
+      if (!response.ok || !Array.isArray(payload)) {
+        const message = !Array.isArray(payload) && payload.error ? payload.error : "Unable to fetch transactions.";
+        throw new Error(message);
+      }
+
+      setTransactions(payload);
+    } catch (fetchError) {
+      const message = fetchError instanceof Error ? fetchError.message : "Unable to fetch transactions.";
+      setError(message);
+      setTransactions([]);
+    }
+  }, []);
+
   useEffect(() => {
     void fetchReceipts();
-  }, [fetchReceipts]);
+    void fetchTransactions();
+  }, [fetchReceipts, fetchTransactions]);
+
+  useEffect(() => {
+    setSelectedTransactionByReceipt((current) => {
+      const next: Record<string, string> = {};
+
+      for (const receipt of receipts) {
+        next[receipt.id] = current[receipt.id] ?? receipt.transaction_id ?? "";
+      }
+
+      return next;
+    });
+  }, [receipts]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextFile = event.target.files?.[0] ?? null;
@@ -97,6 +146,76 @@ export function ReceiptInboxClient() {
     if (receipts.length === 1) return "1 receipt";
     return `${receipts.length} receipts`;
   }, [receipts.length]);
+
+  const applyLinkMutation = useCallback((payload: ReceiptLinkResponse) => {
+    if (!payload.receipt) return;
+
+    setReceipts((current) => current.map((receipt) => (receipt.id === payload.receipt?.id ? payload.receipt : receipt)));
+
+    if (payload.transaction) {
+      setTransactions((current) => current.map((transaction) => (transaction.id === payload.transaction?.id ? payload.transaction : transaction)));
+    }
+  }, []);
+
+  const handleLink = useCallback(
+    async (receiptId: string) => {
+      const transactionId = selectedTransactionByReceipt[receiptId];
+
+      if (!transactionId) {
+        setError("Please select a transaction before linking.");
+        return;
+      }
+
+      setPendingReceiptActionId(receiptId);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/receipts/${receiptId}/link`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transaction_id: transactionId })
+        });
+
+        const payload = (await response.json()) as ReceiptLinkResponse;
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Unable to link receipt.");
+        }
+
+        applyLinkMutation(payload);
+      } catch (linkError) {
+        const message = linkError instanceof Error ? linkError.message : "Unable to link receipt.";
+        setError(message);
+      } finally {
+        setPendingReceiptActionId(null);
+      }
+    },
+    [applyLinkMutation, selectedTransactionByReceipt]
+  );
+
+  const handleUnlink = useCallback(
+    async (receiptId: string) => {
+      setPendingReceiptActionId(receiptId);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/receipts/${receiptId}/unlink`, { method: "POST" });
+        const payload = (await response.json()) as ReceiptLinkResponse;
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Unable to unlink receipt.");
+        }
+
+        applyLinkMutation(payload);
+        setSelectedTransactionByReceipt((current) => ({ ...current, [receiptId]: "" }));
+      } catch (unlinkError) {
+        const message = unlinkError instanceof Error ? unlinkError.message : "Unable to unlink receipt.";
+        setError(message);
+      } finally {
+        setPendingReceiptActionId(null);
+      }
+    },
+    [applyLinkMutation]
+  );
 
   return (
     <div className="space-y-4">
@@ -144,6 +263,43 @@ export function ReceiptInboxClient() {
                 <p className="mt-1 text-xs text-cyan-300">
                   {receipt.transaction_id ? `Linked transaction: ${receipt.transaction_id}` : "Not linked to a transaction yet"}
                 </p>
+                <label className="mt-3 block text-xs text-indigo-100/85">
+                  Link to transaction
+                  <select
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-[#0f1230] px-2 py-2 text-xs text-indigo-100"
+                    value={selectedTransactionByReceipt[receipt.id] ?? ""}
+                    onChange={(event) =>
+                      setSelectedTransactionByReceipt((current) => ({
+                        ...current,
+                        [receipt.id]: event.target.value
+                      }))
+                    }
+                  >
+                    <option value="">Select transaction</option>
+                    {transactions.map((transaction) => (
+                      <option key={transaction.id} value={transaction.id}>
+                        {transaction.date} · {transaction.description}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    type="button"
+                    disabled={pendingReceiptActionId === receipt.id || !(selectedTransactionByReceipt[receipt.id] ?? "")}
+                    onClick={() => void handleLink(receipt.id)}
+                  >
+                    {pendingReceiptActionId === receipt.id ? "Saving..." : "Link"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={pendingReceiptActionId === receipt.id || !receipt.transaction_id}
+                    onClick={() => void handleUnlink(receipt.id)}
+                  >
+                    Unlink
+                  </Button>
+                </div>
               </article>
             ))}
           </div>
