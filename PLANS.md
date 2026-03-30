@@ -1,3 +1,47 @@
+## Minimal report export contract + /api/reports routes (March 30, 2026)
+
+### Goal
+Define and implement a minimal report export API contract covering date range, active-company scope, and output format, while reusing dashboard aggregation primitives and adding deterministic integration coverage.
+
+### Current behavior
+- No `/api/reports/*` route handlers currently expose a report export contract.
+- Dashboard/reporting composition exists in `src/lib/dashboard-data.ts`, but export-specific output shaping is not implemented.
+- Integration tests do not currently validate deterministic export ordering or decimal-safe export formatting.
+
+### Proposed approach
+1. Extract/share small aggregation primitives from `src/lib/dashboard-data.ts` (cents conversion and type totals) to avoid duplicate finance math in export routes.
+2. Add new report routes under `/api/reports/*`:
+   - `GET /api/reports/formats` for discoverable supported output formats.
+   - `POST /api/reports/export` for contract-driven exports with strict date range + format validation and active-company scoping.
+3. Ensure export payloads are deterministic:
+   - transaction ordering by `date` ascending then `id` ascending,
+   - decimal-safe string formatting (fixed 2dp strings, no float math).
+4. Add integration tests for `/api/reports/export` covering deterministic ordering, decimal-safe formatting, and company isolation.
+5. Document the new export contract in `docs/architecture/API_CONTRACTS.md` and user-facing behavior notes in `README.md`.
+
+### Affected files
+- `src/lib/dashboard-data.ts`
+- `src/app/api/reports/formats/route.ts` (new)
+- `src/app/api/reports/export/route.ts` (new)
+- `tests/integration/next-route-handlers.integration.test.js`
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- Date boundary parsing mistakes could cause off-by-one inclusions/exclusions.
+- CSV/JSON format divergence could break deterministic assertions if ordering/format rules are not centralized.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run test -- tests/integration/next-route-handlers.integration.test.js`
+
+### Assumptions / open questions
+- Assumption: minimal export contract supports `json` and `csv` output formats only.
+- Assumption: scope is the authenticated user’s active company context (no arbitrary company id input accepted).
+
 ## CVR adapter environment-driven provider + outcome mapping (March 30, 2026)
 
 ### Goal

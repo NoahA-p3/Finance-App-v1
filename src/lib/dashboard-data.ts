@@ -52,12 +52,37 @@ type TransactionRow = Database["public"]["Tables"]["transactions"]["Row"];
 
 type TransactionForDashboard = Pick<TransactionRow, "id" | "amount" | "date" | "description" | "type" | "category_id" | "receipt_id" | "notes">;
 
-function amountToCents(amount: number | string): bigint {
+export interface TransactionAmountAndType {
+  amount: number | string;
+  type: "expense" | "revenue";
+}
+
+export function amountToCents(amount: number | string): bigint {
   return decimalStringToCentsBigInt(String(amount));
 }
 
-function centsToString(cents: bigint): CentsString {
+export function centsToString(cents: bigint): CentsString {
   return cents.toString() as CentsString;
+}
+
+export function aggregateTransactionTypeTotals(rows: TransactionAmountAndType[]) {
+  let revenueCents = 0n;
+  let expenseCents = 0n;
+
+  for (const row of rows) {
+    const cents = amountToCents(row.amount);
+    if (row.type === "revenue") {
+      revenueCents += cents;
+    } else {
+      expenseCents += cents;
+    }
+  }
+
+  return {
+    revenueCents,
+    expenseCents,
+    profitCents: revenueCents - expenseCents
+  };
 }
 
 function monthKey(date: Date) {
@@ -83,17 +108,7 @@ export async function getDashboardFinanceData(supabase: SupabaseClient, _userId:
   const transactionRows: TransactionForDashboard[] = transactions ?? [];
   const categoryNameById = new Map((categories ?? []).map((entry) => [entry.id, entry.name]));
 
-  let revenueCents = 0n;
-  let expenseCents = 0n;
-
-  for (const row of transactionRows) {
-    const cents = amountToCents(row.amount);
-    if (row.type === "revenue") {
-      revenueCents += cents;
-    } else {
-      expenseCents += cents;
-    }
-  }
+  const { revenueCents, expenseCents, profitCents } = aggregateTransactionTypeTotals(transactionRows);
 
   const now = new Date();
   const monthDates = Array.from({ length: 6 }).map((_, index) => {
@@ -162,7 +177,7 @@ export async function getDashboardFinanceData(supabase: SupabaseClient, _userId:
     kpis: [
       { title: "Revenue", amountCents: revenueCents, delta: "Based on persisted transactions" },
       { title: "Expenses", amountCents: expenseCents, delta: "Based on persisted transactions" },
-      { title: "Net Profit", amountCents: revenueCents - expenseCents, delta: "Revenue minus expenses" }
+      { title: "Net Profit", amountCents: profitCents, delta: "Revenue minus expenses" }
     ],
     trendData,
     expenseBreakdown,

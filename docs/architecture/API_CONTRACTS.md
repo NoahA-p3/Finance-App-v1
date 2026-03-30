@@ -43,6 +43,8 @@ Currently implemented route handlers in `src/app/api/*`:
 - `POST /api/receipts`
 - `POST /api/receipts/{id}/link`
 - `POST /api/receipts/{id}/unlink`
+- `GET /api/reports/formats`
+- `POST /api/reports/export`
 - `GET /api/companies`
 - `POST /api/companies`
 - `PATCH /api/companies`
@@ -111,6 +113,9 @@ All other endpoint groupings in this document are target contracts for phased im
   - `GET /api/receipts` returns persisted receipt metadata (`id`, `path`, `created_at`, `transaction_id`) for the active company.
   - `POST /api/receipts/{id}/link` validates `transaction_id` input, enforces active-company ownership for both rows, updates receipt↔transaction linkage, and returns updated receipt/transaction summaries for client refresh.
   - `POST /api/receipts/{id}/unlink` enforces active-company ownership for the receipt, clears receipt↔transaction linkage, and returns updated receipt/transaction summaries.
+  - `GET /api/reports/formats` returns the currently supported export output formats (`json`, `csv`) for authenticated active-company members.
+  - `POST /api/reports/export` requires `date_from`, `date_to` (ISO `YYYY-MM-DD`) and `format` (`json` or `csv`), scopes all exported data to the active company, and returns deterministic transaction ordering (`date` ascending, then `id` ascending) with decimal-safe string amounts (`amount_decimal`).
+  - Report export summary totals use decimal strings (`revenue_decimal`, `expenses_decimal`, `profit_decimal`) computed with bigint-safe cents aggregation (no float math).
   - Receipt preview/download links are not returned directly; private-path access should use a controlled signed-URL flow.
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
   - Finance mutation endpoints require explicit permission keys:

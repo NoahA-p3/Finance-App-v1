@@ -252,6 +252,110 @@ if (!hasIntegrationEnv()) {
     assert.equal(validPayload.notes, 'Updated via integration test');
   });
 
+  test('/api/reports/formats and /api/reports/export enforce minimal contract, deterministic order, and decimal-safe formatting', async () => {
+    const formatsResponse = await fetch(`${baseUrl}/api/reports/formats`, {
+      headers: { Cookie: ownerCookie }
+    });
+
+    assert.equal(formatsResponse.status, 200);
+    const formatsPayload = await formatsResponse.json();
+    assert.deepEqual(formatsPayload.formats.map((entry) => entry.id), ['json', 'csv']);
+
+    const invalidFormatResponse = await fetch(`${baseUrl}/api/reports/export`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ date_from: '2026-01-01', date_to: '2026-12-31', format: 'xml' })
+    });
+
+    assert.equal(invalidFormatResponse.status, 400);
+
+    const admin = getAdminClient();
+    const reportTransactionA = crypto.randomUUID();
+    const reportTransactionB = crypto.randomUUID();
+
+    const { error: insertAError } = await admin.from('transactions').insert({
+      id: reportTransactionA,
+      user_id: fixture.userIds.ownerA,
+      company_id: fixture.companyAId,
+      description: 'Report Ordering B',
+      amount: '2.30',
+      type: 'expense',
+      date: '2026-02-10'
+    });
+    assert.equal(insertAError, null, insertAError?.message);
+
+    const { error: insertBError } = await admin.from('transactions').insert({
+      id: reportTransactionB,
+      user_id: fixture.userIds.ownerA,
+      company_id: fixture.companyAId,
+      description: 'Report Ordering A',
+      amount: '10.01',
+      type: 'revenue',
+      date: '2026-02-01'
+    });
+    assert.equal(insertBError, null, insertBError?.message);
+
+    const reportResponse = await fetch(`${baseUrl}/api/reports/export`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ date_from: '2026-02-01', date_to: '2026-02-28', format: 'json' })
+    });
+
+    assert.equal(reportResponse.status, 200);
+    const reportPayload = await reportResponse.json();
+    assert.equal(reportPayload.scope.company_id, fixture.companyAId);
+    assert.deepEqual(
+      reportPayload.transactions.map((entry) => entry.description),
+      ['Report Ordering A', 'Report Ordering B']
+    );
+    assert.deepEqual(
+      reportPayload.transactions.map((entry) => entry.amount_decimal),
+      ['10.01', '2.30']
+    );
+    assert.equal(reportPayload.summary.totals.revenue_decimal, '10.01');
+    assert.equal(reportPayload.summary.totals.expenses_decimal, '2.30');
+    assert.equal(reportPayload.summary.totals.profit_decimal, '7.71');
+
+    const companyScopeResponse = await fetch(`${baseUrl}/api/reports/export`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerBCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ date_from: '2026-02-01', date_to: '2026-02-28', format: 'json' })
+    });
+
+    assert.equal(companyScopeResponse.status, 200);
+    const companyScopePayload = await companyScopeResponse.json();
+    assert.equal(companyScopePayload.scope.company_id, fixture.companyBId);
+    assert.equal(companyScopePayload.transactions.length, 0);
+
+    const csvResponse = await fetch(`${baseUrl}/api/reports/export`, {
+      method: 'POST',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ date_from: '2026-02-01', date_to: '2026-02-28', format: 'csv' })
+    });
+
+    assert.equal(csvResponse.status, 200);
+    assert.equal(csvResponse.headers.get('content-type'), 'text/csv; charset=utf-8');
+    const csvBody = await csvResponse.text();
+    const csvLines = csvBody.trim().split('\n');
+    assert.equal(csvLines[0], 'id,date,description,type,category,amount_decimal');
+    assert.match(csvLines[1], /Report Ordering A/);
+    assert.match(csvLines[2], /Report Ordering B/);
+    assert.match(csvLines[1], /10.01$/);
+    assert.match(csvLines[2], /2.30$/);
+  });
+
   test('/api/companies/invitations/* covers resend/revoke status guards and accept replay/expired/revoked branches', async () => {
     const inviteEmail = fixture.users.ownerB.email.toLowerCase();
 

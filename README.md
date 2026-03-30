@@ -35,6 +35,8 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Internal billing baseline includes plans/subscriptions/entitlements (`/api/entitlements`) and server-side soft-limit enforcement on transaction writes for monthly vouchers + rolling 12-month turnover cap.
 - Entitlement enforcement now uses strict decimal parsing for configured limits and revenue amounts; malformed enforced limit values fail closed with a deterministic soft-lock response instead of silently coercing to zero.
 - Dashboard/reporting pages currently read persisted company-scoped data via `src/lib/dashboard-data.ts` (`transactions`, `categories`, `company_settings.base_currency`) and compute KPI/trend/breakdown outputs server-side.
+- Minimal report export contract is available via `GET /api/reports/formats` and `POST /api/reports/export` with required date range (`date_from`, `date_to`), active-company scope, and selectable output format (`json` or `csv`).
+- Report export responses are deterministic for the same dataset/filter (ordered by `date` ascending then `id` ascending) and use decimal-safe strings for row amounts and summary totals (for example `amount_decimal: \"10.01\"`).
 - Transactions workspace amount rendering uses company settings currency (`company_settings.base_currency`) with a normalized `DKK` fallback when settings are unavailable or invalid.
 - Receipt linking in UI is inbox-driven with transaction selection, replacing manual raw UUID entry in the transaction-create form.
 
