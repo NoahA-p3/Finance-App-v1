@@ -4,7 +4,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 
 > Current product state: early MVP foundation. Auth, profile, transaction/category/receipt data paths, and dashboard/report persisted-data views exist. Danish accounting and VAT domain depth is mostly planned.
 
-**Last verified:** 2026-03-29.
+**Last verified:** 2026-03-30.
 
 ## What the app does (current)
 - User signup/login/logout with Supabase Auth.
@@ -15,7 +15,7 @@ Finance Assistant is a Next.js + Supabase accounting web app aimed at freelancer
 - Login alerts are currently implemented as in-app account alerts derived from authenticated session activity; no separate outbound notification service is wired in this MVP yet.
 - Protected dashboard routes via Next.js middleware.
 - Basic profile record sync in `public.profiles`.
-- Transaction CRUD surface (currently list + create via `/api/transactions`).
+- Transaction CRUD surface (currently list + create + scoped metadata update via `/api/transactions` + `PATCH /api/transactions/{id}` for category, notes, and receipt linkage).
 - Category browse/create/delete via `/api/categories` (`GET`, `POST`, `DELETE`).
 - Receipt upload + persisted inbox metadata listing via `/api/receipts` (`POST` upload, `GET` active-company receipt rows).
 - Receipt upload validation enforces allowed MIME types (`application/pdf`, `image/jpeg`, `image/png`, `image/webp`), a 10 MB max file size limit, unsafe filename rejection, and normalized object keys under `user_id/company_id/<uuid>.<ext>`.

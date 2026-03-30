@@ -151,6 +151,106 @@ if (!hasIntegrationEnv()) {
     assert.ok(limitedPayload?.upgrade_prompt);
   });
 
+
+
+  test('/api/transactions/{id} patch validates UUIDs, permissions, and cross-company receipt ownership', async () => {
+    const admin = getAdminClient();
+    const transactionId = crypto.randomUUID();
+    const categoryId = crypto.randomUUID();
+    const receiptId = crypto.randomUUID();
+    const crossCompanyReceiptId = crypto.randomUUID();
+
+    const { error: categoryInsertError } = await admin.from('categories').insert({
+      id: categoryId,
+      name: 'Patch target category',
+      user_id: fixture.userIds.ownerA,
+      company_id: fixture.companyAId
+    });
+    assert.equal(categoryInsertError, null, categoryInsertError?.message);
+
+    const { error: receiptInsertError } = await admin.from('receipts').insert({
+      id: receiptId,
+      user_id: fixture.userIds.ownerA,
+      company_id: fixture.companyAId,
+      path: `${fixture.userIds.ownerA}/${fixture.companyAId}/patch-target.pdf`
+    });
+    assert.equal(receiptInsertError, null, receiptInsertError?.message);
+
+    const { error: otherReceiptInsertError } = await admin.from('receipts').insert({
+      id: crossCompanyReceiptId,
+      user_id: fixture.userIds.ownerB,
+      company_id: fixture.companyBId,
+      path: `${fixture.userIds.ownerB}/${fixture.companyBId}/cross-company.pdf`
+    });
+    assert.equal(otherReceiptInsertError, null, otherReceiptInsertError?.message);
+
+    const { error: txInsertError } = await admin.from('transactions').insert({
+      id: transactionId,
+      user_id: fixture.userIds.ownerA,
+      company_id: fixture.companyAId,
+      description: 'Patch endpoint target',
+      amount: '22.00',
+      type: 'expense',
+      date: '2026-03-15'
+    });
+    assert.equal(txInsertError, null, txInsertError?.message);
+
+    const invalidIdResponse = await fetch(`${baseUrl}/api/transactions/not-a-uuid`, {
+      method: 'PATCH',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ notes: 'invalid uuid path' })
+    });
+
+    assert.equal(invalidIdResponse.status, 400);
+
+    const deniedResponse = await fetch(`${baseUrl}/api/transactions/${transactionId}`, {
+      method: 'PATCH',
+      headers: {
+        Cookie: readOnlyCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ notes: 'should be denied' })
+    });
+
+    assert.equal(deniedResponse.status, 403);
+
+    const crossCompanyResponse = await fetch(`${baseUrl}/api/transactions/${transactionId}`, {
+      method: 'PATCH',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ receipt_id: crossCompanyReceiptId })
+    });
+
+    assert.equal(crossCompanyResponse.status, 400);
+    const crossCompanyPayload = await crossCompanyResponse.json();
+    assert.match(crossCompanyPayload.error, /receipt_id does not exist in active company context/);
+
+    const validUpdateResponse = await fetch(`${baseUrl}/api/transactions/${transactionId}`, {
+      method: 'PATCH',
+      headers: {
+        Cookie: ownerCookie,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        category_id: categoryId,
+        receipt_id: receiptId,
+        notes: 'Updated via integration test'
+      })
+    });
+
+    assert.equal(validUpdateResponse.status, 200);
+    const validPayload = await validUpdateResponse.json();
+    assert.equal(validPayload.id, transactionId);
+    assert.equal(validPayload.category_id, categoryId);
+    assert.equal(validPayload.receipt_id, receiptId);
+    assert.equal(validPayload.notes, 'Updated via integration test');
+  });
+
   test('/api/categories denies read_only and allows owner', async () => {
     const denied = await fetch(`${baseUrl}/api/categories`, {
       method: 'POST',

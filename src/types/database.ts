@@ -702,6 +702,7 @@ export type Database = {
           date: string;
           description: string;
           id: string;
+          notes: string | null;
           receipt_id: string | null;
           type: "expense" | "revenue";
           user_id: string;
@@ -714,6 +715,7 @@ export type Database = {
           date: string;
           description: string;
           id?: string;
+          notes?: string | null;
           receipt_id?: string | null;
           type: "expense" | "revenue";
           user_id: string;
@@ -726,6 +728,7 @@ export type Database = {
           date?: string;
           description?: string;
           id?: string;
+          notes?: string | null;
           receipt_id?: string | null;
           type?: "expense" | "revenue";
           user_id?: string;
