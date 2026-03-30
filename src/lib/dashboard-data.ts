@@ -31,7 +31,10 @@ export interface RecentTransactionRow {
   description: string;
   amountCents: bigint;
   category: string;
+  categoryId: string | null;
   hasReceipt: boolean;
+  receiptId: string | null;
+  notes: string | null;
   status: string;
   type: "expense" | "revenue";
 }
@@ -47,7 +50,7 @@ export interface DashboardFinanceData {
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 type TransactionRow = Database["public"]["Tables"]["transactions"]["Row"];
 
-type TransactionForDashboard = Pick<TransactionRow, "id" | "amount" | "date" | "description" | "type" | "category_id" | "receipt_id">;
+type TransactionForDashboard = Pick<TransactionRow, "id" | "amount" | "date" | "description" | "type" | "category_id" | "receipt_id" | "notes">;
 
 function amountToCents(amount: number | string): bigint {
   return decimalStringToCentsBigInt(String(amount));
@@ -69,7 +72,7 @@ export async function getDashboardFinanceData(supabase: SupabaseClient, _userId:
   const [{ data: transactions }, { data: categories }, { data: settings }] = await Promise.all([
     supabase
       .from("transactions")
-      .select("id, amount, date, description, type, category_id, receipt_id")
+      .select("id, amount, date, description, type, category_id, receipt_id, notes")
       .eq("company_id", companyId)
       .order("date", { ascending: false })
       .limit(500),
@@ -146,7 +149,10 @@ export async function getDashboardFinanceData(supabase: SupabaseClient, _userId:
     description: row.description,
     amountCents: amountToCents(row.amount),
     category: row.category_id ? categoryNameById.get(row.category_id) ?? "Uncategorized" : "Uncategorized",
+    categoryId: row.category_id,
     hasReceipt: Boolean(row.receipt_id),
+    receiptId: row.receipt_id,
+    notes: row.notes,
     status: row.receipt_id ? "Receipt linked" : "Needs receipt",
     type: row.type
   }));

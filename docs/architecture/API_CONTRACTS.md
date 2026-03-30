@@ -30,6 +30,7 @@ Currently implemented route handlers in `src/app/api/*`:
 - `DELETE /api/me/mfa/{factor_id}`
 - `GET /api/transactions`
 - `POST /api/transactions`
+- `PATCH /api/transactions/{id}`
 - `GET /api/postings`
 - `POST /api/postings`
 - `POST /api/postings/{posting_id}/reverse`
@@ -102,7 +103,7 @@ All other endpoint groupings in this document are target contracts for phased im
   - Receipt preview/download links are not returned directly; private-path access should use a controlled signed-URL flow.
   - Baseline seeded roles: `owner`, `staff`, `read_only`; advanced roles are feature-flagged placeholders until matrix finalization.
   - Finance mutation endpoints require explicit permission keys:
-    - `POST /api/transactions` requires `finance.transactions.write`.
+    - `POST /api/transactions` and `PATCH /api/transactions/{id}` require `finance.transactions.write`.
     - `POST /api/categories` and `DELETE /api/categories?id=<id>` require `finance.categories.write`.
     - `POST /api/receipts` requires `finance.receipts.write`.
     - `POST /api/postings` and `POST /api/postings/{posting_id}/reverse` require `finance.postings.write`.
@@ -111,6 +112,7 @@ All other endpoint groupings in this document are target contracts for phased im
   - Evidence: `supabase/migrations/202603290002_categories_write_permissions_alignment.sql` (role-permission + RLS alignment) and `src/app/api/categories/route.ts` (runtime permission guard + 403 response).
   - Cross-tenant reads/writes are blocked by combined API membership checks and table RLS policies.
   - `POST /api/transactions` enforces plan limits server-side for `monthly_vouchers` and `rolling_turnover_12m_dkk`; responses include `entitlement_warning` and soft-lock `upgrade_prompt` payloads when thresholds are reached.
+  - `PATCH /api/transactions/{id}` allows active-company scoped updates for `category_id`, `receipt_id`, and `notes` only; it validates UUID inputs and rejects cross-company category/receipt linkage.
   - Enforcement rollout is feature-flagged by plan tier via `ENABLE_ENTITLEMENT_ENFORCEMENT_PLAN_KEYS`.
   - `POST /api/postings` posts an existing transaction into `journal_entries` + `journal_lines` and writes immutable `audit_events`.
   - `POST /api/postings/{posting_id}/reverse` creates a reversal entry, marks the source posting as `reversed`, and records reversal trace metadata.

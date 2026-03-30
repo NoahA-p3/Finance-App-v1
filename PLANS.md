@@ -2061,3 +2061,48 @@ Add a repository check that fails CI when runtime app code (`src/app/**`, `src/l
 
 ### Assumptions / open questions
 - Assumption: intentional legacy-support work can use an explicit env-var bypass in CI with rationale captured in PR context.
+
+## Transaction update endpoint + persisted dashboard edits (March 30, 2026)
+
+### Goal
+Add active-company scoped transaction update support for category assignment, notes, and receipt linkage; wire dashboard recent-transactions UI to persist those edits; and add route integration coverage for validation/permission/isolation branches.
+
+### Current behavior
+- `/api/transactions` supports only GET and POST.
+- Dashboard recent transactions detail panel edits are local-only and not persisted.
+- `public.transactions` does not expose a dedicated `notes` field in generated type contracts.
+
+### Proposed approach
+1. Add `PATCH /api/transactions/{id}` route handler with boundary validation, active-company ownership checks, and `finance.transactions.write` gating.
+2. Add additive migration for `public.transactions.notes` and include rollback/recovery notes.
+3. Update `src/types/database.ts` transactions row/insert/update types to include `notes`.
+4. Update dashboard data and `recent-transactions` client component so category/notes/receipt edits call PATCH and persist state.
+5. Extend `tests/integration/next-route-handlers.integration.test.js` with valid update, invalid UUID, cross-company receipt denial, and permission denial cases.
+6. Update API docs/README transaction surface references.
+
+### Affected files
+- `src/app/api/transactions/[id]/route.ts` (new)
+- `supabase/migrations/<new>_transaction_notes_column.sql`
+- `supabase/migrations/MIGRATION_ORDER.md`
+- `src/types/database.ts`
+- `src/lib/dashboard-data.ts`
+- `src/components/finance/recent-transactions.tsx`
+- `tests/integration/next-route-handlers.integration.test.js`
+- `docs/architecture/API_CONTRACTS.md`
+- `README.md`
+- `PLANS.md`
+
+### Risks
+- UI edit controls may expose stale categories/receipts if fetches fail.
+- New notes column can drift if migration and generated type contract are not kept aligned.
+- Cross-company receipt/category checks must stay explicit to avoid accidental linkage leaks.
+
+### Verification steps
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run test -- tests/integration/next-route-handlers.integration.test.js`
+
+### Assumptions / open questions
+- Assumption: empty-string notes should be normalized to `null`.
+- Assumption: transaction description/amount/date/type remain immutable in this endpoint to preserve narrow scope.

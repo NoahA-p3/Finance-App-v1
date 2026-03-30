@@ -1,6 +1,6 @@
 # Supabase Migration Order (Canonical)
 
-**As of:** 2026-03-29.
+**As of:** 2026-03-30.
 
 This runbook documents the intended execution sequence for SQL files in `supabase/migrations/` and the dependency edges where order materially affects success.
 
@@ -28,6 +28,7 @@ Run files in lexicographic order by **full filename** (not only timestamp prefix
 16. `202603290001_security_session_events.sql`
 17. `202603290002_categories_write_permissions_alignment.sql`
 18. `202603290003_security_event_retry_queue.sql`
+19. `202603300001_transactions_notes_column.sql`
 
 ## Sequence-sensitive dependency checkpoints
 
